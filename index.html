@@ -46,6 +46,11 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #9ca3af;
         }
+
+        /* Desktop এ সাইডবার কলাপ্স করার জন্য কাস্টম ক্লাস */
+        .sidebar-collapsed {
+            margin-left: -280px !important;
+        }
     </style>
 </head>
 
@@ -58,7 +63,7 @@
     </div>
 
     <div id="sidebar"
-        class="fixed md:relative z-50 h-full bg-sidebar flex-shrink-0 transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 md:w-[280px] shadow-2xl md:shadow-none">
+        class="fixed md:relative z-50 h-full bg-sidebar flex-shrink-0 transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
         <div
             class="w-[280px] h-full flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 text-textMuted relative">
             <div class="absolute top-4 right-4 text-white cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
@@ -67,7 +72,6 @@
 
             <div
                 class="p-4 bg-sidebarDark text-white text-xl font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
-                <i class="fas fa-sun text-yellow-400 mr-2"></i>
                 <span class="text-epylionGreen tracking-wider">Abir LTD</span>
             </div>
 
@@ -122,8 +126,7 @@
                 <div
                     class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
                     <div class="relative z-10">
-                        <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome back, Anwarul! 👋</h2>
-                        <p class="text-gray-300 text-sm font-medium">Here's an overview of your Fabric Bookings.</p>
+                        <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
                     </div>
                 </div>
             </div>
@@ -333,6 +336,8 @@
         let globalExcelData = [];
         let currentViewIndex = null;
 
+        const possibleStatuses = ["Pending", "Acknowledged", "Revised", "Completed", "Cancel"];
+
         function initDashboard() {
             showDashboardHome();
         }
@@ -443,7 +448,7 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                showToast('Please select a file first!');
+                alert('Please select a file first!');
                 return;
             }
 
@@ -470,26 +475,25 @@
                         globalExcelData = cleanedData;
                         renderMainTable();
                         checkEmptyState();
-                        // Show toast on success
                         showToast(`Successfully loaded ${globalExcelData.length} records!`);
                     } else {
-                        showToast('File is empty or no valid data found.');
+                        alert('File is empty or no valid data found.');
                     }
                 } catch (error) {
-                    showToast('Error parsing the file. Please check format.');
+                    alert('Error parsing the file. Please check format.');
                     console.error(error);
                 }
             };
 
             reader.onerror = function () {
-                showToast("Failed to read file!");
+                alert("Failed to read file!");
             };
 
             reader.readAsArrayBuffer(file);
         }
 
         function getStatusStyling(status) {
-            if (!status) return ''; // If no status, return empty
+            if (!status) return '';
             const s = status.toLowerCase();
             if (s.includes('completed') || s.includes('approved')) return 'bg-green-100 text-green-800 border-green-200';
             if (s.includes('pending')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -510,7 +514,6 @@
                 const gsm = getColData(row, ['GSM', 'Weight']) || 'N/A';
                 const reqQty = getColData(row, ['RequiredQtyKgs', 'Required Qty Kgs', 'Required Qty']) || '0';
 
-                // Fetch status from data, default to empty string
                 const status = getColData(row, ['Status']) || '';
 
                 let statusHtml = '';
@@ -569,7 +572,6 @@
 
                 row.style.display = show ? '' : 'none';
             });
-            // Toast removed from filter action
         }
 
         // --- Detailed View Logic ---
@@ -631,10 +633,9 @@
                 globalExcelData[currentViewIndex].savedKnittingDate = knittingDate;
                 globalExcelData[currentViewIndex].savedDeliveryDate = deliveryDate;
 
-                // Show toast on success
                 showToast('Fabric planning dates saved successfully!');
             } else {
-                showToast('Please select at least one date before saving.');
+                alert('Please select at least one date before saving.');
             }
         }
 
@@ -652,14 +653,32 @@
             }
         }
 
+        // Toggles sidebar for mobile and desktop screens
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+
+            if (window.innerWidth >= 768) {
+                // Desktop: Toggle custom collapse class
+                sidebar.classList.toggle('sidebar-collapsed');
+            } else {
+                // Mobile: Toggle default Tailwind translate class
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
         }
 
+        // Close sidebar safely (used when clicking links or overlay)
         function closeSidebarMobile() {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobileOverlay').classList.add('hidden');
+            }
+        }
+
+        // This helper function handles sidebar closing logic for all screens 
+        // to prevent desktop sidebar from hiding when a menu is clicked
+        function closeSidebar() {
             if (window.innerWidth < 768) {
                 document.getElementById('sidebar').classList.add('-translate-x-full');
                 document.getElementById('mobileOverlay').classList.add('hidden');
