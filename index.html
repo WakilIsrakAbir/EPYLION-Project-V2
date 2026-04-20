@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abir Group - Order Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sidebar: '#313644',
+                        sidebarDark: '#2b2f3a',
+                        sidebarHover: '#1f232b',
+                        sidebarActive: '#404656',
+                        textMuted: '#aeb2b7',
+                        epylionGreen: '#4CAF50',
+                        activeBlue: '#3b82f6',
+                        tableHeader: '#f8f9fa'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen bg-[#f4f5f7] text-gray-800 overflow-hidden text-[13px] font-sans" onload="initDashboard()">
+
+    <div id="toast"
+        class="fixed top-5 right-5 bg-gray-800 text-white px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3">
+        <i class="fas fa-info-circle text-blue-400"></i>
+        <span id="toastMessage">Action triggered</span>
+    </div>
+
+    <div id="sidebar"
+        class="fixed md:relative z-50 h-full bg-sidebar flex-shrink-0 transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 md:w-[280px] shadow-2xl md:shadow-none">
+        <div
+            class="w-[280px] h-full flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 text-textMuted relative">
+            <div class="absolute top-4 right-4 text-white cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
+                <i class="fas fa-times text-lg"></i>
+            </div>
+
+            <div
+                class="p-4 bg-sidebarDark text-white text-xl font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
+                <i class="fas fa-sun text-yellow-400 mr-2"></i>
+                <span class="text-epylionGreen tracking-wider">Abir LTD</span>
+            </div>
+
+            <div class="p-4 flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
+                onclick="showDashboardHome()">
+                <div
+                    class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-white shrink-0">
+                    <i class="fas fa-user text-sm"></i>
+                </div>
+                <span class="text-[13px] text-gray-200">Anwarul Haque Shimul</span>
+            </div>
+
+            <ul class="py-2 w-full">
+                <li>
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                        onclick="toggleSubmenu(this, 'orderMenu')">
+                        <span>Order Management</span><i
+                            class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
+                    </div>
+                    <ul class="bg-sidebarDark hidden max-h-60 overflow-y-auto custom-scrollbar" id="orderMenu">
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-6 pr-4 text-gray-400 hover:text-white transition-colors"
+                                data-id="fabricBooking"
+                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric Booking
+                                Acknowledgement</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="mobileOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity"
+        onclick="closeSidebarMobile()"></div>
+
+    <div class="flex-1 flex flex-col overflow-hidden w-full relative">
+
+        <div class="bg-white border-b border-gray-200 flex items-center justify-between px-4 h-[40px] shrink-0">
+            <i class="fas fa-bars text-gray-500 cursor-pointer hover:text-activeBlue text-lg transition-transform hover:scale-110"
+                onclick="toggleSidebar()"></i>
+        </div>
+
+        <div id="dashboardHomeView" class="flex-1 flex flex-col overflow-hidden">
+            <div
+                class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto custom-scrollbar">
+                <div
+                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 cursor-pointer flex items-center shrink-0">
+                    Dashboard <i class="fas fa-home ml-2 text-activeBlue"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6">
+                <div
+                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome back, Anwarul! 👋</h2>
+                        <p class="text-gray-300 text-sm font-medium">Here's an overview of your Fabric Bookings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="listView" class="hidden flex-1 flex-col overflow-hidden">
+            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
+                id="tabBarContainer">
+                <div id="dynamicTabsWrapper" class="flex gap-1 items-end"></div>
+            </div>
+
+            <div class="p-3 flex-1 overflow-y-auto bg-white flex flex-col w-full">
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0" id="filterContainer">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-green-700 text-white border border-green-800 rounded-sm whitespace-nowrap shadow-sm font-medium transition-colors filter-all"
+                            onclick="activateFilter('All', this)">
+                            <i class="fas fa-list mr-1 text-white"></i> All List(s)
+                        </button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-pending"
+                            onclick="activateFilter('Pending', this)">
+                            <i class="fas fa-list mr-1 text-gray-400"></i> Pending Actions List(s)
+                        </button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-acknowledged"
+                            onclick="activateFilter('Acknowledged', this)">
+                            <i class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)
+                        </button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-revised"
+                            onclick="activateFilter('Revised', this)">
+                            <i class="fas fa-list mr-1 text-gray-400"></i> Revised List(s)
+                        </button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-completed"
+                            onclick="activateFilter('Completed', this)">
+                            <i class="fas fa-list mr-1 text-gray-400"></i> Completed / Approved List(s)
+                        </button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-cancel"
+                            onclick="activateFilter('Cancel', this)">
+                            <i class="fas fa-list mr-1 text-gray-400"></i> Cancel List(s)
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-gray-50 p-1 border border-gray-300 rounded-sm mt-2 md:mt-0">
+                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
+                            class="text-xs w-[180px] file:mr-2 file:py-1 file:px-2 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer">
+                        <button onclick="handleExcelUpload()"
+                            class="px-3 py-1 bg-activeBlue text-white rounded-sm shadow-sm text-xs font-medium hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-upload mr-1"></i> Upload Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 w-full relative bg-white flex-1 flex flex-col">
+                    <div id="table_fabricBooking"
+                        class="data-table-container hidden overflow-x-auto custom-scrollbar w-full h-full pb-2">
+                        <table class="w-full text-left whitespace-nowrap min-w-[800px]">
+                            <thead>
+                                <tr class="bg-tableHeader text-gray-600 border-b border-gray-200">
+                                    <th class="p-2 border-r border-gray-200 font-semibold text-center w-[100px]">Manage
+                                    </th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold">Order No</th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold">Buyer</th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold">Fabric Construction</th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold">GSM</th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold text-right">Req. Qty (Kgs)
+                                    </th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold">Rec. Date</th>
+                                    <th class="p-2 border-r border-gray-200 font-semibold text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mainTableBody" class="text-gray-700">
+                            </tbody>
+                        </table>
+                        <div id="emptyState"
+                            class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
+                            <i class="fas fa-file-excel text-4xl mb-3 text-gray-300"></i>
+                            <p>No data available. Please upload an Excel/CSV file to view records.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="detailedView" class="hidden flex-1 flex-col bg-white overflow-hidden">
+            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
+                id="detailTabsContainer">
+                <button onclick="closeDetailedView()"
+                    class="px-3 py-1.5 bg-white border border-gray-200 border-b-0 rounded-t text-activeBlue hover:bg-gray-50 flex items-center shadow-sm shrink-0">
+                    Close <i class="fas fa-caret-down ml-1"></i>
+                </button>
+                <div
+                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center shrink-0">
+                    Detailed View <i
+                        class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 cursor-pointer"
+                        onclick="closeDetailedView()"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col w-full">
+                <div class="bg-gray-50 border border-gray-200 rounded-sm mb-4">
+                    <div class="p-3 border-b border-gray-200 font-semibold text-gray-700">General Information</div>
+                    <div class="p-4 w-full">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Order No.</span><input
+                                    type="text" id="detailOrderNo"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Buyer</span><input
+                                    type="text" id="detailBuyer"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Booking
+                                    Unit</span><input type="text" id="detailBookingUnit"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Receive
+                                    Date</span><input type="text" id="detailReceiveDate"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">UOM</span><input
+                                    type="text" id="detailUom"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                            <div class="flex items-center gap-2"><span
+                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Unit</span><input
+                                    type="text" id="detailUnit"
+                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
+                                    readonly></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-sm w-full">
+                    <div class="p-3 border-b border-gray-200 font-semibold text-gray-700">Fabric Information & Planning
+                    </div>
+                    <div class="p-1 overflow-x-auto custom-scrollbar w-full pb-2">
+                        <table class="w-full text-left whitespace-nowrap border-collapse min-w-[1200px]">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700 font-semibold border-b border-gray-200 text-xs">
+                                    <th class="p-2 border-r border-gray-200">Fabric Construction</th>
+                                    <th class="p-2 border-r border-gray-200">Fabric Details</th>
+                                    <th class="p-2 border-r border-gray-200">Color</th>
+                                    <th class="p-2 border-r border-gray-200">Width</th>
+                                    <th class="p-2 border-r border-gray-200">GSM</th>
+                                    <th class="p-2 border-r border-gray-200 text-right">Req. Qty (Kgs)</th>
+                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Yarn Inhouse Date
+                                    </th>
+                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Knitting Date</th>
+                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Delivery Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailFabricBody" class="text-gray-700 text-xs">
+                                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                                    <td class="p-2 border-r border-gray-100" id="detailConstruction"></td>
+                                    <td class="p-2 border-r border-gray-100 truncate max-w-[200px]"
+                                        id="detailFabricDetails" title=""></td>
+                                    <td class="p-2 border-r border-gray-100" id="detailColor"></td>
+                                    <td class="p-2 border-r border-gray-100" id="detailWidth"></td>
+                                    <td class="p-2 border-r border-gray-100" id="detailGsm"></td>
+                                    <td class="p-2 border-r border-gray-100 text-right" id="detailReqQty"></td>
+
+                                    <td class="p-1.5 border-r border-gray-100 bg-white">
+                                        <input type="date" id="yarnDate"
+                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
+                                    </td>
+                                    <td class="p-1.5 border-r border-gray-100 bg-white">
+                                        <input type="date" id="knittingDate"
+                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
+                                    </td>
+                                    <td class="p-1.5 border-r border-gray-100 bg-white">
+                                        <input type="date" id="deliveryDate"
+                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-auto pt-4 border-t border-gray-200">
+                    <button class="px-4 py-1.5 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 font-medium"
+                        onclick="closeDetailedView()">Back to List(s)</button>
+                    <button
+                        class="px-4 py-1.5 bg-green-600 text-white rounded-sm hover:bg-green-700 font-medium shadow-sm transition-colors"
+                        onclick="saveFabricDates()">
+                        <i class="fas fa-save mr-1"></i> Save Dates
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let toastTimeout;
+        let openTabs = [];
+        let activeTabId = null;
+        let globalExcelData = [];
+        let currentViewIndex = null;
+
+        function initDashboard() {
+            showDashboardHome();
+        }
+
+        // Custom Toast Function
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+
+            // Show toast
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+
+            // Hide after 3 seconds
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function showDashboardHome() {
+            activeTabId = 'dashboard';
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('dashboardHomeView').classList.remove('hidden');
+            document.getElementById('dashboardHomeView').classList.add('flex');
+
+            document.querySelectorAll('.submenu-link').forEach(link => {
+                link.className = 'submenu-link block py-2 pl-6 pr-4 text-gray-400 hover:text-white transition-colors';
+            });
+            renderTabs();
+            closeSidebarMobile();
+        }
+
+        function loadMenuData(dataKey, menuName) {
+            document.getElementById('dashboardHomeView').classList.add('hidden');
+            document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('listView').classList.add('flex');
+
+            if (!openTabs.find(tab => tab.id === dataKey)) {
+                openTabs.push({ id: dataKey, title: menuName });
+            }
+            activeTabId = dataKey;
+            renderTabs();
+
+            document.querySelectorAll('.data-table-container').forEach(t => t.classList.add('hidden'));
+            const targetTable = document.getElementById('table_' + dataKey);
+            if (targetTable) {
+                targetTable.classList.remove('hidden');
+                checkEmptyState();
+            }
+
+            closeSidebarMobile();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('dynamicTabsWrapper');
+            if (!container) return;
+            container.innerHTML = '';
+            openTabs.forEach(tab => {
+                const isActive = tab.id === activeTabId;
+                const tabEl = document.createElement('div');
+                tabEl.className = `px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 ${isActive ? 'bg-white font-semibold text-gray-700' : 'bg-gray-50 text-gray-600'}`;
+                tabEl.onclick = () => loadMenuData(tab.id, tab.title);
+                tabEl.innerHTML = `${tab.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500" onclick="closeTab(event, '${tab.id}')"></i>`;
+                container.appendChild(tabEl);
+            });
+        }
+
+        function closeTab(event, tabIdToClose) {
+            event.stopPropagation();
+            openTabs = openTabs.filter(tab => tab.id !== tabIdToClose);
+            if (openTabs.length === 0) showDashboardHome();
+            else if (activeTabId === tabIdToClose) loadMenuData(openTabs[openTabs.length - 1].id, openTabs[openTabs.length - 1].title);
+            else renderTabs();
+        }
+
+        function checkEmptyState() {
+            const emptyState = document.getElementById('emptyState');
+            const targetTable = document.getElementById('table_fabricBooking');
+
+            if (globalExcelData.length === 0) {
+                emptyState.classList.remove('hidden');
+                targetTable.querySelector('table').classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                targetTable.querySelector('table').classList.remove('hidden');
+            }
+        }
+
+        function getColData(row, possibleKeys) {
+            const rowKeys = Object.keys(row);
+            for (let searchKey of possibleKeys) {
+                let normalizedSearch = String(searchKey).toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let rk of rowKeys) {
+                    let normalizedRk = String(rk).toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (normalizedSearch === normalizedRk) {
+                        return row[rk];
+                    }
+                }
+            }
+            return '';
+        }
+
+        // --- Excel Upload & Parsing Logic ---
+        function handleExcelUpload() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showToast('Please select a file first!');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
+
+                    if (rawData.length > 0) {
+                        const cleanedData = rawData.map((row, index) => {
+                            let cleanRow = {};
+                            for (let key in row) {
+                                cleanRow[key.trim()] = row[key];
+                            }
+                            return cleanRow;
+                        });
+
+                        globalExcelData = cleanedData;
+                        renderMainTable();
+                        checkEmptyState();
+                        // Show toast on success
+                        showToast(`Successfully loaded ${globalExcelData.length} records!`);
+                    } else {
+                        showToast('File is empty or no valid data found.');
+                    }
+                } catch (error) {
+                    showToast('Error parsing the file. Please check format.');
+                    console.error(error);
+                }
+            };
+
+            reader.onerror = function () {
+                showToast("Failed to read file!");
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function getStatusStyling(status) {
+            if (!status) return ''; // If no status, return empty
+            const s = status.toLowerCase();
+            if (s.includes('completed') || s.includes('approved')) return 'bg-green-100 text-green-800 border-green-200';
+            if (s.includes('pending')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            if (s.includes('acknowledged')) return 'bg-blue-100 text-blue-800 border-blue-200';
+            if (s.includes('revised')) return 'bg-purple-100 text-purple-800 border-purple-200';
+            if (s.includes('cancel')) return 'bg-red-100 text-red-800 border-red-200';
+            return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+
+        function renderMainTable() {
+            const tbody = document.getElementById('mainTableBody');
+            tbody.innerHTML = '';
+
+            globalExcelData.forEach((row, index) => {
+                const orderNo = getColData(row, ['OrderNo', 'Order No', 'Order']) || 'N/A';
+                const buyer = getColData(row, ['Buyer', 'Buyer Name']) || 'N/A';
+                const fabricConst = getColData(row, ['FabricConstruction', 'Construction']) || 'N/A';
+                const gsm = getColData(row, ['GSM', 'Weight']) || 'N/A';
+                const reqQty = getColData(row, ['RequiredQtyKgs', 'Required Qty Kgs', 'Required Qty']) || '0';
+
+                // Fetch status from data, default to empty string
+                const status = getColData(row, ['Status']) || '';
+
+                let statusHtml = '';
+                if (status) {
+                    const statusStyle = getStatusStyling(status);
+                    statusHtml = `<span class="${statusStyle} px-2 py-0.5 rounded text-xs border">${status}</span>`;
+                }
+
+                let recDate = getColData(row, ['BookingReceiveDate', 'Receive Date', 'Booking Receive Date']) || 'N/A';
+                if (typeof recDate === 'number') {
+                    recDate = new Date(Math.round((recDate - 25569) * 86400 * 1000)).toLocaleDateString();
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 border-b border-gray-100 data-row";
+                tr.setAttribute('data-status', status.toLowerCase());
+
+                tr.innerHTML = `
+                    <td class="p-2 border-r border-gray-100 flex justify-center gap-3 text-[#313644]">
+                        <i class="fas fa-eye cursor-pointer hover:text-blue-600 transition-transform hover:scale-110" onclick="openDetailedView(${index})"></i>
+                    </td>
+                    <td class="p-2 border-r border-gray-100">${orderNo}</td>
+                    <td class="p-2 border-r border-gray-100">${buyer}</td>
+                    <td class="p-2 border-r border-gray-100">${fabricConst}</td>
+                    <td class="p-2 border-r border-gray-100">${gsm}</td>
+                    <td class="p-2 border-r border-gray-100 text-right">${reqQty}</td>
+                    <td class="p-2 border-r border-gray-100">${recDate}</td>
+                    <td class="p-2 border-r border-gray-100 text-center">${statusHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Filter Logic
+        function activateFilter(filterType, clickedBtn) {
+            const allBtns = document.querySelectorAll('.filter-btn');
+            allBtns.forEach(btn => {
+                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
+                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
+            });
+
+            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
+            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
+
+            const rows = document.querySelectorAll('#mainTableBody .data-row');
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status') || '';
+                let show = false;
+
+                if (filterType === 'All') show = true;
+                else if (filterType === 'Pending' && status.includes('pending')) show = true;
+                else if (filterType === 'Acknowledged' && status.includes('acknowledged')) show = true;
+                else if (filterType === 'Revised' && status.includes('revised')) show = true;
+                else if (filterType === 'Completed' && (status.includes('completed') || status.includes('approved'))) show = true;
+                else if (filterType === 'Cancel' && status.includes('cancel')) show = true;
+
+                row.style.display = show ? '' : 'none';
+            });
+            // Toast removed from filter action
+        }
+
+        // --- Detailed View Logic ---
+        function openDetailedView(index) {
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailedView').classList.remove('hidden');
+            document.getElementById('detailedView').classList.add('flex');
+
+            currentViewIndex = index;
+
+            if (globalExcelData && globalExcelData[index]) {
+                const row = globalExcelData[index];
+
+                document.getElementById('detailOrderNo').value = getColData(row, ['OrderNo', 'Order No']) || '';
+                document.getElementById('detailBuyer').value = getColData(row, ['Buyer', 'Buyer Name']) || '';
+                document.getElementById('detailBookingUnit').value = getColData(row, ['BookingUnit', 'Booking Unit']) || '';
+
+                let rDate = getColData(row, ['BookingReceiveDate', 'Receive Date']);
+                if (typeof rDate === 'number') rDate = new Date(Math.round((rDate - 25569) * 86400 * 1000)).toLocaleDateString();
+                document.getElementById('detailReceiveDate').value = rDate || '';
+
+                document.getElementById('detailUom').value = getColData(row, ['UOM', 'Unit of Measure']) || '';
+                document.getElementById('detailUnit').value = getColData(row, ['Unit']) || '';
+
+                document.getElementById('detailConstruction').innerText = getColData(row, ['FabricConstruction', 'Construction']) || 'N/A';
+
+                const details = getColData(row, ['FabricDetails', 'Details']) || 'N/A';
+                const fdEl = document.getElementById('detailFabricDetails');
+                fdEl.innerText = details;
+                fdEl.title = details;
+
+                document.getElementById('detailColor').innerText = getColData(row, ['Color']) || 'N/A';
+                document.getElementById('detailWidth').innerText = getColData(row, ['Width']) || 'N/A';
+                document.getElementById('detailGsm').innerText = getColData(row, ['GSM']) || 'N/A';
+                document.getElementById('detailReqQty').innerText = getColData(row, ['RequiredQtyKgs', 'Required Qty Kgs']) || '0';
+
+                document.getElementById('yarnDate').value = row.savedYarnDate || '';
+                document.getElementById('knittingDate').value = row.savedKnittingDate || '';
+                document.getElementById('deliveryDate').value = row.savedDeliveryDate || '';
+            }
+        }
+
+        function closeDetailedView() {
+            document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+            currentViewIndex = null;
+        }
+
+        // --- Save Dates Logic (In-Memory) ---
+        function saveFabricDates() {
+            if (currentViewIndex === null) return;
+
+            const yarnDate = document.getElementById('yarnDate').value;
+            const knittingDate = document.getElementById('knittingDate').value;
+            const deliveryDate = document.getElementById('deliveryDate').value;
+
+            if (yarnDate || knittingDate || deliveryDate) {
+                globalExcelData[currentViewIndex].savedYarnDate = yarnDate;
+                globalExcelData[currentViewIndex].savedKnittingDate = knittingDate;
+                globalExcelData[currentViewIndex].savedDeliveryDate = deliveryDate;
+
+                // Show toast on success
+                showToast('Fabric planning dates saved successfully!');
+            } else {
+                showToast('Please select at least one date before saving.');
+            }
+        }
+
+        function toggleSubmenu(headerElement, menuId) {
+            const menu = document.getElementById(menuId);
+            const icon = headerElement.querySelector('i');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                headerElement.classList.add('bg-sidebarActive', 'text-white');
+                icon.classList.replace('fa-chevron-left', 'fa-chevron-down');
+            } else {
+                menu.classList.add('hidden');
+                headerElement.classList.remove('bg-sidebarActive', 'text-white');
+                icon.classList.replace('fa-chevron-down', 'fa-chevron-left');
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function closeSidebarMobile() {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobileOverlay').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>
