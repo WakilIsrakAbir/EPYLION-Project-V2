@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Abir Group</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-100 font-sans" onload="checkAdminAndLoadUsers()">
+
+    <nav class="bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold"><i class="fas fa-users-cog text-blue-400 mr-2"></i> User Management</h1>
+            <a href="index.html" class="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition">Back to
+                Dashboard</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-300" id="displayUsername">Loading...</span>
+            <i class="fas fa-sign-out-alt text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
+                title="Logout"></i>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
+        <div class="bg-white p-6 rounded-lg shadow-md h-fit">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2"><i class="fas fa-user-plus mr-2 text-green-500"></i> Create
+                New User</h2>
+            <form id="createUserForm" onsubmit="handleCreateUser(event)">
+                <div class="mb-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+                    <input type="text" id="newUsername"
+                        class="w-full border rounded p-2 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                    <input type="password" id="newPassword"
+                        class="w-full border rounded p-2 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Role</label>
+                    <select id="newRole" class="w-full border rounded p-2 focus:outline-none focus:border-blue-500">
+                        <option value="Viewer">Viewer</option>
+                        <option value="Planner">Planner</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">Create
+                    User</button>
+            </form>
+        </div>
+
+        <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2"><i class="fas fa-list mr-2 text-blue-500"></i> All Users
+                List</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-700">
+                        <th class="p-3 border">Username</th>
+                        <th class="p-3 border">Role</th>
+                        <th class="p-3 border">Joined Date</th>
+                        <th class="p-3 border text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Check if Admin
+        function checkAdminAndLoadUsers() {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            const username = localStorage.getItem('username');
+
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (role !== 'Admin') {
+                alert('Access Denied! Only Admins can manage users.');
+                window.location.href = 'index.html'; // Redirect to dashboard if not Admin
+                return;
+            }
+
+            document.getElementById('displayUsername').innerText = `${username} (${role})`;
+            loadUsers(); // Fetch users from backend
+        }
+
+        // Fetch Users from API
+        async function loadUsers() {
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/auth/users');
+                const users = await response.json();
+
+                const tableBody = document.getElementById('usersTableBody');
+                tableBody.innerHTML = '';
+
+                users.forEach(user => {
+                    // Date formatting
+                    const date = new Date(user.createdAt).toLocaleDateString();
+
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 border font-medium">${user.username}</td>
+                            <td class="p-3 border">
+                                <span class="px-2 py-1 rounded text-xs font-bold 
+                                    ${user.role === 'Admin' ? 'bg-red-100 text-red-600' :
+                            user.role === 'Planner' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}">
+                                    ${user.role}
+                                </span>
+                            </td>
+                            <td class="p-3 border text-sm text-gray-600">${date}</td>
+                            <td class="p-3 border text-center">
+                                <button onclick="deleteUser('${user._id}', '${user.username}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded transition" title="Delete User">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        // Create New User
+        async function handleCreateUser(event) {
+            event.preventDefault();
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('newRole').value;
+
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('User Created Successfully!');
+                    document.getElementById('createUserForm').reset(); // Clear form
+                    loadUsers(); // Reload table
+                } else {
+                    alert(data.message || 'Failed to create user.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Delete User
+        async function deleteUser(userId, username) {
+            if (confirm(`Are you sure you want to delete the user '${username}'?`)) {
+                try {
+                    const response = await fetch(`https://abir-backend-api.onrender.com/api/auth/user/${userId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('User deleted successfully!');
+                        loadUsers(); // Reload table
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                }
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+
+</html>
