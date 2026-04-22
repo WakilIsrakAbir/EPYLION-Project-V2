@@ -125,8 +125,7 @@
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
                                 data-id="fabricBooking"
-                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric
-                                Booking
+                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric Booking
                                 Acknowledgement</a></li>
                     </ul>
                 </li>
@@ -186,7 +185,7 @@
                         <h3 class="text-md font-bold text-gray-700"><i
                                 class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Source Data</h3>
                         <p class="text-xs text-gray-500 mt-1">Upload Excel (.xlsx, .xls) files to update the database.
-                        </p>
+                            Uploading a file with the same name will overwrite the old one.</p>
                     </div>
                     <div id="uploadArea"
                         class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
@@ -212,7 +211,7 @@
                                     <th class="p-2 border font-semibold">Uploaded By</th>
                                     <th class="p-2 border font-semibold">Role</th>
                                     <th class="p-2 border font-semibold">Date & Time</th>
-                                    <th class="p-2 border font-semibold text-center">Action</th>
+                                    <th class="p-2 border font-semibold text-center w-[120px]">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="fileListBody">
@@ -229,44 +228,17 @@
                 <div id="dynamicTabsWrapper" class="flex gap-1 items-end"></div>
             </div>
 
-            <div class="p-3 flex-1 overflow-y-auto bg-white flex flex-col w-full">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0" id="filterContainer">
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-green-700 text-white border border-green-800 rounded-sm whitespace-nowrap shadow-sm font-medium transition-colors filter-all"
-                            onclick="activateFilter('All', this)"><i class="fas fa-list mr-1 text-white"></i> All
-                            List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-pending"
-                            onclick="activateFilter('Pending', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Pending Actions List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-acknowledged"
-                            onclick="activateFilter('Acknowledged', this)"><i
-                                class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-revised"
-                            onclick="activateFilter('Revised', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Revised List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-completed"
-                            onclick="activateFilter('Completed', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Completed / Approved List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-cancel"
-                            onclick="activateFilter('Cancel', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Cancel List(s)</button>
-                    </div>
-                </div>
+            <div class="p-3 flex-1 overflow-y-auto bg-[#f4f5f7] flex flex-col w-full">
 
-                <div class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm">
+                <div
+                    class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm shadow-sm mt-2">
                     <div id="table_fabricBooking"
                         class="data-table-container hidden overflow-x-auto custom-scrollbar w-full h-full pb-2">
 
                         <div id="loadingData"
                             class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
                             <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
-                            <p>Loading Data from Server...</p>
+                            <p>Processing all uploaded files from Server...</p>
                         </div>
 
                         <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
@@ -281,7 +253,6 @@
                                     <th class="p-2 border-r border-gray-300 font-bold">GSM</th>
                                     <th class="p-2 border-r border-gray-300 font-bold text-right">Req. Qty (Kgs)</th>
                                     <th class="p-2 border-r border-gray-300 font-bold text-center">Receive Date</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="mainTableBody" class="text-gray-700 text-xs">
@@ -402,7 +373,6 @@
         let globalExcelData = [];
         let currentViewIndex = null;
 
-        // --- Initialization ---
         function initDashboard() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -418,7 +388,6 @@
             loadUploadedFiles();
         }
 
-        // --- Permissions ---
         function applyPermissions(role) {
             const sidebarManageUsers = document.getElementById('sidebarManageUsers');
             const sidebarDataManagement = document.getElementById('sidebarDataManagement');
@@ -458,7 +427,6 @@
             }, 3000);
         }
 
-        // --- View Handlers ---
         function showDashboardHome() {
             activeTabId = 'dashboard';
             document.getElementById('dataManagementView').classList.add('hidden');
@@ -520,17 +488,25 @@
                 const files = await res.json();
 
                 if (files.length > 0) {
-                    const latestFile = files[0];
-                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${latestFile.savedName}`;
+                    globalExcelData = [];
 
-                    const fileRes = await fetch(fileUrl);
-                    const arrayBuffer = await fileRes.arrayBuffer();
+                    for (let i = 0; i < files.length; i++) {
+                        try {
+                            const fileUrl = `https://abir-backend-api.onrender.com/uploads/${files[i].savedName}`;
+                            const fileRes = await fetch(fileUrl);
+                            if (!fileRes.ok) continue;
 
-                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
+                            const arrayBuffer = await fileRes.arrayBuffer();
+                            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
 
-                    globalExcelData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                            const fileData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                            globalExcelData = globalExcelData.concat(fileData);
+                        } catch (err) {
+                            console.error("Error reading one of the files:", err);
+                        }
+                    }
 
                     renderMainTable();
                     document.getElementById('loadingData').classList.add('hidden');
@@ -540,7 +516,7 @@
                     checkEmptyState();
                 }
             } catch (e) {
-                console.error("Error parsing excel:", e);
+                console.error("Error connecting to server:", e);
                 globalExcelData = [];
                 checkEmptyState();
             }
@@ -582,7 +558,6 @@
             return '';
         }
 
-        // --- Render Main Table (Matches your provided keys) ---
         function renderMainTable() {
             const tbody = document.getElementById('mainTableBody');
             tbody.innerHTML = '';
@@ -596,13 +571,8 @@
                 const reqQty = getColData(row, ['RequiredQtyKgs']) || '0';
                 const recDate = formatExcelDate(getColData(row, ['BookingReceiveDate']));
 
-                const status = getColData(row, ['Status']) || 'Pending';
-                const statusStyle = getStatusStyling(status);
-                const statusHtml = `<span class="${statusStyle} px-2 py-0.5 rounded text-xs border">${status}</span>`;
-
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50 border-b border-gray-200 data-row transition-colors";
-                tr.setAttribute('data-status', status.toLowerCase());
 
                 tr.innerHTML = `
                     <td class="p-2 border-r border-gray-200 text-center">
@@ -617,13 +587,11 @@
                     <td class="p-2 border-r border-gray-200">${gsm}</td>
                     <td class="p-2 border-r border-gray-200 text-right">${reqQty}</td>
                     <td class="p-2 border-r border-gray-200 text-center">${recDate}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${statusHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // --- Detailed View Logic (Matches your exact Excel headings) ---
         function openDetailedView(index) {
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.remove('hidden');
@@ -634,7 +602,6 @@
             if (globalExcelData && globalExcelData[index]) {
                 const row = globalExcelData[index];
 
-                // General Information
                 document.getElementById('detOrderNo').value = getColData(row, ['OrderNo']) || '';
                 document.getElementById('detBuyer').value = getColData(row, ['Buyer']) || '';
                 document.getElementById('detBookingUnit').value = getColData(row, ['BookingUnit']) || '';
@@ -642,7 +609,6 @@
                 document.getElementById('detUnit').value = getColData(row, ['Unit']) || '';
                 document.getElementById('detUOM').value = getColData(row, ['UOM']) || '';
 
-                // Fabric Information
                 document.getElementById('fabConst').innerText = getColData(row, ['FabricConstruction']) || 'N/A';
 
                 const details = getColData(row, ['FabricDetails']) || 'N/A';
@@ -654,7 +620,6 @@
                 document.getElementById('fabGsm').innerText = getColData(row, ['GSM']) || 'N/A';
                 document.getElementById('fabQty').innerText = getColData(row, ['RequiredQtyKgs']) || '0';
 
-                // Load User Saved Dates if any
                 document.getElementById('inputCuttingDate').value = row.savedCuttingDate || '';
                 document.getElementById('inputKnittingDate').value = row.savedKnittingDate || '';
                 document.getElementById('inputDeliveryDate').value = row.savedDeliveryDate || '';
@@ -667,7 +632,6 @@
             currentViewIndex = null;
         }
 
-        // --- Save Dates Logic ---
         function saveFabricDates() {
             if (currentViewIndex === null) return;
 
@@ -686,7 +650,6 @@
             }
         }
 
-        // --- Standard UI Functions ---
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper');
             if (!container) return;
@@ -709,40 +672,6 @@
             else renderTabs();
         }
 
-        function activateFilter(filterType, clickedBtn) {
-            const allBtns = document.querySelectorAll('.filter-btn');
-            allBtns.forEach(btn => {
-                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
-                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
-            });
-            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
-            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
-
-            const rows = document.querySelectorAll('#mainTableBody .data-row');
-            rows.forEach(row => {
-                const status = row.getAttribute('data-status') || '';
-                let show = false;
-                if (filterType === 'All') show = true;
-                else if (filterType === 'Pending' && status.includes('pending')) show = true;
-                else if (filterType === 'Acknowledged' && status.includes('acknowledged')) show = true;
-                else if (filterType === 'Revised' && status.includes('revised')) show = true;
-                else if (filterType === 'Completed' && (status.includes('completed') || status.includes('approved'))) show = true;
-                else if (filterType === 'Cancel' && status.includes('cancel')) show = true;
-                row.style.display = show ? '' : 'none';
-            });
-        }
-
-        function getStatusStyling(status) {
-            if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
-            const s = status.toLowerCase();
-            if (s.includes('completed') || s.includes('approved')) return 'bg-green-100 text-green-800 border-green-200';
-            if (s.includes('pending')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            if (s.includes('acknowledged')) return 'bg-blue-100 text-blue-800 border-blue-200';
-            if (s.includes('revised')) return 'bg-purple-100 text-purple-800 border-purple-200';
-            if (s.includes('cancel')) return 'bg-red-100 text-red-800 border-red-200';
-            return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-
         async function handleExcelUpload() {
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
@@ -759,9 +688,12 @@
                     method: 'POST', body: formData
                 });
                 if (response.ok) {
-                    alert("ফাইল সফলভাবে আপলোড হয়েছে!");
+                    showToast("File uploaded successfully!");
                     fileInput.value = "";
                     loadUploadedFiles();
+                    if (activeTabId === 'fabricBooking') {
+                        fetchAndParseLatestExcel(); // Refresh table if open
+                    }
                 } else {
                     alert("File Upload Failed");
                 }
@@ -784,20 +716,50 @@
                 files.forEach(file => {
                     const date = new Date(file.createdAt).toLocaleString();
                     const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
+
+                    // Added Delete Button Here
                     const row = `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-2 border font-medium text-blue-600 truncate max-w-xs"><i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}</td>
                             <td class="p-2 border font-semibold">${file.uploadedBy}</td>
                             <td class="p-2 border text-xs"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">${file.role}</span></td>
                             <td class="p-2 border text-xs text-gray-600">${date}</td>
-                            <td class="p-2 border text-center">
-                                <a href="${fileUrl}" download="${file.originalName}" target="_blank" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-bold transition"><i class="fas fa-download mr-1"></i> Download</a>
+                            <td class="p-2 border text-center flex justify-center gap-2">
+                                <a href="${fileUrl}" download="${file.originalName}" target="_blank" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-bold transition" title="Download File"><i class="fas fa-download"></i></a>
+                                <button onclick="deleteFile('${file._id}', '${file.originalName}')" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-xs font-bold transition" title="Delete File"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`;
                     tableBody.innerHTML += row;
                 });
             } catch (error) {
                 console.error("Error loading files:", error);
+            }
+        }
+
+        // --- New Delete File Function ---
+        async function deleteFile(fileId, fileName) {
+            if (!confirm(`Are you sure you want to delete "${fileName}"? This will also remove its data from the dashboard.`)) {
+                return;
+            }
+
+            try {
+                // Sending DELETE request to backend
+                const response = await fetch(`https://abir-backend-api.onrender.com/api/files/${fileId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('File deleted successfully!');
+                    loadUploadedFiles(); // Refresh file list
+                    if (activeTabId === 'fabricBooking') {
+                        fetchAndParseLatestExcel(); // Refresh table data
+                    }
+                } else {
+                    alert('Failed to delete the file from server.');
+                }
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                alert('Server error while deleting file.');
             }
         }
 
