@@ -21,7 +21,7 @@
                         textMuted: '#aeb2b7',
                         epylionGreen: '#4CAF50',
                         activeBlue: '#3b82f6',
-                        tableHeader: '#f8f9fa'
+                        tableHeader: '#e9ecef'
                     }
                 }
             }
@@ -47,9 +47,27 @@
             background: #9ca3af;
         }
 
-        /* Desktop এ সাইডবার কলাপ্স করার জন্য কাস্টম ক্লাস */
         .sidebar-collapsed {
             margin-left: -280px !important;
+        }
+
+        .info-label {
+            width: 140px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #4b5563;
+            flex-shrink: 0;
+        }
+
+        .info-input {
+            flex: 1;
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 2px;
+            background-color: #f9fafb;
+            font-size: 11px;
+            color: #374151;
         }
     </style>
 </head>
@@ -147,6 +165,7 @@
                     class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
                     <div class="relative z-10">
                         <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
+                        <p class="text-gray-300">Select an option from the sidebar to start working.</p>
                     </div>
                 </div>
             </div>
@@ -203,6 +222,7 @@
                 </div>
             </div>
         </div>
+
         <div id="listView" class="hidden flex-1 flex-col overflow-hidden">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
                 id="tabBarContainer">
@@ -210,63 +230,64 @@
             </div>
 
             <div class="p-3 flex-1 overflow-y-auto bg-white flex flex-col w-full">
-
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0" id="filterContainer">
                     <div class="flex flex-wrap gap-2">
                         <button
                             class="filter-btn px-3 py-1.5 bg-green-700 text-white border border-green-800 rounded-sm whitespace-nowrap shadow-sm font-medium transition-colors filter-all"
-                            onclick="activateFilter('All', this)">
-                            <i class="fas fa-list mr-1 text-white"></i> All List(s)
-                        </button>
+                            onclick="activateFilter('All', this)"><i class="fas fa-list mr-1 text-white"></i> All
+                            List(s)</button>
                         <button
                             class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-pending"
-                            onclick="activateFilter('Pending', this)">
-                            <i class="fas fa-list mr-1 text-gray-400"></i> Pending Actions List(s)
-                        </button>
+                            onclick="activateFilter('Pending', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Pending Actions List(s)</button>
                         <button
                             class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-acknowledged"
-                            onclick="activateFilter('Acknowledged', this)">
-                            <i class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)
-                        </button>
+                            onclick="activateFilter('Acknowledged', this)"><i
+                                class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)</button>
                         <button
                             class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-revised"
-                            onclick="activateFilter('Revised', this)">
-                            <i class="fas fa-list mr-1 text-gray-400"></i> Revised List(s)
-                        </button>
+                            onclick="activateFilter('Revised', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Revised List(s)</button>
                         <button
                             class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-completed"
-                            onclick="activateFilter('Completed', this)">
-                            <i class="fas fa-list mr-1 text-gray-400"></i> Completed / Approved List(s)
-                        </button>
+                            onclick="activateFilter('Completed', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Completed / Approved List(s)</button>
                         <button
                             class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-cancel"
-                            onclick="activateFilter('Cancel', this)">
-                            <i class="fas fa-list mr-1 text-gray-400"></i> Cancel List(s)
-                        </button>
+                            onclick="activateFilter('Cancel', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Cancel List(s)</button>
                     </div>
                 </div>
 
-                <div class="border border-gray-200 w-full relative bg-white flex-1 flex flex-col">
+                <div class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm">
                     <div id="table_fabricBooking"
                         class="data-table-container hidden overflow-x-auto custom-scrollbar w-full h-full pb-2">
-                        <table class="w-full text-left whitespace-nowrap min-w-[800px]">
+
+                        <div id="loadingData"
+                            class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
+                            <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
+                            <p>Loading Data from Server...</p>
+                        </div>
+
+                        <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
                             <thead>
-                                <tr id="manageHeader" class="bg-tableHeader text-gray-600 border-b border-gray-200">
-                                    <th class="p-2 border-r border-gray-200 font-semibold text-center w-[100px]">Manage
-                                    </th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold">Order No</th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold">Buyer</th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold">Fabric Construction</th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold">GSM</th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold text-right">Req. Qty (Kgs)
-                                    </th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold">Rec. Date</th>
-                                    <th class="p-2 border-r border-gray-200 font-semibold text-center">Status</th>
+                                <tr id="manageHeader"
+                                    class="bg-tableHeader text-gray-700 border-b border-gray-300 text-xs">
+                                    <th class="p-2 border-r border-gray-300 font-bold text-center w-[60px]">Manage</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold">Order No</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold">Buyer</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold">Booking Unit</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold">Fabric Construction</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold">GSM</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold text-right">Req. Qty (Kgs)</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold text-center">Receive Date</th>
+                                    <th class="p-2 border-r border-gray-300 font-bold text-center">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="mainTableBody" class="text-gray-700">
+                            <tbody id="mainTableBody" class="text-gray-700 text-xs">
                             </tbody>
                         </table>
+
                         <div id="emptyState"
                             class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
                             <i class="fas fa-file-excel text-4xl mb-3 text-gray-300"></i>
@@ -279,114 +300,96 @@
         </div>
 
         <div id="detailedView" class="hidden flex-1 flex-col bg-white overflow-hidden">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
-                id="detailTabsContainer">
-                <button onclick="closeDetailedView()"
-                    class="px-3 py-1.5 bg-white border border-gray-200 border-b-0 rounded-t text-activeBlue hover:bg-gray-50 flex items-center shadow-sm shrink-0">
-                    Close <i class="fas fa-caret-down ml-1"></i>
+            <div class="bg-[#d4edda] border-b border-[#c3e6cb] flex items-center px-4 py-2 shrink-0">
+                <button onclick="closeDetailedView()" class="mr-4 text-gray-700 hover:text-red-600 transition">
+                    <i class="fas fa-arrow-left text-lg"></i>
                 </button>
-                <div
-                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center shrink-0">
-                    Detailed View <i
-                        class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 cursor-pointer"
-                        onclick="closeDetailedView()"></i>
-                </div>
+                <h3 class="font-bold text-gray-800 text-sm">Fabric Booking Details</h3>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 flex flex-col w-full">
-                <div class="bg-gray-50 border border-gray-200 rounded-sm mb-4">
-                    <div class="p-3 border-b border-gray-200 font-semibold text-gray-700">General Information</div>
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col w-full bg-[#f4f5f7]">
+
+                <div class="bg-[#e9f5ec] border border-[#c3e6cb] rounded-sm mb-4">
+                    <div class="p-2 border-b border-[#c3e6cb] font-bold text-gray-800 text-xs">General Information</div>
                     <div class="p-4 w-full">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Order No.</span><input
-                                    type="text" id="detailOrderNo"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Buyer</span><input
-                                    type="text" id="detailBuyer"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Booking
-                                    Unit</span><input type="text" id="detailBookingUnit"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Receive
-                                    Date</span><input type="text" id="detailReceiveDate"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">UOM</span><input
-                                    type="text" id="detailUom"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
-                            <div class="flex items-center gap-2"><span
-                                    class="w-[130px] shrink-0 text-gray-700 text-xs md:text-sm">Unit</span><input
-                                    type="text" id="detailUnit"
-                                    class="flex-1 w-full p-1.5 border border-gray-300 rounded-sm bg-gray-50 text-xs md:text-sm"
-                                    readonly></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center"><span class="info-label">Order No.</span><input
+                                        type="text" id="detOrderNo" class="info-input" readonly></div>
+                                <div class="flex items-center"><span class="info-label">Buyer</span><input type="text"
+                                        id="detBuyer" class="info-input" readonly></div>
+                                <div class="flex items-center"><span class="info-label">Booking Unit</span><input
+                                        type="text" id="detBookingUnit" class="info-input" readonly></div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center"><span class="info-label">Booking Receive
+                                        Date</span><input type="text" id="detBookingDate" class="info-input" readonly>
+                                </div>
+                                <div class="flex items-center"><span class="info-label">Unit</span><input type="text"
+                                        id="detUnit" class="info-input" readonly></div>
+                                <div class="flex items-center"><span class="info-label">UOM</span><input type="text"
+                                        id="detUOM" class="info-input" readonly></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gray-50 border border-gray-200 rounded-sm w-full">
-                    <div class="p-3 border-b border-gray-200 font-semibold text-gray-700">Fabric Information & Planning
-                    </div>
-                    <div class="p-1 overflow-x-auto custom-scrollbar w-full pb-2">
-                        <table class="w-full text-left whitespace-nowrap border-collapse min-w-[1200px]">
+                <div class="bg-[#e9f5ec] border border-[#c3e6cb] rounded-sm w-full mb-4">
+                    <div class="p-2 border-b border-[#c3e6cb] font-bold text-gray-800 text-xs">Fabric Information</div>
+                    <div class="p-0 overflow-x-auto custom-scrollbar w-full">
+                        <table class="w-full text-left whitespace-nowrap border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-700 font-semibold border-b border-gray-200 text-xs">
-                                    <th class="p-2 border-r border-gray-200">Fabric Construction</th>
-                                    <th class="p-2 border-r border-gray-200">Fabric Details</th>
-                                    <th class="p-2 border-r border-gray-200">Color</th>
-                                    <th class="p-2 border-r border-gray-200">Width</th>
-                                    <th class="p-2 border-r border-gray-200">GSM</th>
-                                    <th class="p-2 border-r border-gray-200 text-right">Req. Qty (Kgs)</th>
-                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Yarn Inhouse Date
-                                    </th>
-                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Knitting Date</th>
-                                    <th class="p-2 border-r border-gray-200 bg-blue-50 text-center">Delivery Date</th>
+                                <tr class="bg-gray-100 text-gray-700 font-bold border-b border-gray-300 text-[11px]">
+                                    <th class="p-2 border-r border-gray-300">Fabric Construction</th>
+                                    <th class="p-2 border-r border-gray-300">Fabric Details</th>
+                                    <th class="p-2 border-r border-gray-300">Color</th>
+                                    <th class="p-2 border-r border-gray-300">Width</th>
+                                    <th class="p-2 border-r border-gray-300">GSM</th>
+                                    <th class="p-2 border-r border-gray-300 text-right">Required Qty (Kgs)</th>
                                 </tr>
                             </thead>
-                            <tbody id="detailFabricBody" class="text-gray-700 text-xs">
-                                <tr class="hover:bg-gray-50 border-b border-gray-100">
-                                    <td class="p-2 border-r border-gray-100" id="detailConstruction"></td>
-                                    <td class="p-2 border-r border-gray-100 truncate max-w-[200px]"
-                                        id="detailFabricDetails" title=""></td>
-                                    <td class="p-2 border-r border-gray-100" id="detailColor"></td>
-                                    <td class="p-2 border-r border-gray-100" id="detailWidth"></td>
-                                    <td class="p-2 border-r border-gray-100" id="detailGsm"></td>
-                                    <td class="p-2 border-r border-gray-100 text-right" id="detailReqQty"></td>
-
-                                    <td class="p-1.5 border-r border-gray-100 bg-white">
-                                        <input type="date" id="yarnDate"
-                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
-                                    </td>
-                                    <td class="p-1.5 border-r border-gray-100 bg-white">
-                                        <input type="date" id="knittingDate"
-                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
-                                    </td>
-                                    <td class="p-1.5 border-r border-gray-100 bg-white">
-                                        <input type="date" id="deliveryDate"
-                                            class="w-full border border-gray-300 p-1.5 rounded-sm focus:outline-none focus:border-blue-400 text-gray-700">
-                                    </td>
+                            <tbody id="detailFabricBody" class="text-gray-700 text-[11px] bg-white">
+                                <tr class="hover:bg-gray-50 border-b border-gray-200">
+                                    <td class="p-2 border-r border-gray-200" id="fabConst"></td>
+                                    <td class="p-2 border-r border-gray-200 truncate max-w-[250px]" id="fabDetails"
+                                        title=""></td>
+                                    <td class="p-2 border-r border-gray-200" id="fabColor"></td>
+                                    <td class="p-2 border-r border-gray-200" id="fabWidth"></td>
+                                    <td class="p-2 border-r border-gray-200" id="fabGsm"></td>
+                                    <td class="p-2 border-r border-gray-200 text-right font-semibold" id="fabQty"></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 mt-auto pt-4 border-t border-gray-200">
-                    <button class="px-4 py-1.5 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 font-medium"
-                        onclick="closeDetailedView()">Back to List(s)</button>
-                    <button id="saveDatesBtn"
-                        class="  px-4 py-1.5 bg-green-600 text-white rounded-sm hover:bg-green-700 font-medium shadow-sm transition-colors"
-                        onclick="saveFabricDates()">
-                        <i class="fas fa-save mr-1"></i> Save Dates
-                    </button>
+                <div class="bg-white border border-gray-300 rounded-sm w-full p-4 mt-auto shadow-sm">
+                    <h4 class="font-bold text-gray-700 text-sm mb-3 border-b pb-2"><i
+                            class="fas fa-calendar-alt text-blue-500 mr-2"></i>Update Process Dates</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Cutting Date</label>
+                            <input type="date" id="inputCuttingDate"
+                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Knitting Date</label>
+                            <input type="date" id="inputKnittingDate"
+                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Delivery Date</label>
+                            <input type="date" id="inputDeliveryDate"
+                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button id="saveDatesBtn"
+                            class="px-6 py-2 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700 transition-colors"
+                            onclick="saveFabricDates()">
+                            <i class="fas fa-save mr-2"></i> Save Dates
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,19 +402,15 @@
         let globalExcelData = [];
         let currentViewIndex = null;
 
-        const possibleStatuses = ["Pending", "Acknowledged", "Revised", "Completed", "Cancel"];
-
+        // --- Initialization ---
         function initDashboard() {
             const token = localStorage.getItem('token');
-
             if (!token) {
                 window.location.href = 'login.html';
                 return;
             }
-
             const username = localStorage.getItem('username');
             const role = localStorage.getItem('role');
-
             document.getElementById('displayUsername').innerText = `${username} (${role})`;
 
             showDashboardHome();
@@ -419,19 +418,17 @@
             loadUploadedFiles();
         }
 
-        // পারমিশন কন্ট্রোল করার ফাংশন
+        // --- Permissions ---
         function applyPermissions(role) {
             const sidebarManageUsers = document.getElementById('sidebarManageUsers');
-            const sidebarDataManagement = document.getElementById('sidebarDataManagement'); // নতুন
+            const sidebarDataManagement = document.getElementById('sidebarDataManagement');
 
-            // Admin Management
             if (role === 'Admin') {
                 if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden');
             } else {
                 if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden');
             }
 
-            // Viewer Management (Viewer ra Data Management menu dekhbe na)
             if (role === 'Viewer') {
                 if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden');
             } else {
@@ -439,24 +436,15 @@
             }
 
             const uploadArea = document.getElementById('uploadArea');
-            const saveDatesBtn = document.getElementById('saveDatesBtn');
-            const manageHeader = document.getElementById('manageHeader');
-
             if (role === 'Viewer') {
                 if (uploadArea) uploadArea.style.display = 'none';
-                if (saveDatesBtn) saveDatesBtn.style.display = 'none';
-                if (manageHeader) manageHeader.style.display = 'none';
             } else {
                 if (uploadArea) uploadArea.style.display = 'flex';
-                if (saveDatesBtn) saveDatesBtn.style.display = 'block';
-                if (manageHeader) manageHeader.style.display = 'table-cell';
             }
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
-            localStorage.removeItem('role');
+            localStorage.clear();
             window.location.href = 'login.html';
         }
 
@@ -478,7 +466,6 @@
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dashboardHomeView').classList.remove('hidden');
             document.getElementById('dashboardHomeView').classList.add('flex');
-
             document.querySelectorAll('.submenu-link').forEach(link => {
                 link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
             });
@@ -491,17 +478,15 @@
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
-
             document.getElementById('dataManagementView').classList.remove('hidden');
             document.getElementById('dataManagementView').classList.add('flex');
-
             document.querySelectorAll('.submenu-link').forEach(link => {
                 link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
             });
             closeSidebarMobile();
         }
 
-        function loadMenuData(dataKey, menuName) {
+        async function loadMenuData(dataKey, menuName) {
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.add('hidden');
@@ -516,14 +501,192 @@
 
             document.querySelectorAll('.data-table-container').forEach(t => t.classList.add('hidden'));
             const targetTable = document.getElementById('table_' + dataKey);
+
             if (targetTable) {
                 targetTable.classList.remove('hidden');
-                checkEmptyState();
+                await fetchAndParseLatestExcel();
             }
 
             closeSidebarMobile();
         }
 
+        async function fetchAndParseLatestExcel() {
+            document.getElementById('loadingData').classList.remove('hidden');
+            document.getElementById('dataTableContent').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            try {
+                const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
+                const files = await res.json();
+
+                if (files.length > 0) {
+                    const latestFile = files[0];
+                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${latestFile.savedName}`;
+
+                    const fileRes = await fetch(fileUrl);
+                    const arrayBuffer = await fileRes.arrayBuffer();
+
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    globalExcelData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    renderMainTable();
+                    document.getElementById('loadingData').classList.add('hidden');
+                    document.getElementById('dataTableContent').classList.remove('hidden');
+                } else {
+                    globalExcelData = [];
+                    checkEmptyState();
+                }
+            } catch (e) {
+                console.error("Error parsing excel:", e);
+                globalExcelData = [];
+                checkEmptyState();
+            }
+        }
+
+        function checkEmptyState() {
+            document.getElementById('loadingData').classList.add('hidden');
+            const emptyState = document.getElementById('emptyState');
+            const dataTableContent = document.getElementById('dataTableContent');
+
+            if (globalExcelData.length === 0) {
+                emptyState.classList.remove('hidden');
+                dataTableContent.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                dataTableContent.classList.remove('hidden');
+            }
+        }
+
+        function formatExcelDate(excelDate) {
+            if (!excelDate) return "";
+            if (typeof excelDate === 'number') {
+                return new Date(Math.round((excelDate - 25569) * 86400 * 1000)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            return String(excelDate);
+        }
+
+        function getColData(row, possibleKeys) {
+            const rowKeys = Object.keys(row);
+            for (let searchKey of possibleKeys) {
+                let normalizedSearch = String(searchKey).toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let rk of rowKeys) {
+                    let normalizedRk = String(rk).toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (normalizedSearch === normalizedRk) {
+                        return row[rk];
+                    }
+                }
+            }
+            return '';
+        }
+
+        // --- Render Main Table (Matches your provided keys) ---
+        function renderMainTable() {
+            const tbody = document.getElementById('mainTableBody');
+            tbody.innerHTML = '';
+
+            globalExcelData.forEach((row, index) => {
+                const orderNo = getColData(row, ['OrderNo']) || 'N/A';
+                const buyer = getColData(row, ['Buyer']) || 'N/A';
+                const bookingUnit = getColData(row, ['BookingUnit']) || 'N/A';
+                const fabricConst = getColData(row, ['FabricConstruction']) || 'N/A';
+                const gsm = getColData(row, ['GSM']) || 'N/A';
+                const reqQty = getColData(row, ['RequiredQtyKgs']) || '0';
+                const recDate = formatExcelDate(getColData(row, ['BookingReceiveDate']));
+
+                const status = getColData(row, ['Status']) || 'Pending';
+                const statusStyle = getStatusStyling(status);
+                const statusHtml = `<span class="${statusStyle} px-2 py-0.5 rounded text-xs border">${status}</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 border-b border-gray-200 data-row transition-colors";
+                tr.setAttribute('data-status', status.toLowerCase());
+
+                tr.innerHTML = `
+                    <td class="p-2 border-r border-gray-200 text-center">
+                        <button onclick="openDetailedView(${index})" class="bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                    <td class="p-2 border-r border-gray-200 text-blue-700 font-semibold">${orderNo}</td>
+                    <td class="p-2 border-r border-gray-200 font-medium">${buyer}</td>
+                    <td class="p-2 border-r border-gray-200">${bookingUnit}</td>
+                    <td class="p-2 border-r border-gray-200">${fabricConst}</td>
+                    <td class="p-2 border-r border-gray-200">${gsm}</td>
+                    <td class="p-2 border-r border-gray-200 text-right">${reqQty}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${recDate}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${statusHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Detailed View Logic (Matches your exact Excel headings) ---
+        function openDetailedView(index) {
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailedView').classList.remove('hidden');
+            document.getElementById('detailedView').classList.add('flex');
+
+            currentViewIndex = index;
+
+            if (globalExcelData && globalExcelData[index]) {
+                const row = globalExcelData[index];
+
+                // General Information
+                document.getElementById('detOrderNo').value = getColData(row, ['OrderNo']) || '';
+                document.getElementById('detBuyer').value = getColData(row, ['Buyer']) || '';
+                document.getElementById('detBookingUnit').value = getColData(row, ['BookingUnit']) || '';
+                document.getElementById('detBookingDate').value = formatExcelDate(getColData(row, ['BookingReceiveDate']));
+                document.getElementById('detUnit').value = getColData(row, ['Unit']) || '';
+                document.getElementById('detUOM').value = getColData(row, ['UOM']) || '';
+
+                // Fabric Information
+                document.getElementById('fabConst').innerText = getColData(row, ['FabricConstruction']) || 'N/A';
+
+                const details = getColData(row, ['FabricDetails']) || 'N/A';
+                document.getElementById('fabDetails').innerText = details;
+                document.getElementById('fabDetails').title = details;
+
+                document.getElementById('fabColor').innerText = getColData(row, ['Color']) || 'N/A';
+                document.getElementById('fabWidth').innerText = getColData(row, ['Width']) || 'N/A';
+                document.getElementById('fabGsm').innerText = getColData(row, ['GSM']) || 'N/A';
+                document.getElementById('fabQty').innerText = getColData(row, ['RequiredQtyKgs']) || '0';
+
+                // Load User Saved Dates if any
+                document.getElementById('inputCuttingDate').value = row.savedCuttingDate || '';
+                document.getElementById('inputKnittingDate').value = row.savedKnittingDate || '';
+                document.getElementById('inputDeliveryDate').value = row.savedDeliveryDate || '';
+            }
+        }
+
+        function closeDetailedView() {
+            document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+            currentViewIndex = null;
+        }
+
+        // --- Save Dates Logic ---
+        function saveFabricDates() {
+            if (currentViewIndex === null) return;
+
+            const cuttingDate = document.getElementById('inputCuttingDate').value;
+            const knittingDate = document.getElementById('inputKnittingDate').value;
+            const deliveryDate = document.getElementById('inputDeliveryDate').value;
+
+            if (cuttingDate || knittingDate || deliveryDate) {
+                globalExcelData[currentViewIndex].savedCuttingDate = cuttingDate;
+                globalExcelData[currentViewIndex].savedKnittingDate = knittingDate;
+                globalExcelData[currentViewIndex].savedDeliveryDate = deliveryDate;
+
+                showToast('Dates updated successfully!');
+            } else {
+                alert('Please select at least one date before saving.');
+            }
+        }
+
+        // --- Standard UI Functions ---
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper');
             if (!container) return;
@@ -546,110 +709,31 @@
             else renderTabs();
         }
 
-        function checkEmptyState() {
-            const emptyState = document.getElementById('emptyState');
-            const targetTable = document.getElementById('table_fabricBooking');
+        function activateFilter(filterType, clickedBtn) {
+            const allBtns = document.querySelectorAll('.filter-btn');
+            allBtns.forEach(btn => {
+                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
+                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
+            });
+            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
+            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
 
-            if (globalExcelData.length === 0) {
-                emptyState.classList.remove('hidden');
-                targetTable.querySelector('table').classList.add('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                targetTable.querySelector('table').classList.remove('hidden');
-            }
-        }
-
-        function getColData(row, possibleKeys) {
-            const rowKeys = Object.keys(row);
-            for (let searchKey of possibleKeys) {
-                let normalizedSearch = String(searchKey).toLowerCase().replace(/[^a-z0-9]/g, '');
-                for (let rk of rowKeys) {
-                    let normalizedRk = String(rk).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (normalizedSearch === normalizedRk) {
-                        return row[rk];
-                    }
-                }
-            }
-            return '';
-        }
-
-        async function handleExcelUpload() {
-            const fileInput = document.getElementById('excelFile');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                alert("Please select a file first");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('document', file);
-            formData.append('uploadedBy', localStorage.getItem('username'));
-            formData.append('role', localStorage.getItem('role'));
-
-            try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/files/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    alert("ফাইল সফলভাবে আপলোড হয়েছে!");
-                    fileInput.value = "";
-                    loadUploadedFiles();
-                } else {
-                    alert("File Uploaded");
-                }
-            } catch (error) {
-                alert("Problem Occure In Server");
-            }
-        }
-
-        async function loadUploadedFiles() {
-            try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/files/all');
-                const files = await response.json();
-
-                const tableBody = document.getElementById('fileListBody');
-                if (!tableBody) return;
-
-                tableBody.innerHTML = '';
-
-                if (files.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">কোনো ফাইল আপলোড করা হয়নি।</td></tr>';
-                    return;
-                }
-
-                files.forEach(file => {
-                    const date = new Date(file.createdAt).toLocaleString();
-                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
-
-                    const row = `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 border font-medium text-blue-600 truncate max-w-xs">
-                        <i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}
-                    </td>
-                    <td class="p-2 border font-semibold">${file.uploadedBy}</td>
-                    <td class="p-2 border text-xs">
-                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">${file.role}</span>
-                    </td>
-                    <td class="p-2 border text-xs text-gray-600">${date}</td>
-                    <td class="p-2 border text-center">
-                        <a href="${fileUrl}" download="${file.originalName}" target="_blank" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-bold transition">
-                            <i class="fas fa-download mr-1"></i> Download
-                        </a>
-                    </td>
-                </tr>
-            `;
-                    tableBody.innerHTML += row;
-                });
-            } catch (error) {
-                console.error("Error loading files:", error);
-            }
+            const rows = document.querySelectorAll('#mainTableBody .data-row');
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status') || '';
+                let show = false;
+                if (filterType === 'All') show = true;
+                else if (filterType === 'Pending' && status.includes('pending')) show = true;
+                else if (filterType === 'Acknowledged' && status.includes('acknowledged')) show = true;
+                else if (filterType === 'Revised' && status.includes('revised')) show = true;
+                else if (filterType === 'Completed' && (status.includes('completed') || status.includes('approved'))) show = true;
+                else if (filterType === 'Cancel' && status.includes('cancel')) show = true;
+                row.style.display = show ? '' : 'none';
+            });
         }
 
         function getStatusStyling(status) {
-            if (!status) return '';
+            if (!status) return 'bg-gray-100 text-gray-800 border-gray-200';
             const s = status.toLowerCase();
             if (s.includes('completed') || s.includes('approved')) return 'bg-green-100 text-green-800 border-green-200';
             if (s.includes('pending')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -659,136 +743,61 @@
             return 'bg-gray-100 text-gray-800 border-gray-200';
         }
 
-        function renderMainTable() {
-            const tbody = document.getElementById('mainTableBody');
-            tbody.innerHTML = '';
+        async function handleExcelUpload() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file first"); return;
+            }
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('uploadedBy', localStorage.getItem('username'));
+            formData.append('role', localStorage.getItem('role'));
 
-            globalExcelData.forEach((row, index) => {
-                const orderNo = getColData(row, ['OrderNo', 'Order No', 'Order']) || 'N/A';
-                const buyer = getColData(row, ['Buyer', 'Buyer Name']) || 'N/A';
-                const fabricConst = getColData(row, ['FabricConstruction', 'Construction']) || 'N/A';
-                const gsm = getColData(row, ['GSM', 'Weight']) || 'N/A';
-                const reqQty = getColData(row, ['RequiredQtyKgs', 'Required Qty Kgs', 'Required Qty']) || '0';
-
-                const status = getColData(row, ['Status']) || '';
-
-                let statusHtml = '';
-                if (status) {
-                    const statusStyle = getStatusStyling(status);
-                    statusHtml = `<span class="${statusStyle} px-2 py-0.5 rounded text-xs border">${status}</span>`;
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/files/upload', {
+                    method: 'POST', body: formData
+                });
+                if (response.ok) {
+                    alert("ফাইল সফলভাবে আপলোড হয়েছে!");
+                    fileInput.value = "";
+                    loadUploadedFiles();
+                } else {
+                    alert("File Upload Failed");
                 }
-
-                let recDate = getColData(row, ['BookingReceiveDate', 'Receive Date', 'Booking Receive Date']) || 'N/A';
-                if (typeof recDate === 'number') {
-                    recDate = new Date(Math.round((recDate - 25569) * 86400 * 1000)).toLocaleDateString();
-                }
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 border-b border-gray-100 data-row";
-                tr.setAttribute('data-status', status.toLowerCase());
-
-                tr.innerHTML = `
-                    <td class="p-2 border-r border-gray-100 flex justify-center gap-3 text-[#313644]">
-                        <i class="fas fa-eye cursor-pointer hover:text-blue-600 transition-transform hover:scale-110" onclick="openDetailedView(${index})"></i>
-                    </td>
-                    <td class="p-2 border-r border-gray-100">${orderNo}</td>
-                    <td class="p-2 border-r border-gray-100">${buyer}</td>
-                    <td class="p-2 border-r border-gray-100">${fabricConst}</td>
-                    <td class="p-2 border-r border-gray-100">${gsm}</td>
-                    <td class="p-2 border-r border-gray-100 text-right">${reqQty}</td>
-                    <td class="p-2 border-r border-gray-100">${recDate}</td>
-                    <td class="p-2 border-r border-gray-100 text-center">${statusHtml}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function activateFilter(filterType, clickedBtn) {
-            const allBtns = document.querySelectorAll('.filter-btn');
-            allBtns.forEach(btn => {
-                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
-                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
-            });
-
-            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
-            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
-
-            const rows = document.querySelectorAll('#mainTableBody .data-row');
-            rows.forEach(row => {
-                const status = row.getAttribute('data-status') || '';
-                let show = false;
-
-                if (filterType === 'All') show = true;
-                else if (filterType === 'Pending' && status.includes('pending')) show = true;
-                else if (filterType === 'Acknowledged' && status.includes('acknowledged')) show = true;
-                else if (filterType === 'Revised' && status.includes('revised')) show = true;
-                else if (filterType === 'Completed' && (status.includes('completed') || status.includes('approved'))) show = true;
-                else if (filterType === 'Cancel' && status.includes('cancel')) show = true;
-
-                row.style.display = show ? '' : 'none';
-            });
-        }
-
-        function openDetailedView(index) {
-            document.getElementById('listView').classList.add('hidden');
-            document.getElementById('detailedView').classList.remove('hidden');
-            document.getElementById('detailedView').classList.add('flex');
-
-            currentViewIndex = index;
-
-            if (globalExcelData && globalExcelData[index]) {
-                const row = globalExcelData[index];
-
-                document.getElementById('detailOrderNo').value = getColData(row, ['OrderNo', 'Order No']) || '';
-                document.getElementById('detailBuyer').value = getColData(row, ['Buyer', 'Buyer Name']) || '';
-                document.getElementById('detailBookingUnit').value = getColData(row, ['BookingUnit', 'Booking Unit']) || '';
-
-                let rDate = getColData(row, ['BookingReceiveDate', 'Receive Date']);
-                if (typeof rDate === 'number') rDate = new Date(Math.round((rDate - 25569) * 86400 * 1000)).toLocaleDateString();
-                document.getElementById('detailReceiveDate').value = rDate || '';
-
-                document.getElementById('detailUom').value = getColData(row, ['UOM', 'Unit of Measure']) || '';
-                document.getElementById('detailUnit').value = getColData(row, ['Unit']) || '';
-
-                document.getElementById('detailConstruction').innerText = getColData(row, ['FabricConstruction', 'Construction']) || 'N/A';
-
-                const details = getColData(row, ['FabricDetails', 'Details']) || 'N/A';
-                const fdEl = document.getElementById('detailFabricDetails');
-                fdEl.innerText = details;
-                fdEl.title = details;
-
-                document.getElementById('detailColor').innerText = getColData(row, ['Color']) || 'N/A';
-                document.getElementById('detailWidth').innerText = getColData(row, ['Width']) || 'N/A';
-                document.getElementById('detailGsm').innerText = getColData(row, ['GSM']) || 'N/A';
-                document.getElementById('detailReqQty').innerText = getColData(row, ['RequiredQtyKgs', 'Required Qty Kgs']) || '0';
-
-                document.getElementById('yarnDate').value = row.savedYarnDate || '';
-                document.getElementById('knittingDate').value = row.savedKnittingDate || '';
-                document.getElementById('deliveryDate').value = row.savedDeliveryDate || '';
+            } catch (error) {
+                alert("Problem Occurred In Server");
             }
         }
 
-        function closeDetailedView() {
-            document.getElementById('detailedView').classList.add('hidden');
-            document.getElementById('listView').classList.remove('hidden');
-            currentViewIndex = null;
-        }
-
-        function saveFabricDates() {
-            if (currentViewIndex === null) return;
-
-            const yarnDate = document.getElementById('yarnDate').value;
-            const knittingDate = document.getElementById('knittingDate').value;
-            const deliveryDate = document.getElementById('deliveryDate').value;
-
-            if (yarnDate || knittingDate || deliveryDate) {
-                globalExcelData[currentViewIndex].savedYarnDate = yarnDate;
-                globalExcelData[currentViewIndex].savedKnittingDate = knittingDate;
-                globalExcelData[currentViewIndex].savedDeliveryDate = deliveryDate;
-
-                showToast('Fabric planning dates saved successfully!');
-            } else {
-                alert('Please select at least one date before saving.');
+        async function loadUploadedFiles() {
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/files/all');
+                const files = await response.json();
+                const tableBody = document.getElementById('fileListBody');
+                if (!tableBody) return;
+                tableBody.innerHTML = '';
+                if (files.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">কোনো ফাইল আপলোড করা হয়নি।</td></tr>';
+                    return;
+                }
+                files.forEach(file => {
+                    const date = new Date(file.createdAt).toLocaleString();
+                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-2 border font-medium text-blue-600 truncate max-w-xs"><i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}</td>
+                            <td class="p-2 border font-semibold">${file.uploadedBy}</td>
+                            <td class="p-2 border text-xs"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">${file.role}</span></td>
+                            <td class="p-2 border text-xs text-gray-600">${date}</td>
+                            <td class="p-2 border text-center">
+                                <a href="${fileUrl}" download="${file.originalName}" target="_blank" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-bold transition"><i class="fas fa-download mr-1"></i> Download</a>
+                            </td>
+                        </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error("Error loading files:", error);
             }
         }
 
@@ -809,23 +818,11 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
-
-            if (window.innerWidth >= 768) {
-                sidebar.classList.toggle('sidebar-collapsed');
-            } else {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
+            if (window.innerWidth >= 768) sidebar.classList.toggle('sidebar-collapsed');
+            else { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
         }
 
         function closeSidebarMobile() {
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('-translate-x-full');
-                document.getElementById('mobileOverlay').classList.add('hidden');
-            }
-        }
-
-        function closeSidebar() {
             if (window.innerWidth < 768) {
                 document.getElementById('sidebar').classList.add('-translate-x-full');
                 document.getElementById('mobileOverlay').classList.add('hidden');
