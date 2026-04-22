@@ -230,37 +230,96 @@
 
             <div class="p-3 flex-1 overflow-y-auto bg-[#f4f5f7] flex flex-col w-full">
 
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2 shrink-0" id="filterContainer">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-green-700 text-white border border-green-800 rounded-sm whitespace-nowrap shadow-sm font-medium transition-colors filter-all"
+                            onclick="activateFilter('All', this)"><i class="fas fa-list mr-1 text-white"></i> All
+                            List(s)</button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-pending"
+                            onclick="activateFilter('Pending', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Pending Actions List(s)</button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-acknowledged"
+                            onclick="activateFilter('Acknowledged', this)"><i
+                                class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)</button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-revised"
+                            onclick="activateFilter('Revised', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Revised List(s)</button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-completed"
+                            onclick="activateFilter('Completed', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Completed / Approved List(s)</button>
+                        <button
+                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-cancel"
+                            onclick="activateFilter('Cancel', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
+                            Cancel List(s)</button>
+                    </div>
+                </div>
+
                 <div
-                    class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm shadow-sm mt-2">
-                    <div id="table_fabricBooking"
-                        class="data-table-container hidden overflow-x-auto custom-scrollbar w-full h-full pb-2">
+                    class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0">
+                    <div id="table_fabricBooking" class="data-table-container hidden flex-col w-full h-full min-h-0">
 
                         <div id="loadingData"
-                            class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
+                            class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1">
                             <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
                             <p>Processing all uploaded files from Server...</p>
                         </div>
 
-                        <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
-                            <thead>
-                                <tr id="manageHeader"
-                                    class="bg-tableHeader text-gray-700 border-b border-gray-300 text-xs">
-                                    <th class="p-2 border-r border-gray-300 font-bold text-center w-[60px]">Manage</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold">Order No</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold">Buyer</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold">Booking Unit</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold">Fabric Construction</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold">GSM</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold text-right">Req. Qty (Kgs)</th>
-                                    <th class="p-2 border-r border-gray-300 font-bold text-center">Receive Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mainTableBody" class="text-gray-700 text-xs">
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto overflow-y-auto custom-scrollbar flex-1 min-h-0"
+                            id="tableScrollArea">
+                            <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
+                                <thead>
+                                    <tr id="manageHeader"
+                                        class="bg-tableHeader text-gray-700 border-b border-gray-300 text-xs sticky top-0 z-10">
+                                        <th
+                                            class="p-2 border-r border-b border-gray-300 font-bold text-center w-[60px] bg-tableHeader">
+                                            Manage</th>
+                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">Order
+                                            No</th>
+                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">Buyer
+                                        </th>
+                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">
+                                            Booking Unit</th>
+                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">
+                                            Fabric Construction</th>
+                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">GSM
+                                        </th>
+                                        <th
+                                            class="p-2 border-r border-b border-gray-300 font-bold text-right bg-tableHeader">
+                                            Req. Qty (Kgs)</th>
+                                        <th
+                                            class="p-2 border-r border-b border-gray-300 font-bold text-center bg-tableHeader">
+                                            Receive Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mainTableBody" class="text-gray-700 text-xs">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="paginationControls"
+                            class="bg-white border-t border-gray-300 p-2 px-4 flex flex-wrap items-center justify-between text-xs text-gray-700 shrink-0 hidden">
+                            <div class="flex items-center gap-3">
+                                <span>Rows per page:</span>
+                                <select id="rowsPerPage"
+                                    class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400 bg-gray-50"
+                                    onchange="changeRowsPerPage()">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span id="pageInfo" class="ml-2 font-medium">Showing 0-0 of 0</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-2 sm:mt-0" id="pageButtons"></div>
+                        </div>
 
                         <div id="emptyState"
-                            class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
+                            class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1">
                             <i class="fas fa-file-excel text-4xl mb-3 text-gray-300"></i>
                             <p>No data available. Please upload an Excel file from Data Management menu to view records.
                             </p>
@@ -371,6 +430,11 @@
         let openTabs = [];
         let activeTabId = null;
         let globalExcelData = [];
+
+        let filteredData = [];
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let currentFilter = 'All';
         let currentViewIndex = null;
 
         function initDashboard() {
@@ -467,11 +531,15 @@
             activeTabId = dataKey;
             renderTabs();
 
-            document.querySelectorAll('.data-table-container').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.data-table-container').forEach(t => {
+                t.classList.add('hidden');
+                t.classList.remove('flex');
+            });
             const targetTable = document.getElementById('table_' + dataKey);
 
             if (targetTable) {
                 targetTable.classList.remove('hidden');
+                targetTable.classList.add('flex');
                 await fetchAndParseLatestExcel();
             }
 
@@ -482,6 +550,7 @@
             document.getElementById('loadingData').classList.remove('hidden');
             document.getElementById('dataTableContent').classList.add('hidden');
             document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('paginationControls').classList.add('hidden');
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
@@ -504,35 +573,46 @@
                             const fileData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
                             globalExcelData = globalExcelData.concat(fileData);
                         } catch (err) {
-                            console.error("Error reading one of the files:", err);
+                            console.error("Error reading file:", err);
                         }
                     }
 
+                    try {
+                        const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
+                        if (datesRes.ok) {
+                            const savedDates = await datesRes.json();
+
+                            // FIXED: Number to String matching logic
+                            globalExcelData.forEach(row => {
+                                const orderNoRaw = getColData(row, ['OrderNo']);
+                                const orderNo = String(orderNoRaw).trim();
+
+                                const match = savedDates.find(d => String(d.orderNo).trim() === orderNo);
+                                if (match) {
+                                    row.savedCuttingDate = match.cuttingDate || '';
+                                    row.savedKnittingDate = match.knittingDate || '';
+                                    row.savedDeliveryDate = match.deliveryDate || '';
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error fetching dates from DB', e);
+                    }
+
+                    currentPage = 1;
+                    currentFilter = 'All';
+                    resetFilterButtons();
                     renderMainTable();
+
                     document.getElementById('loadingData').classList.add('hidden');
-                    document.getElementById('dataTableContent').classList.remove('hidden');
                 } else {
                     globalExcelData = [];
-                    checkEmptyState();
+                    renderMainTable();
                 }
             } catch (e) {
                 console.error("Error connecting to server:", e);
                 globalExcelData = [];
-                checkEmptyState();
-            }
-        }
-
-        function checkEmptyState() {
-            document.getElementById('loadingData').classList.add('hidden');
-            const emptyState = document.getElementById('emptyState');
-            const dataTableContent = document.getElementById('dataTableContent');
-
-            if (globalExcelData.length === 0) {
-                emptyState.classList.remove('hidden');
-                dataTableContent.classList.add('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                dataTableContent.classList.remove('hidden');
+                renderMainTable();
             }
         }
 
@@ -558,11 +638,56 @@
             return '';
         }
 
+        function applyFilterToArray() {
+            if (currentFilter === 'All') {
+                filteredData = [...globalExcelData];
+            } else {
+                filteredData = globalExcelData.filter(row => {
+                    const status = (getColData(row, ['Status']) || '').toLowerCase();
+                    if (currentFilter === 'Pending' && status.includes('pending')) return true;
+                    if (currentFilter === 'Acknowledged' && status.includes('acknowledged')) return true;
+                    if (currentFilter === 'Revised' && status.includes('revised')) return true;
+                    if (currentFilter === 'Completed' && (status.includes('completed') || status.includes('approved'))) return true;
+                    if (currentFilter === 'Cancel' && status.includes('cancel')) return true;
+                    return false;
+                });
+            }
+        }
+
         function renderMainTable() {
             const tbody = document.getElementById('mainTableBody');
             tbody.innerHTML = '';
 
-            globalExcelData.forEach((row, index) => {
+            applyFilterToArray();
+
+            const totalRows = filteredData.length;
+            const dataTableContent = document.getElementById('dataTableContent');
+            const emptyState = document.getElementById('emptyState');
+            const paginationControls = document.getElementById('paginationControls');
+
+            if (totalRows === 0) {
+                dataTableContent.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                paginationControls.classList.add('hidden');
+                return;
+            }
+
+            dataTableContent.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            paginationControls.classList.remove('hidden');
+
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
+
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            pageData.forEach((row) => {
+                const originalGlobalIndex = globalExcelData.indexOf(row);
+
                 const orderNo = getColData(row, ['OrderNo']) || 'N/A';
                 const buyer = getColData(row, ['Buyer']) || 'N/A';
                 const bookingUnit = getColData(row, ['BookingUnit']) || 'N/A';
@@ -572,11 +697,11 @@
                 const recDate = formatExcelDate(getColData(row, ['BookingReceiveDate']));
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 border-b border-gray-200 data-row transition-colors";
+                tr.className = "hover:bg-blue-50 border-b border-gray-200 transition-colors";
 
                 tr.innerHTML = `
                     <td class="p-2 border-r border-gray-200 text-center">
-                        <button onclick="openDetailedView(${index})" class="bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View Details">
+                        <button onclick="openDetailedView(${originalGlobalIndex})" class="bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
                     </td>
@@ -590,6 +715,65 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            updatePaginationUI(startIndex, endIndex, totalRows, totalPages);
+        }
+
+        function updatePaginationUI(start, end, total, totalPages) {
+            document.getElementById('pageInfo').innerText = `Showing ${start + 1}-${end} of ${total}`;
+
+            const btnContainer = document.getElementById('pageButtons');
+            btnContainer.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-3 py-1 rounded text-xs font-medium border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`;
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left mr-1 text-[10px]"></i> Prev';
+            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderMainTable(); } };
+            btnContainer.appendChild(prevBtn);
+
+            const pageText = document.createElement('span');
+            pageText.className = "px-3 py-1 font-semibold";
+            pageText.innerText = `Page ${currentPage} of ${totalPages}`;
+            btnContainer.appendChild(pageText);
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-3 py-1 rounded text-xs font-medium border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`;
+            nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right ml-1 text-[10px]"></i>';
+            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
+            btnContainer.appendChild(nextBtn);
+        }
+
+        function changeRowsPerPage() {
+            rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+            currentPage = 1;
+            renderMainTable();
+        }
+
+        function resetFilterButtons() {
+            const allBtns = document.querySelectorAll('.filter-btn');
+            allBtns.forEach(btn => {
+                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
+                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
+            });
+            const allBtn = document.querySelector('.filter-all');
+            if (allBtn) {
+                allBtn.className = allBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
+                allBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
+            }
+        }
+
+        function activateFilter(filterType, clickedBtn) {
+            const allBtns = document.querySelectorAll('.filter-btn');
+            allBtns.forEach(btn => {
+                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
+                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
+            });
+            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
+            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
+
+            currentFilter = filterType;
+            currentPage = 1;
+            renderMainTable();
         }
 
         function openDetailedView(index) {
@@ -632,19 +816,53 @@
             currentViewIndex = null;
         }
 
-        function saveFabricDates() {
+        async function saveFabricDates() {
             if (currentViewIndex === null) return;
+
+            const row = globalExcelData[currentViewIndex];
+            // FIXED: Ensuring Order No is treated as String for robust matching
+            const orderNoRaw = getColData(row, ['OrderNo']);
+            const orderNo = String(orderNoRaw).trim();
+
+            if (!orderNo || orderNo === 'N/A' || orderNo === 'undefined') {
+                alert('Error: Order No is missing for this record. Cannot save dates.');
+                return;
+            }
 
             const cuttingDate = document.getElementById('inputCuttingDate').value;
             const knittingDate = document.getElementById('inputKnittingDate').value;
             const deliveryDate = document.getElementById('inputDeliveryDate').value;
 
             if (cuttingDate || knittingDate || deliveryDate) {
-                globalExcelData[currentViewIndex].savedCuttingDate = cuttingDate;
-                globalExcelData[currentViewIndex].savedKnittingDate = knittingDate;
-                globalExcelData[currentViewIndex].savedDeliveryDate = deliveryDate;
 
-                showToast('Dates updated successfully!');
+                const saveBtn = document.getElementById('saveDatesBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+                saveBtn.disabled = true;
+
+                try {
+                    const response = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderNo, cuttingDate, knittingDate, deliveryDate })
+                    });
+
+                    if (response.ok) {
+                        row.savedCuttingDate = cuttingDate;
+                        row.savedKnittingDate = knittingDate;
+                        row.savedDeliveryDate = deliveryDate;
+                        showToast('Dates saved permanently to Database!');
+                    } else {
+                        alert('Failed to save dates in database.');
+                    }
+                } catch (error) {
+                    console.error('Error saving dates:', error);
+                    alert('Server error while saving dates.');
+                } finally {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+
             } else {
                 alert('Please select at least one date before saving.');
             }
@@ -692,7 +910,7 @@
                     fileInput.value = "";
                     loadUploadedFiles();
                     if (activeTabId === 'fabricBooking') {
-                        fetchAndParseLatestExcel(); // Refresh table if open
+                        fetchAndParseLatestExcel();
                     }
                 } else {
                     alert("File Upload Failed");
@@ -717,7 +935,6 @@
                     const date = new Date(file.createdAt).toLocaleString();
                     const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
 
-                    // Added Delete Button Here
                     const row = `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-2 border font-medium text-blue-600 truncate max-w-xs"><i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}</td>
@@ -736,23 +953,21 @@
             }
         }
 
-        // --- New Delete File Function ---
         async function deleteFile(fileId, fileName) {
             if (!confirm(`Are you sure you want to delete "${fileName}"? This will also remove its data from the dashboard.`)) {
                 return;
             }
 
             try {
-                // Sending DELETE request to backend
                 const response = await fetch(`https://abir-backend-api.onrender.com/api/files/${fileId}`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
                     showToast('File deleted successfully!');
-                    loadUploadedFiles(); // Refresh file list
+                    loadUploadedFiles();
                     if (activeTabId === 'fabricBooking') {
-                        fetchAndParseLatestExcel(); // Refresh table data
+                        fetchAndParseLatestExcel();
                     }
                 } else {
                     alert('Failed to delete the file from server.');
