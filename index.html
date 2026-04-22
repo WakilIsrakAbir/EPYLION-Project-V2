@@ -82,25 +82,42 @@
                     <i class="fas fa-user text-sm"></i>
                 </div>
                 <span class="text-[13px] text-gray-200" id="displayUsername">Loading...</span>
-                
+
                 <i class="fas fa-sign-out-alt ml-auto text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
                     title="Logout"></i>
             </div>
 
             <ul class="py-2 w-full">
+                <li id="sidebarDataManagement">
+                    <div class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                        onclick="showDataManagementView()">
+                        <i class="fas fa-database text-gray-400 w-6"></i> <span class="ml-2">Data Management</span>
+                    </div>
+                </li>
+
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'orderMenu')">
-                        <span>Order Management</span><i
-                            class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
+                        <div class="flex items-center">
+                            <i class="fas fa-box text-gray-400 w-6"></i> <span class="ml-2">Order Management</span>
+                        </div>
+                        <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-60 overflow-y-auto custom-scrollbar" id="orderMenu">
                         <li><a href="#"
-                                class="submenu-link block py-2 pl-6 pr-4 text-gray-400 hover:text-white transition-colors"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
                                 data-id="fabricBooking"
-                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric Booking
+                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric
+                                Booking
                                 Acknowledgement</a></li>
                     </ul>
+                </li>
+
+                <li id="sidebarManageUsers" class="hidden">
+                    <a href="users.html"
+                        class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer block">
+                        <i class="fas fa-users-cog text-gray-400 w-6"></i> <span class="ml-2">Manage Users</span>
+                    </a>
                 </li>
             </ul>
         </div>
@@ -132,15 +149,60 @@
                         <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
                     </div>
                 </div>
-                <div>
-                    <a href="users.html" class="mr-4 text-sm bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition hidden"
-                        id="manageUsersBtn">
-                        <i class="fas fa-users-cog mr-1"></i> Manage Users
-                    </a>
-                </div>
             </div>
         </div>
 
+        <div id="dataManagementView" class="hidden flex-1 flex-col overflow-hidden bg-[#f4f5f7]">
+            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0">
+                <div
+                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
+                    Data Management <i class="fas fa-database ml-2 text-activeBlue"></i>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4">
+                <div
+                    class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="text-md font-bold text-gray-700"><i
+                                class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Source Data</h3>
+                        <p class="text-xs text-gray-500 mt-1">Upload Excel (.xlsx, .xls) files to update the database.
+                        </p>
+                    </div>
+                    <div id="uploadArea"
+                        class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
+                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
+                            class="text-xs w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
+
+                        <button onclick="handleExcelUpload()"
+                            class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-upload mr-1"></i> Upload Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200">
+                    <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700">
+                        <i class="fas fa-file-excel text-green-600 mr-2"></i> Recent Source Files
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700">
+                                    <th class="p-2 border font-semibold">File Name</th>
+                                    <th class="p-2 border font-semibold">Uploaded By</th>
+                                    <th class="p-2 border font-semibold">Role</th>
+                                    <th class="p-2 border font-semibold">Date & Time</th>
+                                    <th class="p-2 border font-semibold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fileListBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="listView" class="hidden flex-1 flex-col overflow-hidden">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
                 id="tabBarContainer">
@@ -182,37 +244,6 @@
                             <i class="fas fa-list mr-1 text-gray-400"></i> Cancel List(s)
                         </button>
                     </div>
-
-                    <div id="uploadArea" class="flex items-center gap-2 bg-gray-50 p-1 border border-gray-300 rounded-sm mt-2 md:mt-0">
-                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
-                            class="text-xs w-[180px] file:mr-2 file:py-1 file:px-2 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer">
-                        
-                        <button onclick="handleExcelUpload()"
-                            class="px-3 py-1 bg-activeBlue text-white rounded-sm shadow-sm text-xs font-medium hover:bg-blue-600 transition-colors">
-                            <i class="fas fa-upload mr-1"></i> Upload Data
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 mt-4 mb-4">
-                    <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700">
-                        <i class="fas fa-file-excel text-green-600 mr-2"></i> Recent Source Files
-                    </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-700">
-                                    <th class="p-2 border">File Name</th>
-                                    <th class="p-2 border">Uploaded By</th>
-                                    <th class="p-2 border">Role</th>
-                                    <th class="p-2 border">Date & Time</th>
-                                    <th class="p-2 border text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fileListBody">
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
 
                 <div class="border border-gray-200 w-full relative bg-white flex-1 flex flex-col">
@@ -239,7 +270,8 @@
                         <div id="emptyState"
                             class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full">
                             <i class="fas fa-file-excel text-4xl mb-3 text-gray-300"></i>
-                            <p>No data available. Please upload an Excel/CSV file to view records.</p>
+                            <p>No data available. Please upload an Excel file from Data Management menu to view records.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -370,91 +402,109 @@
         const possibleStatuses = ["Pending", "Acknowledged", "Revised", "Completed", "Cancel"];
 
         function initDashboard() {
-                const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
 
-                if (!token) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                const username = localStorage.getItem('username');
-                const role = localStorage.getItem('role'); // ইউজারের রোলটি নিলাম
-
-                // নাম এবং রোল একসাথে দেখাবো (যাতে বুঝতে সুবিধা হয় কে লগইন করেছে)
-                document.getElementById('displayUsername').innerText = `${username} (${role})`;
-
-                showDashboardHome();
-
-                // রোল অনুযায়ী পারমিশন সেট করবো
-                applyPermissions(role);
-                loadUploadedFiles(); // ড্যাশবোর্ড ওপেন হলেই এই ফাংশনটা কল হয়ে ফাইলগুলো দেখাবে
-            }
-
-            // পারমিশন কন্ট্রোল করার ফাংশন
-            function applyPermissions(role) {
-                const manageUsersBtn = document.getElementById('manageUsersBtn');
-                if (role === 'Admin') {
-                    if (manageUsersBtn) manageUsersBtn.style.display = 'inline-block';
-                }
-                // যেসব এলিমেন্ট আমরা কন্ট্রোল করতে চাই সেগুলোর ID বা Class ধরে নিলাম
-                const uploadArea = document.getElementById('uploadArea'); // এক্সেল আপলোড করার ডিভ
-                const saveDatesBtn = document.getElementById('saveDatesBtn'); // Save Dates বাটন
-                const manageHeader = document.getElementById('manageHeader'); // টেবিলের 'Manage' কলামের হেডিং
-
-                // যদি Viewer হয়, তাহলে আপলোড এবং এডিট করার অপশনগুলো হাইড করে দিবো
-                if (role === 'Viewer') {
-                    if (uploadArea) uploadArea.style.display = 'none';
-                    if (saveDatesBtn) saveDatesBtn.style.display = 'none';
-                    if (manageHeader) manageHeader.style.display = 'none'; // ম্যানেজ কলামটি হাইড
-                }
-                // Planner বা Admin হলে সব দেখতে পাবে (ডিফল্টভাবেই শো করা থাকে)
-                else {
-                    if (uploadArea) uploadArea.style.display = 'flex';
-                    if (saveDatesBtn) saveDatesBtn.style.display = 'block';
-                    if (manageHeader) manageHeader.style.display = 'table-cell';
-                }
-            }
-
-            // Logout korar function
-            function logout() {
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                localStorage.removeItem('role');
+            if (!token) {
                 window.location.href = 'login.html';
+                return;
             }
 
-        // Custom Toast Function
+            const username = localStorage.getItem('username');
+            const role = localStorage.getItem('role');
+
+            document.getElementById('displayUsername').innerText = `${username} (${role})`;
+
+            showDashboardHome();
+            applyPermissions(role);
+            loadUploadedFiles();
+        }
+
+        // পারমিশন কন্ট্রোল করার ফাংশন
+        function applyPermissions(role) {
+            const sidebarManageUsers = document.getElementById('sidebarManageUsers');
+            const sidebarDataManagement = document.getElementById('sidebarDataManagement'); // নতুন
+
+            // Admin Management
+            if (role === 'Admin') {
+                if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden');
+            } else {
+                if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden');
+            }
+
+            // Viewer Management (Viewer ra Data Management menu dekhbe na)
+            if (role === 'Viewer') {
+                if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden');
+            } else {
+                if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden');
+            }
+
+            const uploadArea = document.getElementById('uploadArea');
+            const saveDatesBtn = document.getElementById('saveDatesBtn');
+            const manageHeader = document.getElementById('manageHeader');
+
+            if (role === 'Viewer') {
+                if (uploadArea) uploadArea.style.display = 'none';
+                if (saveDatesBtn) saveDatesBtn.style.display = 'none';
+                if (manageHeader) manageHeader.style.display = 'none';
+            } else {
+                if (uploadArea) uploadArea.style.display = 'flex';
+                if (saveDatesBtn) saveDatesBtn.style.display = 'block';
+                if (manageHeader) manageHeader.style.display = 'table-cell';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = 'login.html';
+        }
+
         function showToast(message) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMessage').textContent = message;
-
-            // Show toast
             toast.classList.remove('opacity-0', 'pointer-events-none');
-
-            // Hide after 3 seconds
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => {
                 toast.classList.add('opacity-0', 'pointer-events-none');
             }, 3000);
         }
 
+        // --- View Handlers ---
         function showDashboardHome() {
             activeTabId = 'dashboard';
+            document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dashboardHomeView').classList.remove('hidden');
             document.getElementById('dashboardHomeView').classList.add('flex');
 
             document.querySelectorAll('.submenu-link').forEach(link => {
-                link.className = 'submenu-link block py-2 pl-6 pr-4 text-gray-400 hover:text-white transition-colors';
+                link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
             });
             renderTabs();
+            closeSidebarMobile();
+        }
+
+        function showDataManagementView() {
+            activeTabId = 'dataManagement';
+            document.getElementById('dashboardHomeView').classList.add('hidden');
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailedView').classList.add('hidden');
+
+            document.getElementById('dataManagementView').classList.remove('hidden');
+            document.getElementById('dataManagementView').classList.add('flex');
+
+            document.querySelectorAll('.submenu-link').forEach(link => {
+                link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
+            });
             closeSidebarMobile();
         }
 
         function loadMenuData(dataKey, menuName) {
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('listView').classList.remove('hidden');
             document.getElementById('listView').classList.add('flex');
 
@@ -523,65 +573,58 @@
             return '';
         }
 
-        // ১. File সার্ভারে পাঠানোর কোড
-            async function handleExcelUpload() {
-                const fileInput = document.getElementById('excelFile');
-                const file = fileInput.files[0]; // ইউজার যেই ফাইলটা সিলেক্ট করেছে সেটা ধরলাম
+        async function handleExcelUpload() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
 
-                if (!file) {
-                    alert("Please select a file first");
+            if (!file) {
+                alert("Please select a file first");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('document', file);
+            formData.append('uploadedBy', localStorage.getItem('username'));
+            formData.append('role', localStorage.getItem('role'));
+
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert("ফাইল সফলভাবে আপলোড হয়েছে!");
+                    fileInput.value = "";
+                    loadUploadedFiles();
+                } else {
+                    alert("File Uploaded");
+                }
+            } catch (error) {
+                alert("Problem Occure In Server");
+            }
+        }
+
+        async function loadUploadedFiles() {
+            try {
+                const response = await fetch('https://abir-backend-api.onrender.com/api/files/all');
+                const files = await response.json();
+
+                const tableBody = document.getElementById('fileListBody');
+                if (!tableBody) return;
+
+                tableBody.innerHTML = '';
+
+                if (files.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">কোনো ফাইল আপলোড করা হয়নি।</td></tr>';
                     return;
                 }
 
-                // Backend-এ ফাইল পাঠানোর জন্য FormData বানাতে হয়
-                const formData = new FormData();
-                formData.append('document', file); // আসল ফাইলটা দিলাম
-                formData.append('uploadedBy', localStorage.getItem('username')); // যে আপলোড করছে তার নাম
-                formData.append('role', localStorage.getItem('role')); // তার রোল
+                files.forEach(file => {
+                    const date = new Date(file.createdAt).toLocaleString();
+                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
 
-                try {
-                    // আমাদের বানানো API তে ফাইলটা পাঠিয়ে দিচ্ছি (POST request)
-                    const response = await fetch('https://abir-backend-api.onrender.com/api/files/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        alert("ফাইল সফলভাবে আপলোড হয়েছে!");
-                        fileInput.value = ""; // আপলোড শেষে ইনপুট বক্সটা ফাঁকা করে দিলাম
-                        loadUploadedFiles(); // নতুন ফাইল আসার পর টেবিলটা রিফ্রেশ করলাম
-                    } else {
-                        alert("File Uploaded");
-                    }
-                } catch (error) {
-                    alert("Problem Occure In Server");
-                }
-            }
-
-        // ২. Database থেকে ফাইলগুলো এনে টেবিলে দেখানোর কোড
-            async function loadUploadedFiles() {
-                try {
-                    // আমাদের API থেকে সব ফাইলের লিস্ট নিয়ে আসলাম (GET request)
-                    const response = await fetch('https://abir-backend-api.onrender.com/api/files/all');
-                    const files = await response.json();
-
-                    const tableBody = document.getElementById('fileListBody');
-                    if (!tableBody) return;
-
-                    tableBody.innerHTML = ''; // টেবিলটা প্রথমে ক্লিন করলাম
-
-                    // যদি কোনো ফাইল না থাকে
-                    if (files.length === 0) {
-                        tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">কোনো ফাইল আপলোড করা হয়নি।</td></tr>';
-                        return;
-                    }
-
-                    // একটা একটা করে ফাইল নিবো আর টেবিলের Row বানাবো
-                    files.forEach(file => {
-                        const date = new Date(file.createdAt).toLocaleString(); // তারিখ ঠিক করলাম
-                        const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`; // ডাউনলোডের লিংক
-
-                        const row = `
+                    const row = `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-2 border font-medium text-blue-600 truncate max-w-xs">
                         <i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}
@@ -598,12 +641,12 @@
                     </td>
                 </tr>
             `;
-                        tableBody.innerHTML += row; // টেবিলে Row টা বসিয়ে দিলাম
-                    });
-                } catch (error) {
-                    console.error("Error loading files:", error);
-                }
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error("Error loading files:", error);
             }
+        }
 
         function getStatusStyling(status) {
             if (!status) return '';
@@ -660,7 +703,6 @@
             });
         }
 
-        // Filter Logic
         function activateFilter(filterType, clickedBtn) {
             const allBtns = document.querySelectorAll('.filter-btn');
             allBtns.forEach(btn => {
@@ -687,7 +729,6 @@
             });
         }
 
-        // --- Detailed View Logic ---
         function openDetailedView(index) {
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.remove('hidden');
@@ -733,7 +774,6 @@
             currentViewIndex = null;
         }
 
-        // --- Save Dates Logic (In-Memory) ---
         function saveFabricDates() {
             if (currentViewIndex === null) return;
 
@@ -766,22 +806,18 @@
             }
         }
 
-        // Toggles sidebar for mobile and desktop screens
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
 
             if (window.innerWidth >= 768) {
-                // Desktop: Toggle custom collapse class
                 sidebar.classList.toggle('sidebar-collapsed');
             } else {
-                // Mobile: Toggle default Tailwind translate class
                 sidebar.classList.toggle('-translate-x-full');
                 overlay.classList.toggle('hidden');
             }
         }
 
-        // Close sidebar safely (used when clicking links or overlay)
         function closeSidebarMobile() {
             if (window.innerWidth < 768) {
                 document.getElementById('sidebar').classList.add('-translate-x-full');
@@ -789,8 +825,6 @@
             }
         }
 
-        // This helper function handles sidebar closing logic for all screens 
-        // to prevent desktop sidebar from hiding when a menu is clicked
         function closeSidebar() {
             if (window.innerWidth < 768) {
                 document.getElementById('sidebar').classList.add('-translate-x-full');
