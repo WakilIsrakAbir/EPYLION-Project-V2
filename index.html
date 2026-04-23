@@ -52,22 +52,65 @@
         }
 
         .info-label {
-            width: 140px;
+            width: 115px;
             font-size: 11px;
             font-weight: 600;
             color: #4b5563;
             flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .info-input {
             flex: 1;
-            width: 100%;
+            min-width: 0;
             padding: 4px 8px;
             border: 1px solid #d1d5db;
             border-radius: 2px;
             background-color: #f9fafb;
             font-size: 11px;
             color: #374151;
+            outline: none;
+        }
+
+        .info-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .header-search {
+            width: 100%;
+            min-width: 80px;
+            padding: 4px 6px;
+            font-size: 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 2px;
+            font-weight: normal;
+            margin-top: 4px;
+            color: #374151;
+            outline: none;
+        }
+
+        .header-search:focus {
+            border-color: #3b82f6;
+        }
+
+        .buyer-tab {
+            cursor: pointer;
+            padding: 6px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .buyer-tab.active {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
         }
     </style>
 </head>
@@ -81,30 +124,23 @@
     </div>
 
     <div id="sidebar"
-        class="fixed md:relative z-50 h-full bg-sidebar flex-shrink-0 transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
-        <div
-            class="w-[280px] h-full flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 text-textMuted relative">
+        class="shrink-0 fixed md:relative z-50 h-full bg-sidebar transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+        <div class="w-[280px] h-full flex flex-col overflow-y-auto custom-scrollbar text-textMuted relative">
             <div class="absolute top-4 right-4 text-white cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
-                <i class="fas fa-times text-lg"></i>
-            </div>
-
+                <i class="fas fa-times text-lg"></i></div>
             <div
                 class="p-4 bg-sidebarDark text-white text-xl font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
                 <span class="text-epylionGreen tracking-wider">Abir LTD</span>
             </div>
-
             <div class="p-4 flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
                 onclick="showDashboardHome()">
                 <div
                     class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-white shrink-0">
-                    <i class="fas fa-user text-sm"></i>
-                </div>
+                    <i class="fas fa-user text-sm"></i></div>
                 <span class="text-[13px] text-gray-200" id="displayUsername">Loading...</span>
-
                 <i class="fas fa-sign-out-alt ml-auto text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
                     title="Logout"></i>
             </div>
-
             <ul class="py-2 w-full">
                 <li id="sidebarDataManagement">
                     <div class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
@@ -112,24 +148,28 @@
                         <i class="fas fa-database text-gray-400 w-6"></i> <span class="ml-2">Data Management</span>
                     </div>
                 </li>
-
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'orderMenu')">
-                        <div class="flex items-center">
-                            <i class="fas fa-box text-gray-400 w-6"></i> <span class="ml-2">Order Management</span>
-                        </div>
+                        <div class="flex items-center"><i class="fas fa-box text-gray-400 w-6"></i> <span
+                                class="ml-2">Order Management</span></div>
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
-                    <ul class="bg-sidebarDark hidden max-h-60 overflow-y-auto custom-scrollbar" id="orderMenu">
+                    <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="orderMenu">
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                data-id="fabricBooking"
-                                onclick="loadMenuData('fabricBooking', 'Fabric Booking Acknowledgement')">Fabric Booking
-                                Acknowledgement</a></li>
+                                onclick="loadMenuData('knitting', 'Knitting Plan')">Knitting Plan</a></li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('dyeing', 'Dyeing Plan')">Dyeing Plan</a></li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('finishing', 'Finishing Plan')">Finishing Plan</a></li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('delivery', 'Delivery Plan')">Delivery Plan</a></li>
                     </ul>
                 </li>
-
                 <li id="sidebarManageUsers" class="hidden">
                     <a href="users.html"
                         class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer block">
@@ -143,14 +183,14 @@
     <div id="mobileOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity"
         onclick="closeSidebarMobile()"></div>
 
-    <div class="flex-1 flex flex-col overflow-hidden w-full relative">
+    <div class="flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
 
         <div class="bg-white border-b border-gray-200 flex items-center justify-between px-4 h-[40px] shrink-0">
             <i class="fas fa-bars text-gray-500 cursor-pointer hover:text-activeBlue text-lg transition-transform hover:scale-110"
                 onclick="toggleSidebar()"></i>
         </div>
 
-        <div id="dashboardHomeView" class="flex-1 flex flex-col overflow-hidden">
+        <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto custom-scrollbar">
                 <div
@@ -158,51 +198,45 @@
                     Dashboard <i class="fas fa-home ml-2 text-activeBlue"></i>
                 </div>
             </div>
-
-            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6">
+            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6 min-h-0">
                 <div
-                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
+                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
                     <div class="relative z-10">
                         <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
-                        <p class="text-gray-300">Select an option from the sidebar to start working.</p>
+                        <p class="text-gray-300">Select a Production Plan from the sidebar to manage data.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="dataManagementView" class="hidden flex-1 flex-col overflow-hidden bg-[#f4f5f7]">
+        <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0">
                 <div
                     class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
                     Data Management <i class="fas fa-database ml-2 text-activeBlue"></i>
                 </div>
             </div>
-
-            <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4">
+            <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
                 <div
-                    class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
                     <div>
                         <h3 class="text-md font-bold text-gray-700"><i
                                 class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Source Data</h3>
                         <p class="text-xs text-gray-500 mt-1">Upload Excel (.xlsx, .xls) files to update the database.
-                            Uploading a file with the same name will overwrite the old one.</p>
+                            Same names will overwrite.</p>
                     </div>
                     <div id="uploadArea"
                         class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
                         <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
                             class="text-xs w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
-
                         <button onclick="handleExcelUpload()"
-                            class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors">
-                            <i class="fas fa-upload mr-1"></i> Upload Data
-                        </button>
+                            class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors"><i
+                                class="fas fa-upload mr-1"></i> Upload Data</button>
                     </div>
                 </div>
-
-                <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200">
-                    <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700">
-                        <i class="fas fa-file-excel text-green-600 mr-2"></i> Recent Source Files
-                    </h3>
+                <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 shrink-0">
+                    <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700"><i
+                            class="fas fa-file-excel text-green-600 mr-2"></i> Recent Source Files</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm border-collapse">
                             <thead>
@@ -214,281 +248,286 @@
                                     <th class="p-2 border font-semibold text-center w-[120px]">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="fileListBody">
-                            </tbody>
+                            <tbody id="fileListBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="listView" class="hidden flex-1 flex-col overflow-hidden">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar"
+        <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full"
                 id="tabBarContainer">
                 <div id="dynamicTabsWrapper" class="flex gap-1 items-end"></div>
             </div>
 
-            <div class="p-3 flex-1 overflow-y-auto bg-[#f4f5f7] flex flex-col w-full">
-
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-2 shrink-0" id="filterContainer">
+            <div class="p-3 flex-1 flex flex-col min-h-0 w-full">
+                <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
                     <div class="flex flex-wrap gap-2">
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-green-700 text-white border border-green-800 rounded-sm whitespace-nowrap shadow-sm font-medium transition-colors filter-all"
-                            onclick="activateFilter('All', this)"><i class="fas fa-list mr-1 text-white"></i> All
-                            List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-pending"
-                            onclick="activateFilter('Pending', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Pending Actions List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-acknowledged"
-                            onclick="activateFilter('Acknowledged', this)"><i
-                                class="fas fa-list mr-1 text-gray-400"></i> Acknowledged List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-revised"
-                            onclick="activateFilter('Revised', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Revised List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-completed"
-                            onclick="activateFilter('Completed', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Completed / Approved List(s)</button>
-                        <button
-                            class="filter-btn px-3 py-1.5 bg-[#f4f5f7] text-gray-600 border border-gray-300 hover:bg-gray-200 rounded-sm whitespace-nowrap shadow-sm transition-colors filter-cancel"
-                            onclick="activateFilter('Cancel', this)"><i class="fas fa-list mr-1 text-gray-400"></i>
-                            Cancel List(s)</button>
+                        <div id="mainPlanTab"
+                            class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm shadow-sm uppercase tracking-wide">
+                            PLAN NAME</div>
+                        <div class="bg-white px-6 py-2 border border-gray-300 font-bold text-gray-800 rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 transition-colors"
+                            onclick="activateBuyerFilter('All')">All List</div>
                     </div>
+                    <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
+                        id="buyerFilterContainer"></div>
                 </div>
 
                 <div
-                    class="border border-gray-300 w-full relative bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0">
-                    <div id="table_fabricBooking" class="data-table-container hidden flex-col w-full h-full min-h-0">
+                    class="border border-gray-300 w-full bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0 relative">
 
-                        <div id="loadingData"
-                            class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1">
-                            <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
-                            <p>Processing all uploaded files from Server...</p>
-                        </div>
+                    <div id="loadingData"
+                        class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white z-30">
+                        <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
+                        <p>Processing Data from Server...</p>
+                    </div>
 
-                        <div class="overflow-x-auto overflow-y-auto custom-scrollbar flex-1 min-h-0"
-                            id="tableScrollArea">
-                            <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
-                                <thead>
-                                    <tr id="manageHeader"
-                                        class="bg-tableHeader text-gray-700 border-b border-gray-300 text-xs sticky top-0 z-10">
-                                        <th
-                                            class="p-2 border-r border-b border-gray-300 font-bold text-center w-[60px] bg-tableHeader">
-                                            Manage</th>
-                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">Order
-                                            No</th>
-                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">Buyer
-                                        </th>
-                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">
-                                            Booking Unit</th>
-                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">
-                                            Fabric Construction</th>
-                                        <th class="p-2 border-r border-b border-gray-300 font-bold bg-tableHeader">GSM
-                                        </th>
-                                        <th
-                                            class="p-2 border-r border-b border-gray-300 font-bold text-right bg-tableHeader">
-                                            Req. Qty (Kgs)</th>
-                                        <th
-                                            class="p-2 border-r border-b border-gray-300 font-bold text-center bg-tableHeader">
-                                            Receive Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="mainTableBody" class="text-gray-700 text-xs">
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="flex-1 overflow-auto custom-scrollbar w-full bg-white" id="dataTableContentWrapper">
+                        <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
+                            <thead class="sticky top-0 z-20 bg-tableHeader shadow-sm">
+                                <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
+                                    <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">Manage
+                                    </th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+                                    <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date
+                                    </th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Status</th>
+                                </tr>
+                                <tr class="bg-white border-b border-gray-300">
+                                    <th class="p-1 border-r border-gray-300 bg-white"></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                            class="header-search" oninput="filterByColumn(1, this.value)"
+                                            placeholder="Search No..."></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                            class="header-search" oninput="filterByColumn(2, this.value)"
+                                            placeholder="Search Date..."></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                            class="header-search" oninput="filterByColumn(3, this.value)"
+                                            placeholder="Search Buyer..."></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                            class="header-search" oninput="filterByColumn(4, this.value)"
+                                            placeholder="Search Status..."></th>
+                                </tr>
+                            </thead>
+                            <tbody id="mainTableBody" class="text-gray-700 text-[11px]">
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <div id="paginationControls"
-                            class="bg-white border-t border-gray-300 p-2 px-4 flex flex-wrap items-center justify-between text-xs text-gray-700 shrink-0 hidden">
-                            <div class="flex items-center gap-3">
-                                <span>Rows per page:</span>
-                                <select id="rowsPerPage"
-                                    class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400 bg-gray-50"
-                                    onchange="changeRowsPerPage()">
-                                    <option value="10">10</option>
-                                    <option value="20">20</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                                <span id="pageInfo" class="ml-2 font-medium">Showing 0-0 of 0</span>
-                            </div>
-                            <div class="flex items-center gap-1 mt-2 sm:mt-0" id="pageButtons"></div>
+                    <div id="paginationControls"
+                        class="bg-white border-t border-gray-300 p-2 md:px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-700 shrink-0 gap-3 hidden">
+                        <div class="flex items-center gap-2">
+                            <span>Rows per page:</span>
+                            <select id="rowsPerPage"
+                                class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400 bg-gray-50 cursor-pointer"
+                                onchange="changeRowsPerPage()">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span id="pageInfo" class="ml-2 font-medium">Showing 0-0 of 0</span>
                         </div>
-
-                        <div id="emptyState"
-                            class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1">
-                            <i class="fas fa-file-excel text-4xl mb-3 text-gray-300"></i>
-                            <p>No data available. Please upload an Excel file from Data Management menu to view records.
-                            </p>
-                        </div>
+                        <div class="flex items-center gap-1" id="pageButtons"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="detailedView" class="hidden flex-1 flex-col bg-white overflow-hidden">
-            <div class="bg-[#d4edda] border-b border-[#c3e6cb] flex items-center px-4 py-2 shrink-0">
-                <button onclick="closeDetailedView()" class="mr-4 text-gray-700 hover:text-red-600 transition">
-                    <i class="fas fa-arrow-left text-lg"></i>
-                </button>
-                <h3 class="font-bold text-gray-800 text-sm">Fabric Booking Details</h3>
+        <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+            <div
+                class="bg-gray-100 border-b border-gray-200 flex items-center px-4 py-2 shrink-0 justify-between w-full">
+                <div class="flex items-center">
+                    <button onclick="closeDetailedView()" class="mr-4 text-gray-700 hover:text-blue-600 transition"
+                        title="Back">
+                        <i class="fas fa-arrow-left text-lg"></i>
+                    </button>
+                    <h3 class="font-bold text-gray-800 text-sm">General Information & Planning</h3>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeDetailedView()"
+                        class="px-3 md:px-4 py-1.5 border border-gray-300 text-xs font-bold rounded hover:bg-gray-200 text-gray-700 transition">Back</button>
+                    <button id="saveDatesBtn" onclick="saveFabricPlanning()"
+                        class="px-4 md:px-6 py-1.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 shadow-sm transition"><i
+                            class="fas fa-save mr-1"></i> Save Data</button>
+                </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 flex flex-col w-full bg-[#f4f5f7]">
+            <div
+                class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-3 md:p-4 flex flex-col gap-4 w-full min-h-0">
 
-                <div class="bg-[#e9f5ec] border border-[#c3e6cb] rounded-sm mb-4">
-                    <div class="p-2 border-b border-[#c3e6cb] font-bold text-gray-800 text-xs">General Information</div>
-                    <div class="p-4 w-full">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center"><span class="info-label">Order No.</span><input
-                                        type="text" id="detOrderNo" class="info-input" readonly></div>
-                                <div class="flex items-center"><span class="info-label">Buyer</span><input type="text"
-                                        id="detBuyer" class="info-input" readonly></div>
-                                <div class="flex items-center"><span class="info-label">Booking Unit</span><input
-                                        type="text" id="detBookingUnit" class="info-input" readonly></div>
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center"><span class="info-label">Booking Receive
-                                        Date</span><input type="text" id="detBookingDate" class="info-input" readonly>
-                                </div>
-                                <div class="flex items-center"><span class="info-label">Unit</span><input type="text"
-                                        id="detUnit" class="info-input" readonly></div>
-                                <div class="flex items-center"><span class="info-label">UOM</span><input type="text"
-                                        id="detUOM" class="info-input" readonly></div>
-                            </div>
+                <div class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center"><span class="info-label">EWO No.</span><input type="text"
+                                    id="detEWO" class="info-input" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Booking No.</span><input type="text"
+                                    id="detBookingNo" class="info-input" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Booking Date</span><input
+                                    type="text" id="detBookingDate" class="info-input" readonly></div>
+
+                            <div class="flex items-center"><span class="info-label">Booking Unit</span><input
+                                    type="text" id="detBookingUnit" class="info-input" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Unit</span><input type="text"
+                                    id="detUnit" class="info-input" readonly></div>
+                            <div class="flex items-center"><span class="info-label">UOM</span><input type="text"
+                                    id="detUOM" class="info-input" readonly></div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center"><span class="info-label">Buyer Name(s)</span><input
+                                    type="text" id="detBuyer" class="info-input text-blue-700 font-bold" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Buyer Team</span><input type="text"
+                                    id="detBuyerTeam" class="info-input" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Order Qty. (Kg)</span><input
+                                    type="text" id="detOrderQty" class="info-input" readonly></div>
+
+                            <div class="flex items-center"><span class="info-label">Event Day</span><input type="text"
+                                    id="detEventDay" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">1st Shipment Date</span><input
+                                    type="date" id="detShip1" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">Last Shipment Date</span><input
+                                    type="date" id="detShipLast" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Yarn date</span><input
+                                    type="date" id="detYarnDate" class="info-input"></div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center"><span class="info-label">T&A Deli. Start</span><input
+                                    type="date" id="detDeliStart" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Deli. End</span><input
+                                    type="date" id="detDeliEnd" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Knitting Start</span><input
+                                    type="date" id="detKnitStart" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Knitting End</span><input
+                                    type="date" id="detKnitEnd" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Dyeing Start</span><input
+                                    type="date" id="detDyeStart" class="info-input"></div>
+                            <div class="flex items-center"><span class="info-label">T&A Dyeing End</span><input
+                                    type="date" id="detDyeEnd" class="info-input"></div>
+
+                            <div
+                                class="p-1 bg-gray-100 text-center font-bold text-xs mt-1 border border-gray-200 text-gray-700">
+                                Fabric Notes</div>
+                            <textarea id="detFabNotes" class="info-input h-10 text-[10px]"
+                                placeholder="For color & Quality pls follow..."></textarea>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-[#e9f5ec] border border-[#c3e6cb] rounded-sm w-full mb-4">
-                    <div class="p-2 border-b border-[#c3e6cb] font-bold text-gray-800 text-xs">Fabric Information</div>
-                    <div class="p-0 overflow-x-auto custom-scrollbar w-full">
-                        <table class="w-full text-left whitespace-nowrap border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-700 font-bold border-b border-gray-300 text-[11px]">
+                <div
+                    class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col">
+                    <div
+                        class="bg-gray-100 p-2 font-bold text-gray-800 text-xs flex items-center border-b border-gray-200 shrink-0">
+                        <i class="fas fa-layer-group text-blue-500 mr-2"></i> Fabric Item Information
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar w-full bg-white">
+                        <table class="w-full text-left whitespace-nowrap border-collapse min-w-[1600px]">
+                            <thead class="bg-white shadow-sm">
+                                <tr class="text-[10px] font-bold text-gray-700 bg-gray-100 border-b border-gray-300">
                                     <th class="p-2 border-r border-gray-300">Fabric Construction</th>
                                     <th class="p-2 border-r border-gray-300">Fabric Details</th>
-                                    <th class="p-2 border-r border-gray-300">Color</th>
-                                    <th class="p-2 border-r border-gray-300">Width</th>
-                                    <th class="p-2 border-r border-gray-300">GSM</th>
-                                    <th class="p-2 border-r border-gray-300 text-right">Required Qty (Kgs)</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Width</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Color</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">GSM</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Allocated QTY</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Allocated Bal.</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Grey Req.</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Knit Prod.</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Knit Bala.</th>
+                                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200" colspan="2">
+                                        Knitting Planning</th>
+                                    <th class="p-2 border-r border-gray-300 text-center">Plan Type</th>
+                                    <th class="p-2 border-r border-gray-300">Knitting Limitation</th>
+                                    <th class="p-2 border-r border-gray-300">Remarks</th>
+                                </tr>
+                                <tr class="text-[9px] bg-gray-50 border-b border-gray-300">
+                                    <th class="border-r border-gray-300" colspan="10"></th>
+                                    <th class="p-1 border-r border-gray-300 text-center text-gray-600">Start Date</th>
+                                    <th class="p-1 border-r border-gray-300 text-center text-gray-600">End Date</th>
+                                    <th class="border-r border-gray-300" colspan="3"></th>
                                 </tr>
                             </thead>
-                            <tbody id="detailFabricBody" class="text-gray-700 text-[11px] bg-white">
-                                <tr class="hover:bg-gray-50 border-b border-gray-200">
-                                    <td class="p-2 border-r border-gray-200" id="fabConst"></td>
-                                    <td class="p-2 border-r border-gray-200 truncate max-w-[250px]" id="fabDetails"
-                                        title=""></td>
-                                    <td class="p-2 border-r border-gray-200" id="fabColor"></td>
-                                    <td class="p-2 border-r border-gray-200" id="fabWidth"></td>
-                                    <td class="p-2 border-r border-gray-200" id="fabGsm"></td>
-                                    <td class="p-2 border-r border-gray-200 text-right font-semibold" id="fabQty"></td>
-                                </tr>
+                            <tbody id="detFabricItemsBody" class="text-[10px] bg-white text-gray-700">
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="bg-white border border-gray-300 rounded-sm w-full p-4 mt-auto shadow-sm">
-                    <h4 class="font-bold text-gray-700 text-sm mb-3 border-b pb-2"><i
-                            class="fas fa-calendar-alt text-blue-500 mr-2"></i>Update Process Dates</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div
+                    class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full mt-2">
+                    <h4 class="font-bold text-gray-800 text-xs mb-3 border-b border-gray-200 pb-2">
+                        <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Update Process Dates
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3">
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Cutting Date</label>
+                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Cutting Date</label>
                             <input type="date" id="inputCuttingDate"
-                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Knitting Date</label>
+                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Knitting Date</label>
                             <input type="date" id="inputKnittingDate"
-                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Delivery Date</label>
+                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Delivery Date</label>
                             <input type="date" id="inputDeliveryDate"
-                                class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500 text-sm">
+                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
                         </div>
-                    </div>
-                    <div class="flex justify-end mt-4">
-                        <button id="saveDatesBtn"
-                            class="px-6 py-2 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700 transition-colors"
-                            onclick="saveFabricDates()">
-                            <i class="fas fa-save mr-2"></i> Save Dates
-                        </button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        let toastTimeout;
+        let globalRawData = [];
+        let groupedData = {};
+        let filteredKeys = [];
         let openTabs = [];
-        let activeTabId = null;
-        let globalExcelData = [];
+        let activeTabId = 'dashboard';
 
-        let filteredData = [];
         let currentPage = 1;
         let rowsPerPage = 10;
-        let currentFilter = 'All';
+        let activeBuyer = 'All';
+        let colFilters = {};
         let currentViewIndex = null;
+        let toastTimeout;
 
         function initDashboard() {
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-            const username = localStorage.getItem('username');
-            const role = localStorage.getItem('role');
-            document.getElementById('displayUsername').innerText = `${username} (${role})`;
-
+            if (!token) { window.location.href = 'login.html'; return; }
+            document.getElementById('displayUsername').innerText = `${localStorage.getItem('username')} (${localStorage.getItem('role')})`;
             showDashboardHome();
-            applyPermissions(role);
+            applyPermissions(localStorage.getItem('role'));
             loadUploadedFiles();
         }
 
         function applyPermissions(role) {
             const sidebarManageUsers = document.getElementById('sidebarManageUsers');
             const sidebarDataManagement = document.getElementById('sidebarDataManagement');
+            if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
+            else { if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden'); }
 
-            if (role === 'Admin') {
-                if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden');
-            } else {
-                if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden');
-            }
-
-            if (role === 'Viewer') {
-                if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden');
-            } else {
-                if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden');
-            }
+            if (role === 'Viewer') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
+            else { if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden'); }
 
             const uploadArea = document.getElementById('uploadArea');
-            if (role === 'Viewer') {
-                if (uploadArea) uploadArea.style.display = 'none';
-            } else {
-                if (uploadArea) uploadArea.style.display = 'flex';
-            }
+            if (role === 'Viewer') { if (uploadArea) uploadArea.style.display = 'none'; }
+            else { if (uploadArea) uploadArea.style.display = 'flex'; }
         }
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 3000);
+            toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
         }
 
         function showDashboardHome() {
@@ -497,12 +536,7 @@
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dashboardHomeView').classList.remove('hidden');
-            document.getElementById('dashboardHomeView').classList.add('flex');
-            document.querySelectorAll('.submenu-link').forEach(link => {
-                link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
-            });
-            renderTabs();
-            closeSidebarMobile();
+            renderTabs(); closeSidebarMobile();
         }
 
         function showDataManagementView() {
@@ -511,236 +545,230 @@
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.remove('hidden');
-            document.getElementById('dataManagementView').classList.add('flex');
-            document.querySelectorAll('.submenu-link').forEach(link => {
-                link.className = 'submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors';
-            });
-            closeSidebarMobile();
+            renderTabs(); closeSidebarMobile();
         }
 
         async function loadMenuData(dataKey, menuName) {
-            document.getElementById('dashboardHomeView').classList.add('hidden');
-            document.getElementById('detailedView').classList.add('hidden');
-            document.getElementById('dataManagementView').classList.add('hidden');
-            document.getElementById('listView').classList.remove('hidden');
-            document.getElementById('listView').classList.add('flex');
-
-            if (!openTabs.find(tab => tab.id === dataKey)) {
-                openTabs.push({ id: dataKey, title: menuName });
-            }
             activeTabId = dataKey;
+            document.getElementById('mainPlanTab').innerText = menuName;
+            document.getElementById('dashboardHomeView').classList.add('hidden');
+            document.getElementById('dataManagementView').classList.add('hidden');
+            document.getElementById('detailedView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+
+            if (!openTabs.find(tab => tab.id === dataKey)) openTabs.push({ id: dataKey, title: menuName });
             renderTabs();
 
-            document.querySelectorAll('.data-table-container').forEach(t => {
-                t.classList.add('hidden');
-                t.classList.remove('flex');
-            });
-            const targetTable = document.getElementById('table_' + dataKey);
+            document.querySelectorAll('.header-search').forEach(inp => inp.value = '');
+            colFilters = {};
+            activeBuyer = 'All';
 
-            if (targetTable) {
-                targetTable.classList.remove('hidden');
-                targetTable.classList.add('flex');
-                await fetchAndParseLatestExcel();
-            }
-
+            await fetchAndProcessData();
             closeSidebarMobile();
         }
 
-        async function fetchAndParseLatestExcel() {
+        async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
-            document.getElementById('dataTableContent').classList.add('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('dataTableContentWrapper').classList.add('hidden');
             document.getElementById('paginationControls').classList.add('hidden');
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
                 const files = await res.json();
 
-                if (files.length > 0) {
-                    globalExcelData = [];
-
-                    for (let i = 0; i < files.length; i++) {
-                        try {
-                            const fileUrl = `https://abir-backend-api.onrender.com/uploads/${files[i].savedName}`;
-                            const fileRes = await fetch(fileUrl);
-                            if (!fileRes.ok) continue;
-
-                            const arrayBuffer = await fileRes.arrayBuffer();
-                            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                            const firstSheetName = workbook.SheetNames[0];
-                            const worksheet = workbook.Sheets[firstSheetName];
-
-                            const fileData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-                            globalExcelData = globalExcelData.concat(fileData);
-                        } catch (err) {
-                            console.error("Error reading file:", err);
-                        }
-                    }
-
+                globalRawData = [];
+                for (let file of files) {
                     try {
-                        const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
-                        if (datesRes.ok) {
-                            const savedDates = await datesRes.json();
-
-                            // FIXED: Number to String matching logic
-                            globalExcelData.forEach(row => {
-                                const orderNoRaw = getColData(row, ['OrderNo']);
-                                const orderNo = String(orderNoRaw).trim();
-
-                                const match = savedDates.find(d => String(d.orderNo).trim() === orderNo);
-                                if (match) {
-                                    row.savedCuttingDate = match.cuttingDate || '';
-                                    row.savedKnittingDate = match.knittingDate || '';
-                                    row.savedDeliveryDate = match.deliveryDate || '';
-                                }
-                            });
-                        }
-                    } catch (e) {
-                        console.error('Error fetching dates from DB', e);
-                    }
-
-                    currentPage = 1;
-                    currentFilter = 'All';
-                    resetFilterButtons();
-                    renderMainTable();
-
-                    document.getElementById('loadingData').classList.add('hidden');
-                } else {
-                    globalExcelData = [];
-                    renderMainTable();
+                        const fileRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
+                        if (!fileRes.ok) continue;
+                        const arrayBuffer = await fileRes.arrayBuffer();
+                        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const data = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+                        globalRawData = globalRawData.concat(data);
+                    } catch (err) { console.error("Error reading file:", err); }
                 }
-            } catch (e) {
-                console.error("Error connecting to server:", e);
-                globalExcelData = [];
-                renderMainTable();
-            }
-        }
 
-        function formatExcelDate(excelDate) {
-            if (!excelDate) return "";
-            if (typeof excelDate === 'number') {
-                return new Date(Math.round((excelDate - 25569) * 86400 * 1000)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            }
-            return String(excelDate);
-        }
+                groupedData = {};
 
-        function getColData(row, possibleKeys) {
-            const rowKeys = Object.keys(row);
-            for (let searchKey of possibleKeys) {
-                let normalizedSearch = String(searchKey).toLowerCase().replace(/[^a-z0-9]/g, '');
-                for (let rk of rowKeys) {
-                    let normalizedRk = String(rk).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (normalizedSearch === normalizedRk) {
-                        return row[rk];
+                // 1. First Pass: Create global list of all buyers to guarantee tabs are made
+                const globalBuyersList = new Set();
+                globalRawData.forEach(row => {
+                    const buyerRaw = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                    let buyer = String(buyerRaw).trim();
+                    if (buyer && buyer.toLowerCase() !== 'undefined' && buyer.toLowerCase() !== 'n/a') {
+                        globalBuyersList.add(buyer);
                     }
-                }
-            }
-            return '';
-        }
-
-        function applyFilterToArray() {
-            if (currentFilter === 'All') {
-                filteredData = [...globalExcelData];
-            } else {
-                filteredData = globalExcelData.filter(row => {
-                    const status = (getColData(row, ['Status']) || '').toLowerCase();
-                    if (currentFilter === 'Pending' && status.includes('pending')) return true;
-                    if (currentFilter === 'Acknowledged' && status.includes('acknowledged')) return true;
-                    if (currentFilter === 'Revised' && status.includes('revised')) return true;
-                    if (currentFilter === 'Completed' && (status.includes('completed') || status.includes('approved'))) return true;
-                    if (currentFilter === 'Cancel' && status.includes('cancel')) return true;
-                    return false;
                 });
+
+                // 2. Second Pass: Group Data Safely
+                globalRawData.forEach((row, index) => {
+                    const bNoRaw = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
+                    let bNo = String(bNoRaw).trim();
+                    if (!bNo || bNo.toLowerCase() === 'n/a' || bNo.toLowerCase() === 'undefined' || bNo === '') {
+                        bNo = 'Unknown_Booking_' + index;
+                    }
+
+                    const buyerRaw = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                    let buyer = String(buyerRaw).trim();
+                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') buyer = '';
+
+                    if (!groupedData[bNo]) {
+                        groupedData[bNo] = {
+                            bookingNo: bNo.startsWith('Unknown_Booking_') ? 'N/A' : bNo,
+                            bookingDate: formatExcelDate(getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date'])),
+                            buyers: new Set(), // Set to hold multiple buyers for one order
+                            buyerTeam: String(getColData(row, ['BuyerTeam', 'Team']) || 'N/A'),
+                            status: String(getColData(row, ['Status']) || 'Pending'),
+                            items: []
+                        };
+                    }
+
+                    if (buyer) {
+                        groupedData[bNo].buyers.add(buyer);
+                    }
+
+                    groupedData[bNo].items.push(row);
+                });
+
+                try {
+                    const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
+                    if (datesRes.ok) {
+                        const savedPlans = await datesRes.json();
+                        savedPlans.forEach(plan => {
+                            if (groupedData[plan.orderNo]) groupedData[plan.orderNo].dbData = plan;
+                        });
+                    }
+                } catch (e) { console.error("Error fetching db dates", e); }
+
+                // Generate tabs from the guaranteed global list
+                renderBuyerTabs(Array.from(globalBuyersList));
+                currentPage = 1;
+                renderMainTable();
+
+                document.getElementById('loadingData').classList.add('hidden');
+            } catch (e) {
+                console.error("Error processing data:", e);
+                document.getElementById('loadingData').classList.add('hidden');
             }
+        }
+
+        function renderBuyerTabs(buyers) {
+            const container = document.getElementById('buyerFilterContainer');
+            container.innerHTML = '';
+            buyers.forEach(b => {
+                const btn = document.createElement('div');
+                btn.className = `buyer-tab ${activeBuyer.toLowerCase() === b.toLowerCase() ? 'active' : ''}`;
+                btn.innerText = b;
+                btn.onclick = () => activateBuyerFilter(b);
+                container.appendChild(btn);
+            });
+        }
+
+        function activateBuyerFilter(buyer) {
+            activeBuyer = buyer;
+            document.querySelectorAll('.buyer-tab').forEach(t => {
+                if (t.innerText.toLowerCase() === buyer.toLowerCase()) t.classList.add('active');
+                else t.classList.remove('active');
+            });
+            currentPage = 1;
+            renderMainTable();
+        }
+
+        function filterByColumn(colIndex, val) {
+            colFilters[colIndex] = String(val).toLowerCase().trim();
+            currentPage = 1;
+            renderMainTable();
         }
 
         function renderMainTable() {
             const tbody = document.getElementById('mainTableBody');
-            tbody.innerHTML = '';
+            let data = Object.values(groupedData);
 
-            applyFilterToArray();
+            // FIX: Search across MULTIPLE buyers if an order has them
+            if (activeBuyer !== 'All') {
+                const searchB = activeBuyer.toLowerCase().trim();
+                data = data.filter(d => {
+                    const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim());
+                    return bArr.includes(searchB);
+                });
+            }
 
-            const totalRows = filteredData.length;
-            const dataTableContent = document.getElementById('dataTableContent');
-            const emptyState = document.getElementById('emptyState');
-            const paginationControls = document.getElementById('paginationControls');
+            for (let col in colFilters) {
+                const searchVal = colFilters[col];
+                if (!searchVal) continue;
+                data = data.filter(d => {
+                    const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
+                    if (col == 1) return String(d.bookingNo).toLowerCase().includes(searchVal);
+                    if (col == 2) return String(d.bookingDate).toLowerCase().includes(searchVal);
+                    if (col == 3) return String(displayBuyer).toLowerCase().includes(searchVal);
+                    if (col == 4) return String(d.status).toLowerCase().includes(searchVal);
+                    return true;
+                });
+            }
 
-            if (totalRows === 0) {
-                dataTableContent.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                paginationControls.classList.add('hidden');
+            const total = data.length;
+
+            document.getElementById('dataTableContentWrapper').classList.remove('hidden');
+
+            if (total === 0) {
+                document.getElementById('paginationControls').classList.add('hidden');
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 bg-white border-b border-gray-200"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found for your search.</td></tr>`;
                 return;
             }
 
-            dataTableContent.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-            paginationControls.classList.remove('hidden');
+            document.getElementById('paginationControls').classList.remove('hidden');
 
-            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            const totalPages = Math.ceil(total / rowsPerPage);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
 
-            const startIndex = (currentPage - 1) * rowsPerPage;
-            const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
+            const start = (currentPage - 1) * rowsPerPage;
+            const pagedData = data.slice(start, start + rowsPerPage);
 
-            const pageData = filteredData.slice(startIndex, endIndex);
+            let htmlContent = '';
+            pagedData.forEach(d => {
+                const safeBookingNo = encodeURIComponent(d.bookingNo === 'N/A' ? d.items[0].BookingNo || 'N/A' : d.bookingNo);
+                const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A'; // Show Abir, Rajin properly
 
-            pageData.forEach((row) => {
-                const originalGlobalIndex = globalExcelData.indexOf(row);
-
-                const orderNo = getColData(row, ['OrderNo']) || 'N/A';
-                const buyer = getColData(row, ['Buyer']) || 'N/A';
-                const bookingUnit = getColData(row, ['BookingUnit']) || 'N/A';
-                const fabricConst = getColData(row, ['FabricConstruction']) || 'N/A';
-                const gsm = getColData(row, ['GSM']) || 'N/A';
-                const reqQty = getColData(row, ['RequiredQtyKgs']) || '0';
-                const recDate = formatExcelDate(getColData(row, ['BookingReceiveDate']));
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 border-b border-gray-200 transition-colors";
-
-                tr.innerHTML = `
-                    <td class="p-2 border-r border-gray-200 text-center">
-                        <button onclick="openDetailedView(${originalGlobalIndex})" class="bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                    <td class="p-2 border-r border-gray-200 text-blue-700 font-semibold">${orderNo}</td>
-                    <td class="p-2 border-r border-gray-200 font-medium">${buyer}</td>
-                    <td class="p-2 border-r border-gray-200">${bookingUnit}</td>
-                    <td class="p-2 border-r border-gray-200">${fabricConst}</td>
-                    <td class="p-2 border-r border-gray-200">${gsm}</td>
-                    <td class="p-2 border-r border-gray-200 text-right">${reqQty}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${recDate}</td>
+                htmlContent += `
+                    <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                        <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${safeBookingNo}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
+                        <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.bookingNo}</td>
+                        <td class="p-2 border-r border-gray-200 text-center">${d.bookingDate}</td>
+                        <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${displayBuyer}</td>
+                        <td class="p-2 border-r border-gray-200 text-gray-600 font-medium">${d.status}</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
+            tbody.innerHTML = htmlContent;
 
-            updatePaginationUI(startIndex, endIndex, totalRows, totalPages);
+            updatePaginationUI(start, start + pagedData.length, total, totalPages);
         }
 
         function updatePaginationUI(start, end, total, totalPages) {
-            document.getElementById('pageInfo').innerText = `Showing ${start + 1}-${end} of ${total}`;
-
+            document.getElementById('pageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1}-${end} of ${total}`;
             const btnContainer = document.getElementById('pageButtons');
             btnContainer.innerHTML = '';
 
-            const prevBtn = document.createElement('button');
-            prevBtn.className = `px-3 py-1 rounded text-xs font-medium border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`;
-            prevBtn.innerHTML = '<i class="fas fa-chevron-left mr-1 text-[10px]"></i> Prev';
-            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderMainTable(); } };
-            btnContainer.appendChild(prevBtn);
+            const prev = document.createElement('button');
+            prev.className = `px-3 py-1.5 border border-gray-300 rounded font-medium text-xs transition-colors ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`;
+            prev.innerHTML = '<i class="fas fa-chevron-left mr-1 text-[10px]"></i> Prev';
+            prev.onclick = () => { if (currentPage > 1) { currentPage--; renderMainTable(); } };
+
+            const next = document.createElement('button');
+            next.className = `px-3 py-1.5 border border-gray-300 rounded font-medium text-xs transition-colors ${currentPage === totalPages || totalPages === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`;
+            next.innerHTML = 'Next <i class="fas fa-chevron-right ml-1 text-[10px]"></i>';
+            next.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
+
+            btnContainer.appendChild(prev);
 
             const pageText = document.createElement('span');
-            pageText.className = "px-3 py-1 font-semibold";
-            pageText.innerText = `Page ${currentPage} of ${totalPages}`;
+            pageText.className = "px-3 py-1 font-semibold text-gray-700 hidden sm:inline-block";
+            pageText.innerText = `Page ${totalPages === 0 ? 0 : currentPage} of ${totalPages}`;
             btnContainer.appendChild(pageText);
 
-            const nextBtn = document.createElement('button');
-            nextBtn.className = `px-3 py-1 rounded text-xs font-medium border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`;
-            nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right ml-1 text-[10px]"></i>';
-            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
-            btnContainer.appendChild(nextBtn);
+            btnContainer.appendChild(next);
         }
 
         function changeRowsPerPage() {
@@ -749,65 +777,92 @@
             renderMainTable();
         }
 
-        function resetFilterButtons() {
-            const allBtns = document.querySelectorAll('.filter-btn');
-            allBtns.forEach(btn => {
-                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
-                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
-            });
-            const allBtn = document.querySelector('.filter-all');
-            if (allBtn) {
-                allBtn.className = allBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
-                allBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
+        function openDetailedView(encodedBookingNo) {
+            const bookingNo = decodeURIComponent(encodedBookingNo);
+
+            let data = groupedData[bookingNo];
+            if (!data) {
+                data = Object.values(groupedData).find(g => g.bookingNo === bookingNo || (g.bookingNo === 'N/A' && g.items[0].BookingNo === bookingNo));
             }
-        }
+            if (!data) return;
 
-        function activateFilter(filterType, clickedBtn) {
-            const allBtns = document.querySelectorAll('.filter-btn');
-            allBtns.forEach(btn => {
-                btn.className = btn.className.replace('bg-green-700 text-white border-green-800', 'bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200');
-                btn.querySelector('i').className = 'fas fa-list mr-1 text-gray-400';
-            });
-            clickedBtn.className = clickedBtn.className.replace('bg-[#f4f5f7] text-gray-600 border-gray-300 hover:bg-gray-200', 'bg-green-700 text-white border-green-800');
-            clickedBtn.querySelector('i').className = 'fas fa-list mr-1 text-white';
+            currentViewIndex = bookingNo;
 
-            currentFilter = filterType;
-            currentPage = 1;
-            renderMainTable();
-        }
-
-        function openDetailedView(index) {
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.remove('hidden');
-            document.getElementById('detailedView').classList.add('flex');
 
-            currentViewIndex = index;
+            document.getElementById('detBookingNo').value = data.bookingNo;
+            document.getElementById('detBookingDate').value = data.bookingDate;
+            document.getElementById('detBuyer').value = data.buyers.size > 0 ? Array.from(data.buyers).join(', ') : 'N/A';
+            document.getElementById('detBuyerTeam').value = data.buyerTeam;
 
-            if (globalExcelData && globalExcelData[index]) {
-                const row = globalExcelData[index];
+            const firstRow = data.items[0] || {};
+            document.getElementById('detEWO').value = getColData(firstRow, ['OrderNo', 'EWO']);
+            document.getElementById('detOrderQty').value = getColData(firstRow, ['RequiredQtyKgs', 'Qty']);
 
-                document.getElementById('detOrderNo').value = getColData(row, ['OrderNo']) || '';
-                document.getElementById('detBuyer').value = getColData(row, ['Buyer']) || '';
-                document.getElementById('detBookingUnit').value = getColData(row, ['BookingUnit']) || '';
-                document.getElementById('detBookingDate').value = formatExcelDate(getColData(row, ['BookingReceiveDate']));
-                document.getElementById('detUnit').value = getColData(row, ['Unit']) || '';
-                document.getElementById('detUOM').value = getColData(row, ['UOM']) || '';
+            document.getElementById('detBookingUnit').value = getColData(firstRow, ['BookingUnit']) || '';
+            document.getElementById('detUnit').value = getColData(firstRow, ['Unit']) || '';
+            document.getElementById('detUOM').value = getColData(firstRow, ['UOM']) || '';
 
-                document.getElementById('fabConst').innerText = getColData(row, ['FabricConstruction']) || 'N/A';
+            if (data.dbData) {
+                document.getElementById('detEventDay').value = data.dbData.eventDay || '';
+                document.getElementById('detShip1').value = data.dbData.ship1 || '';
+                document.getElementById('detShipLast').value = data.dbData.shipLast || '';
+                document.getElementById('detYarnDate').value = data.dbData.yarnDate || '';
+                document.getElementById('detDeliStart').value = data.dbData.deliStart || '';
+                document.getElementById('detDeliEnd').value = data.dbData.deliEnd || '';
+                document.getElementById('detKnitStart').value = data.dbData.knitStart || '';
+                document.getElementById('detKnitEnd').value = data.dbData.knitEnd || '';
+                document.getElementById('detDyeStart').value = data.dbData.dyeStart || '';
+                document.getElementById('detDyeEnd').value = data.dbData.dyeEnd || '';
 
-                const details = getColData(row, ['FabricDetails']) || 'N/A';
-                document.getElementById('fabDetails').innerText = details;
-                document.getElementById('fabDetails').title = details;
-
-                document.getElementById('fabColor').innerText = getColData(row, ['Color']) || 'N/A';
-                document.getElementById('fabWidth').innerText = getColData(row, ['Width']) || 'N/A';
-                document.getElementById('fabGsm').innerText = getColData(row, ['GSM']) || 'N/A';
-                document.getElementById('fabQty').innerText = getColData(row, ['RequiredQtyKgs']) || '0';
-
-                document.getElementById('inputCuttingDate').value = row.savedCuttingDate || '';
-                document.getElementById('inputKnittingDate').value = row.savedKnittingDate || '';
-                document.getElementById('inputDeliveryDate').value = row.savedDeliveryDate || '';
+                if (document.getElementById('inputCuttingDate')) document.getElementById('inputCuttingDate').value = data.dbData.cuttingDate || '';
+                if (document.getElementById('inputKnittingDate')) document.getElementById('inputKnittingDate').value = data.dbData.knittingDate || '';
+                if (document.getElementById('inputDeliveryDate')) document.getElementById('inputDeliveryDate').value = data.dbData.deliveryDate || '';
+            } else {
+                document.querySelectorAll('.info-input:not([readonly])').forEach(el => el.value = '');
+                if (document.getElementById('inputCuttingDate')) document.getElementById('inputCuttingDate').value = '';
+                if (document.getElementById('inputKnittingDate')) document.getElementById('inputKnittingDate').value = '';
+                if (document.getElementById('inputDeliveryDate')) document.getElementById('inputDeliveryDate').value = '';
             }
+
+            const itemBody = document.getElementById('detFabricItemsBody');
+            let itemHtml = '';
+
+            data.items.forEach((item) => {
+                const fabConst = getColData(item, ['FabricConstruction']) || 'N/A';
+                const fabDetails = getColData(item, ['FabricDetails']) || 'N/A';
+                const width = getColData(item, ['Width']) || 'N/A';
+                const color = getColData(item, ['Color']) || 'N/A';
+                const gsm = getColData(item, ['GSM']) || 'N/A';
+                const greyReq = parseFloat(getColData(item, ['RequiredQtyKgs', 'GreyReq'])) || 0;
+
+                itemHtml += `
+                <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                    <td class="p-2 border-r border-gray-200">${fabConst}</td>
+                    <td class="p-2 border-r border-gray-200 max-w-[200px] truncate" title="${fabDetails}">${fabDetails}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${width}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${color}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${gsm}</td>
+                    <td class="p-2 border-r border-gray-200 font-semibold text-center">0</td>
+                    <td class="p-2 border-r border-gray-200 text-center">0</td>
+                    <td class="p-2 border-r border-gray-200 font-bold bg-gray-50 text-center">${greyReq}</td>
+                    <td class="p-2 border-r border-gray-200 bg-gray-50 text-center"><input type="number" class="w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="0" oninput="calculateBalance(this, ${greyReq})"></td>
+                    <td class="p-2 border-r border-gray-200 bg-gray-50 font-bold text-red-600 text-center">${greyReq}</td>
+                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none"></td>
+                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none"></td>
+                    <td class="p-2 border-r border-gray-200 text-center"><select class="p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none"><option>Confirm</option><option>Tentative</option></select></td>
+                    <td class="p-2 border-r border-gray-200"><input type="text" class="w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation"></td>
+                    <td class="p-2 border-r border-gray-200"><input type="text" class="w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes"></td>
+                </tr>`;
+            });
+            itemBody.innerHTML = itemHtml;
+        }
+
+        function calculateBalance(input, req) {
+            const prod = parseFloat(input.value) || 0;
+            const balanceCell = input.parentElement.nextElementSibling;
+            balanceCell.innerText = (req - prod).toFixed(2);
         }
 
         function closeDetailedView() {
@@ -816,187 +871,160 @@
             currentViewIndex = null;
         }
 
-        async function saveFabricDates() {
-            if (currentViewIndex === null) return;
+        async function saveFabricPlanning() {
+            const bookingNo = currentViewIndex;
+            if (!bookingNo) return;
 
-            const row = globalExcelData[currentViewIndex];
-            // FIXED: Ensuring Order No is treated as String for robust matching
-            const orderNoRaw = getColData(row, ['OrderNo']);
-            const orderNo = String(orderNoRaw).trim();
+            const payload = {
+                orderNo: bookingNo,
+                eventDay: document.getElementById('detEventDay').value,
+                ship1: document.getElementById('detShip1').value,
+                shipLast: document.getElementById('detShipLast').value,
+                yarnDate: document.getElementById('detYarnDate').value,
+                deliStart: document.getElementById('detDeliStart').value,
+                deliEnd: document.getElementById('detDeliEnd').value,
+                knitStart: document.getElementById('detKnitStart').value,
+                knitEnd: document.getElementById('detKnitEnd').value,
+                dyeStart: document.getElementById('detDyeStart').value,
+                dyeEnd: document.getElementById('detDyeEnd').value,
 
-            if (!orderNo || orderNo === 'N/A' || orderNo === 'undefined') {
-                alert('Error: Order No is missing for this record. Cannot save dates.');
-                return;
-            }
+                cuttingDate: document.getElementById('inputCuttingDate') ? document.getElementById('inputCuttingDate').value : '',
+                knittingDate: document.getElementById('inputKnittingDate') ? document.getElementById('inputKnittingDate').value : '',
+                deliveryDate: document.getElementById('inputDeliveryDate') ? document.getElementById('inputDeliveryDate').value : ''
+            };
 
-            const cuttingDate = document.getElementById('inputCuttingDate').value;
-            const knittingDate = document.getElementById('inputKnittingDate').value;
-            const deliveryDate = document.getElementById('inputDeliveryDate').value;
+            const saveBtn = document.getElementById('saveDatesBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
+            saveBtn.disabled = true;
 
-            if (cuttingDate || knittingDate || deliveryDate) {
-
-                const saveBtn = document.getElementById('saveDatesBtn');
-                const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
-                saveBtn.disabled = true;
-
-                try {
-                    const response = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderNo, cuttingDate, knittingDate, deliveryDate })
-                    });
-
-                    if (response.ok) {
-                        row.savedCuttingDate = cuttingDate;
-                        row.savedKnittingDate = knittingDate;
-                        row.savedDeliveryDate = deliveryDate;
-                        showToast('Dates saved permanently to Database!');
-                    } else {
-                        alert('Failed to save dates in database.');
+            try {
+                const res = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast("Planning Data Saved Successfully!");
+                    if (groupedData[bookingNo]) {
+                        groupedData[bookingNo].dbData = payload;
                     }
-                } catch (error) {
-                    console.error('Error saving dates:', error);
-                    alert('Server error while saving dates.');
-                } finally {
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
                 }
-
-            } else {
-                alert('Please select at least one date before saving.');
-            }
-        }
-
-        function renderTabs() {
-            const container = document.getElementById('dynamicTabsWrapper');
-            if (!container) return;
-            container.innerHTML = '';
-            openTabs.forEach(tab => {
-                const isActive = tab.id === activeTabId;
-                const tabEl = document.createElement('div');
-                tabEl.className = `px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 ${isActive ? 'bg-white font-semibold text-gray-700' : 'bg-gray-50 text-gray-600'}`;
-                tabEl.onclick = () => loadMenuData(tab.id, tab.title);
-                tabEl.innerHTML = `${tab.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500" onclick="closeTab(event, '${tab.id}')"></i>`;
-                container.appendChild(tabEl);
-            });
-        }
-
-        function closeTab(event, tabIdToClose) {
-            event.stopPropagation();
-            openTabs = openTabs.filter(tab => tab.id !== tabIdToClose);
-            if (openTabs.length === 0) showDashboardHome();
-            else if (activeTabId === tabIdToClose) loadMenuData(openTabs[openTabs.length - 1].id, openTabs[openTabs.length - 1].title);
-            else renderTabs();
+            } catch (e) { alert("Server Error while saving"); }
+            finally { saveBtn.innerHTML = originalText; saveBtn.disabled = false; }
         }
 
         async function handleExcelUpload() {
-            const fileInput = document.getElementById('excelFile');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert("Please select a file first"); return;
-            }
-            const formData = new FormData();
-            formData.append('document', file);
-            formData.append('uploadedBy', localStorage.getItem('username'));
-            formData.append('role', localStorage.getItem('role'));
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) return alert("Select file first");
+            const fd = new FormData();
+            fd.append('document', file);
+            fd.append('uploadedBy', localStorage.getItem('username'));
+            fd.append('role', localStorage.getItem('role'));
 
             try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/files/upload', {
-                    method: 'POST', body: formData
-                });
-                if (response.ok) {
-                    showToast("File uploaded successfully!");
-                    fileInput.value = "";
+                const res = await fetch('https://abir-backend-api.onrender.com/api/files/upload', { method: 'POST', body: fd });
+                if (res.ok) {
+                    showToast("Upload Success!");
+                    document.getElementById('excelFile').value = '';
                     loadUploadedFiles();
-                    if (activeTabId === 'fabricBooking') {
-                        fetchAndParseLatestExcel();
+                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') {
+                        fetchAndProcessData();
                     }
-                } else {
-                    alert("File Upload Failed");
-                }
-            } catch (error) {
-                alert("Problem Occurred In Server");
-            }
+                } else { alert("Upload error"); }
+            } catch (e) { alert("Server error"); }
         }
 
         async function loadUploadedFiles() {
             try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/files/all');
-                const files = await response.json();
-                const tableBody = document.getElementById('fileListBody');
-                if (!tableBody) return;
-                tableBody.innerHTML = '';
-                if (files.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">কোনো ফাইল আপলোড করা হয়নি।</td></tr>';
-                    return;
-                }
-                files.forEach(file => {
-                    const date = new Date(file.createdAt).toLocaleString();
-                    const fileUrl = `https://abir-backend-api.onrender.com/uploads/${file.savedName}`;
+                const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
+                const files = await res.json();
+                const body = document.getElementById('fileListBody');
 
-                    const row = `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="p-2 border font-medium text-blue-600 truncate max-w-xs"><i class="fas fa-file-alt mr-1 text-gray-400"></i> ${file.originalName}</td>
-                            <td class="p-2 border font-semibold">${file.uploadedBy}</td>
-                            <td class="p-2 border text-xs"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">${file.role}</span></td>
-                            <td class="p-2 border text-xs text-gray-600">${date}</td>
-                            <td class="p-2 border text-center flex justify-center gap-2">
-                                <a href="${fileUrl}" download="${file.originalName}" target="_blank" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-bold transition" title="Download File"><i class="fas fa-download"></i></a>
-                                <button onclick="deleteFile('${file._id}', '${file.originalName}')" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-xs font-bold transition" title="Delete File"><i class="fas fa-trash"></i></button>
+                let fileHtml = '';
+                if (files.length === 0) {
+                    fileHtml = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">No files uploaded.</td></tr>';
+                } else {
+                    files.forEach(f => {
+                        fileHtml += `
+                        <tr class="border-b hover:bg-gray-50 transition-colors">
+                            <td class="p-2 text-blue-600 font-medium"><i class="fas fa-file-excel mr-1 text-gray-400"></i> ${f.originalName}</td>
+                            <td class="p-2 font-semibold">${f.uploadedBy}</td>
+                            <td class="p-2"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold text-[10px]">${f.role}</span></td>
+                            <td class="p-2 text-xs text-gray-500">${new Date(f.createdAt).toLocaleString()}</td>
+                            <td class="p-2 text-center">
+                                <button onclick="deleteFile('${f._id}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`;
-                    tableBody.innerHTML += row;
-                });
-            } catch (error) {
-                console.error("Error loading files:", error);
-            }
-        }
-
-        async function deleteFile(fileId, fileName) {
-            if (!confirm(`Are you sure you want to delete "${fileName}"? This will also remove its data from the dashboard.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`https://abir-backend-api.onrender.com/api/files/${fileId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    showToast('File deleted successfully!');
-                    loadUploadedFiles();
-                    if (activeTabId === 'fabricBooking') {
-                        fetchAndParseLatestExcel();
-                    }
-                } else {
-                    alert('Failed to delete the file from server.');
+                    });
                 }
-            } catch (error) {
-                console.error('Error deleting file:', error);
-                alert('Server error while deleting file.');
+                body.innerHTML = fileHtml;
+            } catch (e) { console.error("Load file err", e); }
+        }
+
+        async function deleteFile(id) {
+            if (confirm("Are you sure you want to delete this file?")) {
+                try {
+                    await fetch(`https://abir-backend-api.onrender.com/api/files/${id}`, { method: 'DELETE' });
+                    showToast("File deleted!");
+                    loadUploadedFiles();
+                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') {
+                        fetchAndProcessData();
+                    }
+                } catch (e) { alert("Delete error"); }
             }
         }
 
-        function toggleSubmenu(headerElement, menuId) {
-            const menu = document.getElementById(menuId);
-            const icon = headerElement.querySelector('i');
-            if (menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden');
-                headerElement.classList.add('bg-sidebarActive', 'text-white');
-                icon.classList.replace('fa-chevron-left', 'fa-chevron-down');
-            } else {
-                menu.classList.add('hidden');
-                headerElement.classList.remove('bg-sidebarActive', 'text-white');
-                icon.classList.replace('fa-chevron-down', 'fa-chevron-left');
+        function getColData(row, keys) {
+            for (let k of keys) {
+                let norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let rk in row) {
+                    if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) return row[rk];
+                }
             }
+            return '';
+        }
+
+        function formatExcelDate(val) {
+            if (!val || val === 'N/A') return 'N/A';
+            if (typeof val === 'number') return new Date(Math.round((val - 25569) * 86400 * 1000)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            return val;
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('dynamicTabsWrapper');
+            let tabHtml = '';
+            openTabs.forEach(t => {
+                tabHtml += `
+                <div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.id}', '${t.title}')">
+                    ${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i>
+                </div>`;
+            });
+            container.innerHTML = tabHtml;
+        }
+
+        function closeTab(e, id) {
+            e.stopPropagation();
+            openTabs = openTabs.filter(t => t.id !== id);
+            if (openTabs.length === 0) showDashboardHome();
+            else loadMenuData(openTabs[0].id, openTabs[0].title);
+        }
+
+        function toggleSubmenu(header, id) {
+            const m = document.getElementById(id);
+            const i = header.querySelector('.fa-chevron-left');
+            m.classList.toggle('hidden');
+            i.classList.toggle('-rotate-90');
         }
 
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
+            const s = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
-            if (window.innerWidth >= 768) sidebar.classList.toggle('sidebar-collapsed');
-            else { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
+            if (window.innerWidth >= 768) {
+                s.classList.toggle('sidebar-collapsed');
+            } else {
+                s.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
         }
 
         function closeSidebarMobile() {
@@ -1005,6 +1033,7 @@
                 document.getElementById('mobileOverlay').classList.add('hidden');
             }
         }
+
     </script>
 </body>
 
