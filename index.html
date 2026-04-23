@@ -384,7 +384,7 @@
                         </div>
                         <div class="flex flex-col gap-2">
                             <div class="flex items-center"><span class="info-label">Buyer Name</span><input type="text"
-                                    id="detBuyer" class="info-input" readonly></div>
+                                    id="detBuyer" class="info-input text-blue-700 font-bold" readonly></div>
                             <div class="flex items-center"><span class="info-label">Buyer Team</span><input type="text"
                                     id="detBuyerTeam" class="info-input" readonly></div>
                             <div class="flex items-center"><span class="info-label">Order Qty. (Kg)</span><input
@@ -756,6 +756,7 @@
             renderMainTable();
         }
 
+        // ================= UPDATE: POPULATE SAVED ROW DATA =================
         function openDetailedView(encodedBookingNo) {
             const bookingNo = decodeURIComponent(encodedBookingNo);
 
@@ -794,6 +795,9 @@
                 document.getElementById('detKnitEnd').value = data.dbData.knitEnd || '';
                 document.getElementById('detDyeStart').value = data.dbData.dyeStart || '';
                 document.getElementById('detDyeEnd').value = data.dbData.dyeEnd || '';
+
+                // Load Saved Fabric Notes
+                document.getElementById('detFabNotes').value = data.dbData.fabricNotes || '';
             } else {
                 document.querySelectorAll('.info-input:not([readonly])').forEach(el => el.value = '');
             }
@@ -801,7 +805,7 @@
             const itemBody = document.getElementById('detFabricItemsBody');
             let itemHtml = '';
 
-            data.items.forEach((item) => {
+            data.items.forEach((item, index) => {
                 const fabConst = getColData(item, ['FabricConstruction']) || 'N/A';
                 const fabDetails = getColData(item, ['FabricDetails']) || 'N/A';
                 const width = getColData(item, ['Width']) || 'N/A';
@@ -809,8 +813,23 @@
                 const gsm = getColData(item, ['GSM']) || 'N/A';
                 const greyReq = parseFloat(getColData(item, ['RequiredQtyKgs', 'GreyReq'])) || 0;
 
+                // Load Saved Row Data
+                let savedRow = {};
+                if (data.dbData && data.dbData.fabricItems && data.dbData.fabricItems[index]) {
+                    savedRow = data.dbData.fabricItems[index];
+                }
+
+                const savedKnitProd = savedRow.knitProd || 0;
+                const currentBala = (greyReq - savedKnitProd).toFixed(2);
+                const savedStart = savedRow.startDate || '';
+                const savedEnd = savedRow.endDate || '';
+                const savedPlan = savedRow.planType || 'Confirm';
+                const savedLimitation = savedRow.limitation || '';
+                const savedRemarks = savedRow.remarks || '';
+
+                // ADDED .fabric-row class and unique identifiers for inputs
                 itemHtml += `
-                <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row">
                     <td class="p-2 border-r border-gray-200">${fabConst}</td>
                     <td class="p-2 border-r border-gray-200 max-w-[200px] truncate" title="${fabDetails}">${fabDetails}</td>
                     <td class="p-2 border-r border-gray-200 text-center">${width}</td>
@@ -819,13 +838,28 @@
                     <td class="p-2 border-r border-gray-200 font-semibold text-center">0</td>
                     <td class="p-2 border-r border-gray-200 text-center">0</td>
                     <td class="p-2 border-r border-gray-200 font-bold bg-gray-50 text-center">${greyReq}</td>
-                    <td class="p-2 border-r border-gray-200 bg-gray-50 text-center"><input type="number" class="w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="0" oninput="calculateBalance(this, ${greyReq})"></td>
-                    <td class="p-2 border-r border-gray-200 bg-gray-50 font-bold text-red-600 text-center">${greyReq}</td>
-                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none"></td>
-                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none"></td>
-                    <td class="p-2 border-r border-gray-200 text-center"><select class="p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none"><option>Confirm</option><option>Tentative</option></select></td>
-                    <td class="p-2 border-r border-gray-200"><input type="text" class="w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation"></td>
-                    <td class="p-2 border-r border-gray-200"><input type="text" class="w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes"></td>
+                    <td class="p-2 border-r border-gray-200 bg-gray-50 text-center">
+                        <input type="number" class="row-knit-prod w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="${savedKnitProd}" oninput="calculateBalance(this, ${greyReq})">
+                    </td>
+                    <td class="p-2 border-r border-gray-200 bg-gray-50 font-bold text-red-600 text-center">${currentBala}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">
+                        <input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${savedStart}">
+                    </td>
+                    <td class="p-2 border-r border-gray-200 text-center">
+                        <input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${savedEnd}">
+                    </td>
+                    <td class="p-2 border-r border-gray-200 text-center">
+                        <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none">
+                            <option value="Confirm" ${savedPlan === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                            <option value="Tentative" ${savedPlan === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                        </select>
+                    </td>
+                    <td class="p-2 border-r border-gray-200">
+                        <input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${savedLimitation}">
+                    </td>
+                    <td class="p-2 border-r border-gray-200">
+                        <input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${savedRemarks}">
+                    </td>
                 </tr>`;
             });
             itemBody.innerHTML = itemHtml;
@@ -843,9 +877,23 @@
             currentViewIndex = null;
         }
 
+        // ================= UPDATE: EXTRACT AND SAVE ARRAY DATA =================
         async function saveFabricPlanning() {
             const bookingNo = currentViewIndex;
             if (!bookingNo) return;
+
+            // Extract Row Data
+            const fabricItemsArr = [];
+            document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
+                fabricItemsArr.push({
+                    knitProd: row.querySelector('.row-knit-prod').value,
+                    startDate: row.querySelector('.row-start-date').value,
+                    endDate: row.querySelector('.row-end-date').value,
+                    planType: row.querySelector('.row-plan-type').value,
+                    limitation: row.querySelector('.row-limitation').value,
+                    remarks: row.querySelector('.row-remarks').value
+                });
+            });
 
             const payload = {
                 orderNo: bookingNo,
@@ -858,7 +906,11 @@
                 knitStart: document.getElementById('detKnitStart').value,
                 knitEnd: document.getElementById('detKnitEnd').value,
                 dyeStart: document.getElementById('detDyeStart').value,
-                dyeEnd: document.getElementById('detDyeEnd').value
+                dyeEnd: document.getElementById('detDyeEnd').value,
+
+                // Add New Fields
+                fabricNotes: document.getElementById('detFabNotes').value,
+                fabricItems: fabricItemsArr
             };
 
             const saveBtn = document.getElementById('saveDatesBtn');
@@ -874,7 +926,7 @@
                 if (res.ok) {
                     showToast("Planning Data Saved Successfully!");
                     if (groupedData[bookingNo]) {
-                        groupedData[bookingNo].dbData = payload;
+                        groupedData[bookingNo].dbData = payload; // Local cache update
                     }
                 }
             } catch (e) { alert("Server Error while saving"); }
