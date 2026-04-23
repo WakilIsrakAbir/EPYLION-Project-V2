@@ -28,6 +28,7 @@
         }
     </script>
     <style>
+        /* Custom Smooth Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -275,10 +276,9 @@
                 </div>
 
                 <div
-                    class="border border-gray-300 w-full bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0 relative">
-
+                    class="border border-gray-300 w-full bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0">
                     <div id="loadingData"
-                        class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white z-30">
+                        class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1">
                         <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
                         <p>Processing Data from Server...</p>
                     </div>
@@ -289,23 +289,23 @@
                                 <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
                                     <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">Manage
                                     </th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Booking No.</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date
                                     </th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Buyer Team</th>
                                     <th class="p-2 border-r border-gray-300 bg-tableHeader">Status</th>
                                 </tr>
                                 <tr class="bg-white border-b border-gray-300">
                                     <th class="p-1 border-r border-gray-300 bg-white"></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
                                             class="header-search" oninput="filterByColumn(1, this.value)"
-                                            placeholder="Search No..."></th>
+                                            placeholder="Search Booking..."></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
                                             class="header-search" oninput="filterByColumn(2, this.value)"
                                             placeholder="Search Date..."></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
                                             class="header-search" oninput="filterByColumn(3, this.value)"
-                                            placeholder="Search Buyer..."></th>
+                                            placeholder="Search Team..."></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
                                             class="header-search" oninput="filterByColumn(4, this.value)"
                                             placeholder="Search Status..."></th>
@@ -314,6 +314,13 @@
                             <tbody id="mainTableBody" class="text-gray-700 text-[11px]">
                             </tbody>
                         </table>
+
+                        <div id="emptyState"
+                            class="text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center h-full hidden">
+                            <i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i>
+                            <p>No data available. Please upload an Excel file from Data Management menu to view records.
+                            </p>
+                        </div>
                     </div>
 
                     <div id="paginationControls"
@@ -376,8 +383,8 @@
                                     id="detUOM" class="info-input" readonly></div>
                         </div>
                         <div class="flex flex-col gap-2">
-                            <div class="flex items-center"><span class="info-label">Buyer Name(s)</span><input
-                                    type="text" id="detBuyer" class="info-input text-blue-700 font-bold" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Buyer Name</span><input type="text"
+                                    id="detBuyer" class="info-input" readonly></div>
                             <div class="flex items-center"><span class="info-label">Buyer Team</span><input type="text"
                                     id="detBuyerTeam" class="info-input" readonly></div>
                             <div class="flex items-center"><span class="info-label">Order Qty. (Kg)</span><input
@@ -452,30 +459,6 @@
                             <tbody id="detFabricItemsBody" class="text-[10px] bg-white text-gray-700">
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full mt-2">
-                    <h4 class="font-bold text-gray-800 text-xs mb-3 border-b border-gray-200 pb-2">
-                        <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Update Process Dates
-                    </h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Cutting Date</label>
-                            <input type="date" id="inputCuttingDate"
-                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Knitting Date</label>
-                            <input type="date" id="inputKnittingDate"
-                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-600 mb-1">Delivery Date</label>
-                            <input type="date" id="inputDeliveryDate"
-                                class="w-full border border-gray-300 p-2 rounded text-[11px] outline-none focus:border-blue-500">
-                        </div>
                     </div>
                 </div>
 
@@ -591,7 +574,6 @@
 
                 groupedData = {};
 
-                // 1. First Pass: Create global list of all buyers to guarantee tabs are made
                 const globalBuyersList = new Set();
                 globalRawData.forEach(row => {
                     const buyerRaw = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
@@ -601,7 +583,6 @@
                     }
                 });
 
-                // 2. Second Pass: Group Data Safely
                 globalRawData.forEach((row, index) => {
                     const bNoRaw = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
                     let bNo = String(bNoRaw).trim();
@@ -617,7 +598,7 @@
                         groupedData[bNo] = {
                             bookingNo: bNo.startsWith('Unknown_Booking_') ? 'N/A' : bNo,
                             bookingDate: formatExcelDate(getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date'])),
-                            buyers: new Set(), // Set to hold multiple buyers for one order
+                            buyers: new Set(),
                             buyerTeam: String(getColData(row, ['BuyerTeam', 'Team']) || 'N/A'),
                             status: String(getColData(row, ['Status']) || 'Pending'),
                             items: []
@@ -641,7 +622,6 @@
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
 
-                // Generate tabs from the guaranteed global list
                 renderBuyerTabs(Array.from(globalBuyersList));
                 currentPage = 1;
                 renderMainTable();
@@ -685,7 +665,6 @@
             const tbody = document.getElementById('mainTableBody');
             let data = Object.values(groupedData);
 
-            // FIX: Search across MULTIPLE buyers if an order has them
             if (activeBuyer !== 'All') {
                 const searchB = activeBuyer.toLowerCase().trim();
                 data = data.filter(d => {
@@ -729,7 +708,7 @@
             let htmlContent = '';
             pagedData.forEach(d => {
                 const safeBookingNo = encodeURIComponent(d.bookingNo === 'N/A' ? d.items[0].BookingNo || 'N/A' : d.bookingNo);
-                const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A'; // Show Abir, Rajin properly
+                const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
 
                 htmlContent += `
                     <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
@@ -815,15 +794,8 @@
                 document.getElementById('detKnitEnd').value = data.dbData.knitEnd || '';
                 document.getElementById('detDyeStart').value = data.dbData.dyeStart || '';
                 document.getElementById('detDyeEnd').value = data.dbData.dyeEnd || '';
-
-                if (document.getElementById('inputCuttingDate')) document.getElementById('inputCuttingDate').value = data.dbData.cuttingDate || '';
-                if (document.getElementById('inputKnittingDate')) document.getElementById('inputKnittingDate').value = data.dbData.knittingDate || '';
-                if (document.getElementById('inputDeliveryDate')) document.getElementById('inputDeliveryDate').value = data.dbData.deliveryDate || '';
             } else {
                 document.querySelectorAll('.info-input:not([readonly])').forEach(el => el.value = '');
-                if (document.getElementById('inputCuttingDate')) document.getElementById('inputCuttingDate').value = '';
-                if (document.getElementById('inputKnittingDate')) document.getElementById('inputKnittingDate').value = '';
-                if (document.getElementById('inputDeliveryDate')) document.getElementById('inputDeliveryDate').value = '';
             }
 
             const itemBody = document.getElementById('detFabricItemsBody');
@@ -886,11 +858,7 @@
                 knitStart: document.getElementById('detKnitStart').value,
                 knitEnd: document.getElementById('detKnitEnd').value,
                 dyeStart: document.getElementById('detDyeStart').value,
-                dyeEnd: document.getElementById('detDyeEnd').value,
-
-                cuttingDate: document.getElementById('inputCuttingDate') ? document.getElementById('inputCuttingDate').value : '',
-                knittingDate: document.getElementById('inputKnittingDate') ? document.getElementById('inputKnittingDate').value : '',
-                deliveryDate: document.getElementById('inputDeliveryDate') ? document.getElementById('inputDeliveryDate').value : ''
+                dyeEnd: document.getElementById('detDyeEnd').value
             };
 
             const saveBtn = document.getElementById('saveDatesBtn');
