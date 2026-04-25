@@ -266,8 +266,8 @@
                 <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
                     <div class="flex flex-wrap gap-2">
                         <div id="mainPlanTab"
-                            class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm shadow-sm uppercase tracking-wide">
-                            PLAN NAME</div>
+                            class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm shadow-sm tracking-wide">
+                            Pending List</div>
                         <div class="bg-white px-6 py-2 border border-gray-300 font-bold text-gray-800 rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 transition-colors"
                             onclick="activateBuyerFilter('All')">All List</div>
                     </div>
@@ -383,8 +383,8 @@
                                     id="detUOM" class="info-input" readonly></div>
                         </div>
                         <div class="flex flex-col gap-2">
-                            <div class="flex items-center"><span class="info-label">Buyer Name</span><input type="text"
-                                    id="detBuyer" class="info-input text-blue-700 font-bold" readonly></div>
+                            <div class="flex items-center"><span class="info-label">Buyer Name(s)</span><input
+                                    type="text" id="detBuyer" class="info-input text-blue-700 font-bold" readonly></div>
                             <div class="flex items-center"><span class="info-label">Buyer Team</span><input type="text"
                                     id="detBuyerTeam" class="info-input" readonly></div>
                             <div class="flex items-center"><span class="info-label">Order Qty. (Kg)</span><input
@@ -533,7 +533,9 @@
 
         async function loadMenuData(dataKey, menuName) {
             activeTabId = dataKey;
-            document.getElementById('mainPlanTab').innerText = menuName;
+
+            // NOTE: mainPlanTab is no longer dynamically changed to menuName, it stays "Pending List"
+
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
@@ -756,7 +758,6 @@
             renderMainTable();
         }
 
-        // ================= UPDATE: POPULATE SAVED ROW DATA =================
         function openDetailedView(encodedBookingNo) {
             const bookingNo = decodeURIComponent(encodedBookingNo);
 
@@ -796,7 +797,6 @@
                 document.getElementById('detDyeStart').value = data.dbData.dyeStart || '';
                 document.getElementById('detDyeEnd').value = data.dbData.dyeEnd || '';
 
-                // Load Saved Fabric Notes
                 document.getElementById('detFabNotes').value = data.dbData.fabricNotes || '';
             } else {
                 document.querySelectorAll('.info-input:not([readonly])').forEach(el => el.value = '');
@@ -813,7 +813,6 @@
                 const gsm = getColData(item, ['GSM']) || 'N/A';
                 const greyReq = parseFloat(getColData(item, ['RequiredQtyKgs', 'GreyReq'])) || 0;
 
-                // Load Saved Row Data
                 let savedRow = {};
                 if (data.dbData && data.dbData.fabricItems && data.dbData.fabricItems[index]) {
                     savedRow = data.dbData.fabricItems[index];
@@ -827,7 +826,6 @@
                 const savedLimitation = savedRow.limitation || '';
                 const savedRemarks = savedRow.remarks || '';
 
-                // ADDED .fabric-row class and unique identifiers for inputs
                 itemHtml += `
                 <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row">
                     <td class="p-2 border-r border-gray-200">${fabConst}</td>
@@ -877,12 +875,10 @@
             currentViewIndex = null;
         }
 
-        // ================= UPDATE: EXTRACT AND SAVE ARRAY DATA =================
         async function saveFabricPlanning() {
             const bookingNo = currentViewIndex;
             if (!bookingNo) return;
 
-            // Extract Row Data
             const fabricItemsArr = [];
             document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
                 fabricItemsArr.push({
@@ -908,7 +904,6 @@
                 dyeStart: document.getElementById('detDyeStart').value,
                 dyeEnd: document.getElementById('detDyeEnd').value,
 
-                // Add New Fields
                 fabricNotes: document.getElementById('detFabNotes').value,
                 fabricItems: fabricItemsArr
             };
@@ -926,7 +921,7 @@
                 if (res.ok) {
                     showToast("Planning Data Saved Successfully!");
                     if (groupedData[bookingNo]) {
-                        groupedData[bookingNo].dbData = payload; // Local cache update
+                        groupedData[bookingNo].dbData = payload;
                     }
                 }
             } catch (e) { alert("Server Error while saving"); }
