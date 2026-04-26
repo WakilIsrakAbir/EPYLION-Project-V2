@@ -566,27 +566,14 @@
             closeSidebarMobile();
         }
 
-        // ================= LIST ROUTING LOGIC (SMART FIX) =================
-        function getBookingStatus(d) {
-            if (!d.dbData || !d.dbData.fabricItems || d.dbData.fabricItems.length === 0) {
-                return 'Pending';
-            }
-            const items = d.dbData.fabricItems;
-            let hasTentative = false;
-            let hasEmpty = false;
-
-            for (let item of items) {
-                if (item.planType === 'Tentative') {
-                    hasTentative = true;
-                } else if (item.planType !== 'Confirm') {
-                    // If any item is NOT Confirm and NOT Tentative (e.g., empty/Select), it's pending
-                    hasEmpty = true;
-                }
-            }
-
-            if (hasTentative) return 'Tentative';
-            if (hasEmpty) return 'Pending';
-            return 'Confirm'; // Returns Confirm ONLY if all items are Confirm
+        // ================= COMPOSITE KEY GENERATOR =================
+        function generateItemId(item) {
+            const fabConst = String(getColData(item, ['FabricConstruction']) || 'N/A').trim();
+            const fabDetails = String(getColData(item, ['FabricDetails']) || 'N/A').trim();
+            const width = String(getColData(item, ['Width']) || 'N/A').trim();
+            const color = String(getColData(item, ['Color']) || 'N/A').trim();
+            const gsm = String(getColData(item, ['GSM']) || 'N/A').trim();
+            return `${fabConst}_${fabDetails}_${width}_${color}_${gsm}`.toLowerCase().replace(/\s+/g, '');
         }
 
         function activateMainTab(tabName) {
@@ -637,15 +624,7 @@
 
                 groupedData = {};
 
-                const globalBuyersList = new Set();
-                globalRawData.forEach(row => {
-                    const buyerRaw = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerRaw).trim();
-                    if (buyer && buyer.toLowerCase() !== 'undefined' && buyer.toLowerCase() !== 'n/a') {
-                        globalBuyersList.add(buyer);
-                    }
-                });
-
+                // 1. Group Excel Items by Booking No
                 globalRawData.forEach((row, index) => {
                     const bNoRaw = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
                     let bNo = String(bNoRaw).trim();
@@ -664,27 +643,143 @@
                             buyers: new Set(),
                             buyerTeam: String(getColData(row, ['BuyerTeam', 'Team']) || 'N/A'),
                             status: String(getColData(row, ['Status']) || 'Pending'),
-                            items: []
+                            excelItems: [],
+                            dbData: null
                         };
                     }
 
-                    if (buyer) {
-                        groupedData[bNo].buyers.add(buyer);
-                    }
-
-                    groupedData[bNo].items.push(row);
+                    if (buyer) groupedData[bNo].buyers.add(buyer);
+                    groupedData[bNo].excelItems.push(row);
                 });
 
+                // 2. Fetch Database Items
                 try {
                     const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
                     if (datesRes.ok) {
                         const savedPlans = await datesRes.json();
                         savedPlans.forEach(plan => {
-                            if (groupedData[plan.orderNo]) groupedData[plan.orderNo].dbData = plan;
+                            if (groupedData[plan.orderNo]) {
+                                groupedData[plan.orderNo].dbData = plan;
+                            } else {
+                                // If DB has order but Excel doesn't, still show it to preserve history
+                                groupedData[plan.orderNo] = {
+                                    bookingNo: plan.orderNo,
+                                    bookingDate: 'N/A',
+                                    buyers: new Set(),
+                                    buyerTeam: 'N/A',
+                                    status: 'N/A',
+                                    excelItems: [],
+                                    dbData: plan
+                                };
+                            }
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
 
+                // 3. The Smart Merge Logic
+                const globalBuyersList = new Set();
+
+                Object.values(groupedData).forEach(group => {
+                    const mergedItemsMap = new Map();
+
+                    // Step A: Load DB items
+                    if (group.dbData && group.dbData.fabricItems) {
+                        group.dbData.fabricItems.forEach(dbItem => {
+                            if (dbItem.itemId) {
+                                mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
+                            }
+                        });
+                    }
+
+                    // Step B: Load Excel items
+                    group.excelItems.forEach(exItem => {
+                        const itemId = generateItemId(exItem);
+                        const fabConst = getColData(exItem, ['FabricConstruction']) || 'N/A';
+                        const fabDetails = getColData(exItem, ['FabricDetails']) || 'N/A';
+                        const width = getColData(exItem, ['Width']) || 'N/A';
+                        const color = getColData(exItem, ['Color']) || 'N/A';
+                        const gsm = getColData(exItem, ['GSM']) || 'N/A';
+                        const greyReq = parseFloat(getColData(exItem, ['RequiredQtyKgs', 'GreyReq'])) || 0;
+
+                        if (mergedItemsMap.has(itemId)) {
+                            const existing = mergedItemsMap.get(itemId);
+                            existing.greyReq = greyReq;
+                            existing.source = 'Both';
+                            existing.excelRow = exItem;
+                            mergedItemsMap.set(itemId, existing);
+                        } else {
+                            mergedItemsMap.set(itemId, {
+                                itemId, fabConst, fabDetails, width, color, gsm, greyReq,
+                                knitProd: 0, startDate: '', endDate: '', planType: '', limitation: '', remarks: '',
+                                source: 'Excel', excelRow: exItem
+                            });
+                        }
+                    });
+
+                    group.mergedItems = Array.from(mergedItemsMap.values());
+
+                    // =========================================================
+                    // Step C: Determine Mutually Exclusive Status Routing
+                    // =========================================================
+                    group.isPending = false;
+                    group.isConfirm = false;
+                    group.isTentative = false;
+
+                    let hasPending = false;
+                    let hasTentative = false;
+                    let allConfirm = true;
+
+                    if (group.mergedItems.length === 0) {
+                        hasPending = true;
+                        allConfirm = false;
+                    } else {
+                        group.mergedItems.forEach(item => {
+                            if (!item.planType || item.planType === '' || item.planType === 'Select') {
+                                hasPending = true;
+                                allConfirm = false;
+                            } else if (item.planType === 'Tentative') {
+                                hasTentative = true;
+                                allConfirm = false;
+                            }
+                        });
+                    }
+
+                    // Hierarchy of routing: Pending > Tentative > Confirm
+                    if (hasPending) {
+                        group.isPending = true;
+                    } else if (hasTentative) {
+                        group.isTentative = true;
+                    } else if (allConfirm) {
+                        group.isConfirm = true;
+                    }
+
+                    // General Info Extract
+                    const firstExcelItem = group.mergedItems.find(i => i.excelRow)?.excelRow || {};
+                    group.generalInfo = {
+                        EWO: getColData(firstExcelItem, ['OrderNo', 'EWO']),
+                        OrderQty: getColData(firstExcelItem, ['RequiredQtyKgs', 'Qty']),
+                        BookingUnit: getColData(firstExcelItem, ['BookingUnit']),
+                        Unit: getColData(firstExcelItem, ['Unit']),
+                        FinalConf: getColData(firstExcelItem, ['FinalConfirmation', 'Status']),
+                        EventDay: getColData(firstExcelItem, ['EventDay']),
+                        Ship1: formatExcelDate(getColData(firstExcelItem, ['1stShipmentDate', 'Ship1'])),
+                        ShipLast: formatExcelDate(getColData(firstExcelItem, ['LastShipmentDate', 'ShipLast'])),
+                        YarnDate: formatExcelDate(getColData(firstExcelItem, ['TAYarnDate', 'YarnDate'])),
+                        DeliStart: formatExcelDate(getColData(firstExcelItem, ['TADeliStart', 'DeliStart'])),
+                        DeliEnd: formatExcelDate(getColData(firstExcelItem, ['TADeliEnd', 'DeliEnd'])),
+                        KnitStart: formatExcelDate(getColData(firstExcelItem, ['TAKnittingStart', 'KnitStart'])),
+                        KnitEnd: formatExcelDate(getColData(firstExcelItem, ['TAKnittingEnd', 'KnitEnd'])),
+                        DyeStart: formatExcelDate(getColData(firstExcelItem, ['TADyeingStart', 'DyeStart'])),
+                        DyeEnd: formatExcelDate(getColData(firstExcelItem, ['TADyeingEnd', 'DyeEnd'])),
+                        FabNotes: getColData(firstExcelItem, ['FabricNotes', 'Notes'])
+                    };
+
+                    group.buyers.forEach(b => {
+                        if (b && b !== 'N/A') globalBuyersList.add(b);
+                    });
+                });
+
+                renderBuyerTabs(Array.from(globalBuyersList));
                 currentPage = 1;
                 renderMainTable();
 
@@ -709,12 +804,10 @@
 
         function activateBuyerFilter(buyer) {
             activeBuyer = buyer;
-
             document.querySelectorAll('.buyer-tab').forEach(t => {
                 if (t.innerText.toLowerCase() === buyer.toLowerCase()) t.classList.add('active');
                 else t.classList.remove('active');
             });
-
             currentPage = 1;
             renderMainTable();
         }
@@ -754,10 +847,10 @@
                 return;
             }
 
-            // Filter by routing state
-            data = data.filter(d => getBookingStatus(d) === activeMainTab);
+            if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
+            else if (activeMainTab === 'Confirm') data = data.filter(d => d.isConfirm);
+            else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
 
-            // Generate Buyers for current valid state
             const buyersSet = new Set();
             data.forEach(d => {
                 d.buyers.forEach(b => {
@@ -819,7 +912,7 @@
 
             let htmlContent = '';
             pagedData.forEach(d => {
-                const safeBookingNo = encodeURIComponent(d.bookingNo === 'N/A' ? d.items[0].BookingNo || 'N/A' : d.bookingNo);
+                const safeBookingNo = encodeURIComponent(d.bookingNo === 'N/A' ? d.excelItems[0]?.BookingNo || 'N/A' : d.bookingNo);
                 const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
 
                 htmlContent += `
@@ -872,9 +965,6 @@
             const bookingNo = decodeURIComponent(encodedBookingNo);
 
             let data = groupedData[bookingNo];
-            if (!data) {
-                data = Object.values(groupedData).find(g => g.bookingNo === bookingNo || (g.bookingNo === 'N/A' && g.items[0].BookingNo === bookingNo));
-            }
             if (!data) return;
 
             currentViewIndex = bookingNo;
@@ -882,87 +972,69 @@
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.remove('hidden');
 
-            const firstRow = data.items[0] || {};
-
-            // ================= READ ONLY GENERAL INFO =================
-            document.getElementById('detEWO').value = getColData(firstRow, ['OrderNo', 'EWO']);
+            document.getElementById('detEWO').value = data.generalInfo.EWO || '';
             document.getElementById('detBookingNo').value = data.bookingNo;
             document.getElementById('detBookingDate').value = data.bookingDate;
             document.getElementById('detBuyer').value = data.buyers.size > 0 ? Array.from(data.buyers).join(', ') : 'N/A';
             document.getElementById('detBuyerTeam').value = data.buyerTeam;
-            document.getElementById('detOrderQty').value = getColData(firstRow, ['RequiredQtyKgs', 'Qty']);
-            document.getElementById('detBookingUnit').value = getColData(firstRow, ['BookingUnit']) || '';
-            document.getElementById('detUnit').value = getColData(firstRow, ['Unit']) || '';
-            document.getElementById('detFinalConf').value = getColData(firstRow, ['FinalConfirmation', 'Status']) || '';
+            document.getElementById('detOrderQty').value = data.generalInfo.OrderQty || '';
+            document.getElementById('detBookingUnit').value = data.generalInfo.BookingUnit || '';
+            document.getElementById('detUnit').value = data.generalInfo.Unit || '';
+            document.getElementById('detFinalConf').value = data.generalInfo.FinalConf || '';
 
-            document.getElementById('detEventDay').value = getColData(firstRow, ['EventDay']) || '';
-            document.getElementById('detShip1').value = formatExcelDate(getColData(firstRow, ['1stShipmentDate', 'Ship1'])) || '';
-            document.getElementById('detShipLast').value = formatExcelDate(getColData(firstRow, ['LastShipmentDate', 'ShipLast'])) || '';
-            document.getElementById('detYarnDate').value = formatExcelDate(getColData(firstRow, ['TAYarnDate', 'YarnDate'])) || '';
-            document.getElementById('detDeliStart').value = formatExcelDate(getColData(firstRow, ['TADeliStart', 'DeliStart'])) || '';
-            document.getElementById('detDeliEnd').value = formatExcelDate(getColData(firstRow, ['TADeliEnd', 'DeliEnd'])) || '';
-            document.getElementById('detKnitStart').value = formatExcelDate(getColData(firstRow, ['TAKnittingStart', 'KnitStart'])) || '';
-            document.getElementById('detKnitEnd').value = formatExcelDate(getColData(firstRow, ['TAKnittingEnd', 'KnitEnd'])) || '';
-            document.getElementById('detDyeStart').value = formatExcelDate(getColData(firstRow, ['TADyeingStart', 'DyeStart'])) || '';
-            document.getElementById('detDyeEnd').value = formatExcelDate(getColData(firstRow, ['TADyeingEnd', 'DyeEnd'])) || '';
-            document.getElementById('detFabNotes').value = getColData(firstRow, ['FabricNotes', 'Notes']) || '';
+            document.getElementById('detEventDay').value = data.generalInfo.EventDay || '';
+            document.getElementById('detShip1').value = data.generalInfo.Ship1 || '';
+            document.getElementById('detShipLast').value = data.generalInfo.ShipLast || '';
+            document.getElementById('detYarnDate').value = data.generalInfo.YarnDate || '';
+            document.getElementById('detDeliStart').value = data.generalInfo.DeliStart || '';
+            document.getElementById('detDeliEnd').value = data.generalInfo.DeliEnd || '';
+            document.getElementById('detKnitStart').value = data.generalInfo.KnitStart || '';
+            document.getElementById('detKnitEnd').value = data.generalInfo.KnitEnd || '';
+            document.getElementById('detDyeStart').value = data.generalInfo.DyeStart || '';
+            document.getElementById('detDyeEnd').value = data.generalInfo.DyeEnd || '';
+            document.getElementById('detFabNotes').value = data.generalInfo.FabNotes || '';
 
             const itemBody = document.getElementById('detFabricItemsBody');
             let itemHtml = '';
 
-            data.items.forEach((item, index) => {
-                const fabConst = getColData(item, ['FabricConstruction']) || 'N/A';
-                const fabDetails = getColData(item, ['FabricDetails']) || 'N/A';
-                const width = getColData(item, ['Width']) || 'N/A';
-                const color = getColData(item, ['Color']) || 'N/A';
-                const gsm = getColData(item, ['GSM']) || 'N/A';
-                const greyReq = parseFloat(getColData(item, ['RequiredQtyKgs', 'GreyReq'])) || 0;
+            // Show all items for the selected order (Total part e pending e dekhabe)
+            data.mergedItems.forEach((item) => {
+                const currentBala = (item.greyReq - (parseFloat(item.knitProd) || 0)).toFixed(2);
 
-                let savedRow = {};
-                if (data.dbData && data.dbData.fabricItems && data.dbData.fabricItems[index]) {
-                    savedRow = data.dbData.fabricItems[index];
-                }
-
-                const savedKnitProd = savedRow.knitProd || 0;
-                const currentBala = (greyReq - savedKnitProd).toFixed(2);
-                const savedStart = savedRow.startDate || '';
-                const savedEnd = savedRow.endDate || '';
-                const savedPlan = savedRow.planType || '';
-                const savedLimitation = savedRow.limitation || '';
-                const savedRemarks = savedRow.remarks || '';
+                let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row";
 
                 itemHtml += `
-                <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row">
-                    <td class="p-2 border-r border-gray-200">${fabConst}</td>
-                    <td class="p-2 border-r border-gray-200 max-w-[200px] truncate" title="${fabDetails}">${fabDetails}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${width}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${color}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${gsm}</td>
+                <tr class="${rowClass}" data-itemid="${item.itemId}" data-fabconst="${item.fabConst}" data-fabdetails="${item.fabDetails}" data-width="${item.width}" data-color="${item.color}" data-gsm="${item.gsm}" data-greyreq="${item.greyReq}">
+                    <td class="p-2 border-r border-gray-200">${item.fabConst}</td>
+                    <td class="p-2 border-r border-gray-200 max-w-[200px] truncate" title="${item.fabDetails}">${item.fabDetails}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${item.width}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${item.color}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${item.gsm}</td>
                     <td class="p-2 border-r border-gray-200 font-semibold text-center">0</td>
                     <td class="p-2 border-r border-gray-200 text-center">0</td>
-                    <td class="p-2 border-r border-gray-200 font-bold bg-gray-50 text-center">${greyReq}</td>
+                    <td class="p-2 border-r border-gray-200 font-bold bg-gray-50 text-center">${item.greyReq}</td>
                     <td class="p-2 border-r border-gray-200 bg-gray-50 text-center">
-                        <input type="number" class="row-knit-prod w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="${savedKnitProd}" oninput="calculateBalance(this, ${greyReq})">
+                        <input type="number" class="row-knit-prod w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="${item.knitProd}" oninput="calculateBalance(this, ${item.greyReq})">
                     </td>
                     <td class="p-2 border-r border-gray-200 bg-gray-50 font-bold text-red-600 text-center">${currentBala}</td>
                     <td class="p-2 border-r border-gray-200 text-center">
-                        <input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${savedStart}">
+                        <input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate}">
                     </td>
                     <td class="p-2 border-r border-gray-200 text-center">
-                        <input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${savedEnd}">
+                        <input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate}">
                     </td>
                     <td class="p-2 border-r border-gray-200 text-center">
                         <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
-                            <option value="" ${savedPlan === '' ? 'selected' : ''}>Select</option>
-                            <option value="Confirm" ${savedPlan === 'Confirm' ? 'selected' : ''}>Confirm</option>
-                            <option value="Tentative" ${savedPlan === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            <option value="" ${item.planType === '' ? 'selected' : ''}>Select</option>
+                            <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                            <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
                         </select>
                     </td>
                     <td class="p-2 border-r border-gray-200">
-                        <input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${savedLimitation}">
+                        <input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation}">
                     </td>
                     <td class="p-2 border-r border-gray-200">
-                        <input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${savedRemarks}">
+                        <input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks}">
                     </td>
                 </tr>`;
             });
@@ -985,9 +1057,40 @@
             const bookingNo = currentViewIndex;
             if (!bookingNo) return;
 
-            const fabricItemsArr = [];
+            const existingData = groupedData[bookingNo];
+            if (!existingData) return;
+
+            const allItemsMap = new Map();
+            if (existingData.mergedItems) {
+                existingData.mergedItems.forEach(item => {
+                    allItemsMap.set(item.itemId, {
+                        itemId: item.itemId,
+                        fabConst: item.fabConst,
+                        fabDetails: item.fabDetails,
+                        width: item.width,
+                        color: item.color,
+                        gsm: item.gsm,
+                        greyReq: item.greyReq,
+                        knitProd: item.knitProd,
+                        startDate: item.startDate,
+                        endDate: item.endDate,
+                        planType: item.planType,
+                        limitation: item.limitation,
+                        remarks: item.remarks
+                    });
+                });
+            }
+
             document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
-                fabricItemsArr.push({
+                const id = row.dataset.itemid;
+                allItemsMap.set(id, {
+                    itemId: id,
+                    fabConst: row.dataset.fabconst,
+                    fabDetails: row.dataset.fabdetails,
+                    width: row.dataset.width,
+                    color: row.dataset.color,
+                    gsm: row.dataset.gsm,
+                    greyReq: parseFloat(row.dataset.greyreq),
                     knitProd: row.querySelector('.row-knit-prod').value,
                     startDate: row.querySelector('.row-start-date').value,
                     endDate: row.querySelector('.row-end-date').value,
@@ -997,7 +1100,8 @@
                 });
             });
 
-            // Only sending editable array data and ID. The rest are locked.
+            const fabricItemsArr = Array.from(allItemsMap.values());
+
             const payload = {
                 orderNo: bookingNo,
                 fabricItems: fabricItemsArr
@@ -1015,15 +1119,9 @@
                 });
                 if (res.ok) {
                     showToast("Planning Data Saved Successfully!");
-                    if (groupedData[bookingNo]) {
-                        // Update local cache so routing takes effect immediately
-                        if (!groupedData[bookingNo].dbData) groupedData[bookingNo].dbData = {};
-                        groupedData[bookingNo].dbData.fabricItems = fabricItemsArr;
-                    }
-                    // Auto-close and refresh table to show movement
+                    await fetchAndProcessData();
                     setTimeout(() => {
                         closeDetailedView();
-                        renderMainTable();
                     }, 500);
                 }
             } catch (e) { alert("Server Error while saving"); }
