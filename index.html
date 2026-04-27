@@ -113,6 +113,28 @@
             border-color: #2563eb;
             color: white;
         }
+
+        /* Upload Tabs Styling */
+        .upload-tab {
+            cursor: pointer;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .upload-tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .upload-tab:hover:not(.active) {
+            color: #374151;
+            border-bottom-color: #d1d5db;
+        }
     </style>
 </head>
 
@@ -218,35 +240,50 @@
                 </div>
             </div>
             <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
-                <div
-                    class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-                    <div>
-                        <h3 class="text-md font-bold text-gray-700"><i
-                                class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Source Data</h3>
-                        <p class="text-xs text-gray-500 mt-1">Upload Excel (.xlsx, .xls) files to update the database.
-                            Same names will overwrite.</p>
+
+                <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col shrink-0">
+                    <h3 class="text-lg font-bold text-gray-700 mb-3"><i
+                            class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Source Data</h3>
+
+                    <div class="flex gap-2 border-b border-gray-200 mb-4 overflow-x-auto custom-scrollbar">
+                        <div class="upload-tab active" id="tabGeneral" onclick="setUploadCategory('General')">General
+                            Base Data</div>
+                        <div class="upload-tab" id="tabKnitting" onclick="setUploadCategory('Knitting')">Knitting Plan
+                            Data</div>
+                        <div class="upload-tab" id="tabDyeing" onclick="setUploadCategory('Dyeing')">Dyeing Plan Data
+                        </div>
+                        <div class="upload-tab" id="tabFinishing" onclick="setUploadCategory('Finishing')">Finishing
+                            Plan Data</div>
+                        <div class="upload-tab" id="tabDelivery" onclick="setUploadCategory('Delivery')">Delivery Plan
+                            Data</div>
                     </div>
-                    <div id="uploadArea"
-                        class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
-                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
-                            class="text-xs w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
-                        <button onclick="handleExcelUpload()"
-                            class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors"><i
-                                class="fas fa-upload mr-1"></i> Upload Data</button>
+
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <p class="text-xs text-gray-500">Currently uploading for: <strong class="text-blue-600"
+                                id="currentUploadLabel">General Base Data</strong></p>
+                        <div id="uploadArea"
+                            class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
+                            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
+                                class="text-xs w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
+                            <button onclick="handleExcelUpload()"
+                                class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors"><i
+                                    class="fas fa-upload mr-1"></i> Upload Data</button>
+                        </div>
                     </div>
                 </div>
+
                 <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 shrink-0">
                     <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700"><i
-                            class="fas fa-file-excel text-green-600 mr-2"></i> Recent Source Files</h3>
+                            class="fas fa-file-excel text-green-600 mr-2"></i> Uploaded Files Directory</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700">
+                                    <th class="p-2 border font-semibold">File Category</th>
                                     <th class="p-2 border font-semibold">File Name</th>
                                     <th class="p-2 border font-semibold">Uploaded By</th>
-                                    <th class="p-2 border font-semibold">Role</th>
                                     <th class="p-2 border font-semibold">Date & Time</th>
-                                    <th class="p-2 border font-semibold text-center w-[120px]">Action</th>
+                                    <th class="p-2 border font-semibold text-center w-[80px]">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="fileListBody"></tbody>
@@ -279,7 +316,6 @@
                             class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
                             onclick="activateMainTab('All')">All List</div>
                     </div>
-
                     <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
                         id="buyerFilterContainer"></div>
                 </div>
@@ -290,13 +326,13 @@
                     <div id="loadingData"
                         class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white z-30">
                         <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
-                        <p>Processing Data from Server...</p>
+                        <p>Processing Department Data...</p>
                     </div>
 
                     <div id="emptyState"
                         class="hidden flex-1 flex-col justify-center items-center bg-white text-gray-500 w-full h-full p-10 text-center">
                         <i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i>
-                        <p>No data available.</p>
+                        <p>No data available for this plan.</p>
                     </div>
 
                     <div class="flex-1 overflow-auto custom-scrollbar w-full bg-white" id="dataTableContentWrapper">
@@ -360,7 +396,7 @@
                         title="Back">
                         <i class="fas fa-arrow-left text-lg"></i>
                     </button>
-                    <h3 class="font-bold text-gray-800 text-sm">General Information & Planning</h3>
+                    <h3 class="font-bold text-gray-800 text-sm" id="detailPageTitle">General Information & Planning</h3>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="closeDetailedView()"
@@ -437,31 +473,21 @@
                     class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col">
                     <div
                         class="bg-gray-100 p-2 font-bold text-gray-800 text-xs flex items-center border-b border-gray-200 shrink-0">
-                        <i class="fas fa-layer-group text-blue-500 mr-2"></i> Fabric Item Information
+                        <i class="fas fa-layer-group text-blue-500 mr-2"></i> Department Fabric Items
                     </div>
 
                     <div class="overflow-x-auto custom-scrollbar w-full bg-white">
                         <table class="w-full text-left whitespace-nowrap border-collapse min-w-[1600px]">
                             <thead class="bg-white shadow-sm">
-                                <tr class="text-[10px] font-bold text-gray-700 bg-gray-100 border-b border-gray-300">
-                                    <th class="p-2 border-r border-gray-300">Fabric Construction</th>
-                                    <th class="p-2 border-r border-gray-300">Fabric Details</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Width</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Color</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">GSM</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Allocated QTY</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Allocated Bal.</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Grey Req.</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Knit Prod.</th>
-                                    <th class="p-2 border-r border-gray-300 text-center">Knit Bala.</th>
-                                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200" colspan="2">
-                                        Knitting Planning</th>
+                                <tr class="text-[10px] font-bold text-gray-700 bg-gray-100 border-b border-gray-300"
+                                    id="mainHeaderRow">
+                                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200" colspan="2"
+                                        id="planningHeaderText">Planning</th>
                                     <th class="p-2 border-r border-gray-300 text-center">Plan Type</th>
-                                    <th class="p-2 border-r border-gray-300">Knitting Limitation</th>
+                                    <th class="p-2 border-r border-gray-300" id="limitationHeaderText">Limitation</th>
                                     <th class="p-2 border-r border-gray-300">Remarks</th>
                                 </tr>
-                                <tr class="text-[9px] bg-gray-50 border-b border-gray-300">
-                                    <th class="border-r border-gray-300" colspan="10"></th>
+                                <tr class="text-[9px] bg-gray-50 border-b border-gray-300" id="subHeaderRow">
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">Start Date</th>
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">End Date</th>
                                     <th class="border-r border-gray-300" colspan="3"></th>
@@ -478,18 +504,16 @@
     </div>
 
     <script>
-        let globalRawData = [];
         let groupedData = {};
-        let filteredKeys = [];
         let openTabs = [];
         let activeTabId = 'dashboard';
+        let activeUploadCategory = 'General'; // Default Upload Tab
 
         let currentPage = 1;
         let rowsPerPage = 10;
 
         let activeMainTab = 'Pending';
         let activeBuyer = '';
-
         let colFilters = {};
         let currentViewIndex = null;
         let toastTimeout;
@@ -508,17 +532,14 @@
             const sidebarDataManagement = document.getElementById('sidebarDataManagement');
             if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
             else { if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden'); }
-
             if (role === 'Viewer') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
             else { if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden'); }
-
             const uploadArea = document.getElementById('uploadArea');
             if (role === 'Viewer') { if (uploadArea) uploadArea.style.display = 'none'; }
             else { if (uploadArea) uploadArea.style.display = 'flex'; }
         }
 
         function logout() { localStorage.clear(); window.location.href = 'login.html'; }
-
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMessage').textContent = msg;
@@ -527,6 +548,7 @@
             toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
         }
 
+        // ================= VIEW NAVIGATION =================
         function showDashboardHome() {
             activeTabId = 'dashboard';
             document.getElementById('dataManagementView').classList.add('hidden');
@@ -547,7 +569,6 @@
 
         async function loadMenuData(dataKey, menuName) {
             activeTabId = dataKey;
-
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
@@ -555,49 +576,87 @@
 
             if (!openTabs.find(tab => tab.id === dataKey)) openTabs.push({ id: dataKey, title: menuName });
             renderTabs();
-
             document.querySelectorAll('.header-search').forEach(inp => inp.value = '');
             colFilters = {};
-
             activateMainTab('Pending');
             activeBuyer = '';
 
+            renderDynamicHeaders(); // Hybrid Header Injection
             await fetchAndProcessData();
             closeSidebarMobile();
         }
 
-        // ================= COMPOSITE KEY GENERATOR =================
-        function generateItemId(item) {
-            const fabConst = String(getColData(item, ['FabricConstruction']) || 'N/A').trim();
-            const fabDetails = String(getColData(item, ['FabricDetails']) || 'N/A').trim();
-            const width = String(getColData(item, ['Width']) || 'N/A').trim();
-            const color = String(getColData(item, ['Color']) || 'N/A').trim();
-            const gsm = String(getColData(item, ['GSM']) || 'N/A').trim();
-            return `${fabConst}_${fabDetails}_${width}_${color}_${gsm}`.toLowerCase().replace(/\s+/g, '');
+        // ================= UPLOAD TAB MANAGEMENT =================
+        function setUploadCategory(cat) {
+            activeUploadCategory = cat;
+            document.querySelectorAll('.upload-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab' + cat).classList.add('active');
+            document.getElementById('currentUploadLabel').innerText = cat + ' Data';
+        }
+
+        // ================= HYBRID TABLE HEADER GENERATOR =================
+        function renderDynamicHeaders() {
+            document.querySelectorAll('.dynamic-th').forEach(e => e.remove());
+
+            let mainCols = [];
+            if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                mainCols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance %', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
+                document.getElementById('planningHeaderText').innerText = 'Knitting Planning';
+                document.getElementById('limitationHeaderText').innerText = 'Knitting Limitation';
+            } else {
+                mainCols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'Process Name', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'BP Qty', 'Dyeing Prod.', 'Dyeing Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
+                document.getElementById('planningHeaderText').innerText = 'Dyeing/Finishing Planning';
+                document.getElementById('limitationHeaderText').innerText = 'Dyeing/Finishing Limitation';
+            }
+
+            let mainHtml = mainCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+            let subHtml = `<th class="border-r border-gray-300 dynamic-th" colspan="${mainCols.length}"></th>`;
+
+            document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', mainHtml);
+            document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', subHtml);
+        }
+
+        // ================= SMART COMPOSITE KEY =================
+        function generateItemId(item, tabId) {
+            let bNoVal = getColData(item, ['OrderNo', 'BookingNo', 'EWO', 'Booking']);
+            const bNo = String(bNoVal !== '' ? bNoVal : 'N/A').trim();
+
+            let colorVal = getColData(item, ['Color']);
+            const color = String(colorVal !== '' ? colorVal : 'N/A').trim();
+
+            if (tabId === 'knitting' || tabId === 'delivery') {
+                let fabConstVal = getColData(item, ['FabricConstruction']);
+                const fabConst = String(fabConstVal !== '' ? fabConstVal : 'N/A').trim();
+
+                let gsmVal = getColData(item, ['GSM']);
+                const gsm = String(gsmVal !== '' ? gsmVal : 'N/A').trim();
+
+                return `${bNo}_${color}_${fabConst}_${gsm}`.toLowerCase().replace(/\s+/g, '');
+            } else {
+                let procVal = getColData(item, ['Process Name', 'ProcessName', 'Process']);
+                const procName = String(procVal !== '' ? procVal : 'N/A').trim();
+
+                return `${bNo}_${color}_${procName}`.toLowerCase().replace(/\s+/g, '');
+            }
         }
 
         function activateMainTab(tabName) {
             activeMainTab = tabName;
-
             const tabs = ['Pending', 'Confirm', 'Tentative', 'All'];
             tabs.forEach(t => {
                 const btn = document.getElementById('btn' + t);
                 if (btn) {
-                    if (t === tabName) {
-                        btn.className = "bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors";
-                    } else {
-                        btn.className = "bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors";
-                    }
+                    if (t === tabName) btn.className = "bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors";
+                    else btn.className = "bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors";
                 }
             });
-
             activeBuyer = '';
             document.querySelectorAll('.buyer-tab').forEach(t => t.classList.remove('active'));
-
             currentPage = 1;
             renderMainTable();
         }
 
+        // ================= ISOLATED DATA FETCHING =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
             document.getElementById('dataTableContentWrapper').classList.add('hidden');
@@ -607,182 +666,187 @@
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
-                const files = await res.json();
+                const allFiles = await res.json();
 
-                globalRawData = [];
-                for (let file of files) {
-                    try {
-                        const fileRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
-                        if (!fileRes.ok) continue;
-                        const arrayBuffer = await fileRes.arrayBuffer();
-                        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const data = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-                        globalRawData = globalRawData.concat(data);
-                    } catch (err) { console.error("Error reading file:", err); }
-                }
+                // Filter files by category
+                const targetCategory = activeTabId.charAt(0).toUpperCase() + activeTabId.slice(1); // 'knitting' -> 'Knitting'
+                const generalFiles = allFiles.filter(f => f.category === 'General' || !f.category);
+                const deptFiles = allFiles.filter(f => f.category === targetCategory);
+
+                const readFiles = async (fileList) => {
+                    let raw = [];
+                    for (let file of fileList) {
+                        try {
+                            const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
+                            if (!fRes.ok) continue;
+                            const ab = await fRes.arrayBuffer();
+                            const wb = XLSX.read(ab, { type: 'array' });
+                            raw = raw.concat(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+                        } catch (e) { console.error("File read err:", e); }
+                    }
+                    return raw;
+                };
+
+                const generalRawData = await readFiles(generalFiles);
+                const deptRawData = await readFiles(deptFiles);
 
                 groupedData = {};
 
-                // 1. Group Excel Items by Booking No
-                globalRawData.forEach((row, index) => {
-                    const bNoRaw = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
-                    let bNo = String(bNoRaw).trim();
-                    if (!bNo || bNo.toLowerCase() === 'n/a' || bNo.toLowerCase() === 'undefined' || bNo === '') {
-                        bNo = 'Unknown_Booking_' + index;
-                    }
-
-                    const buyerRaw = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerRaw).trim();
-                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') buyer = '';
-
+                // Initialize groups securely
+                const initGroup = (bNo) => {
                     if (!groupedData[bNo]) {
                         groupedData[bNo] = {
                             bookingNo: bNo.startsWith('Unknown_Booking_') ? 'N/A' : bNo,
-                            bookingDate: formatExcelDate(getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date'])),
                             buyers: new Set(),
-                            buyerTeam: String(getColData(row, ['BuyerTeam', 'Team']) || 'N/A'),
-                            status: String(getColData(row, ['Status']) || 'Pending'),
+                            generalInfo: {},
                             excelItems: [],
                             dbData: null
                         };
                     }
+                };
 
+                // 1. Process General Data
+                generalRawData.forEach((row, index) => {
+                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
+                    let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
+
+                    let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                    let buyer = String(buyerVal !== '' ? buyerVal : '').trim();
+                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') buyer = '';
+
+                    initGroup(bNo);
                     if (buyer) groupedData[bNo].buyers.add(buyer);
+
+                    // Map general info if not mapped yet
+                    if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
+                        let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
+                        groupedData[bNo].bookingDate = formatExcelDate(dateVal);
+
+                        let teamVal = getColData(row, ['BuyerTeam', 'Team']);
+                        groupedData[bNo].buyerTeam = String(teamVal !== '' ? teamVal : 'N/A');
+
+                        let statusVal = getColData(row, ['Status']);
+                        groupedData[bNo].status = String(statusVal !== '' ? statusVal : 'Pending');
+
+                        groupedData[bNo].generalInfo = {
+                            EWO: getColData(row, ['OrderNo', 'EWO']),
+                            OrderQty: getColData(row, ['RequiredQtyKgs', 'Qty']),
+                            BookingUnit: getColData(row, ['BookingUnit']),
+                            Unit: getColData(row, ['Unit']),
+                            FinalConf: getColData(row, ['FinalConfirmation', 'Status']),
+                            EventDay: getColData(row, ['EventDay']),
+                            Ship1: formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1'])),
+                            ShipLast: formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast'])),
+                            YarnDate: formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate'])),
+                            DeliStart: formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart'])),
+                            DeliEnd: formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd'])),
+                            KnitStart: formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart'])),
+                            KnitEnd: formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd'])),
+                            DyeStart: formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart'])),
+                            DyeEnd: formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd'])),
+                            FabNotes: getColData(row, ['FabricNotes', 'Notes'])
+                        };
+                    }
+                });
+
+                // 2. Process Department Data (Fabric Items)
+                deptRawData.forEach((row, index) => {
+                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
+                    let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
+                    initGroup(bNo);
                     groupedData[bNo].excelItems.push(row);
                 });
 
-                // 2. Fetch Database Items
+                // 3. Fetch Department DB Items
                 try {
                     const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
                     if (datesRes.ok) {
                         const savedPlans = await datesRes.json();
                         savedPlans.forEach(plan => {
-                            if (groupedData[plan.orderNo]) {
-                                groupedData[plan.orderNo].dbData = plan;
-                            } else {
-                                // If DB has order but Excel doesn't, still show it to preserve history
-                                groupedData[plan.orderNo] = {
-                                    bookingNo: plan.orderNo,
-                                    bookingDate: 'N/A',
-                                    buyers: new Set(),
-                                    buyerTeam: 'N/A',
-                                    status: 'N/A',
-                                    excelItems: [],
-                                    dbData: plan
-                                };
-                            }
+                            if (groupedData[plan.orderNo]) groupedData[plan.orderNo].dbData = plan;
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
 
-                // 3. The Smart Merge Logic
+                // 4. The Smart Merge Logic for HYBRID DATA
                 const globalBuyersList = new Set();
 
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
-                    // Step A: Load DB items
-                    if (group.dbData && group.dbData.fabricItems) {
-                        group.dbData.fabricItems.forEach(dbItem => {
-                            if (dbItem.itemId) {
-                                mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
-                            }
-                        });
-                    }
+                    // Only load DB items specific to CURRENT Department!
+                    const dbDepartmentItems = group.dbData && group.dbData[activeTabId] ? group.dbData[activeTabId] : [];
 
-                    // Step B: Load Excel items
+                    dbDepartmentItems.forEach(dbItem => {
+                        if (dbItem.itemId) mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
+                    });
+
+                    // Map current department Excel items
                     group.excelItems.forEach(exItem => {
-                        const itemId = generateItemId(exItem);
-                        const fabConst = getColData(exItem, ['FabricConstruction']) || 'N/A';
-                        const fabDetails = getColData(exItem, ['FabricDetails']) || 'N/A';
-                        const width = getColData(exItem, ['Width']) || 'N/A';
-                        const color = getColData(exItem, ['Color']) || 'N/A';
-                        const gsm = getColData(exItem, ['GSM']) || 'N/A';
-                        const greyReq = parseFloat(getColData(exItem, ['RequiredQtyKgs', 'GreyReq'])) || 0;
+                        const itemId = generateItemId(exItem, activeTabId);
+
+                        let dynamicItemData = {};
+                        if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                            dynamicItemData = {
+                                OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), FabricConstruction: getColData(exItem, ['FabricConstruction']),
+                                GSM: getColData(exItem, ['GSM']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']), Buyer: getColData(exItem, ['Buyer', 'BuyerName']),
+                                Allowance: getColData(exItem, ['Allowance %', 'Allowance']), YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']), AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
+                                YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']), GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                                KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']), NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']),
+                                RFD: getColData(exItem, ['RFD']), Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                            };
+                        } else {
+                            dynamicItemData = {
+                                OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']),
+                                Buyer: getColData(exItem, ['Buyer', 'BuyerName']), Unit: getColData(exItem, ['Unit']), ProcessName: getColData(exItem, ['Process Name', 'ProcessName']),
+                                GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']), KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                                BPQty: getColData(exItem, ['BP Qty', 'BPQty']), DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']), DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
+                                NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']), RFD: getColData(exItem, ['RFD']),
+                                Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                            };
+                        }
 
                         if (mergedItemsMap.has(itemId)) {
                             const existing = mergedItemsMap.get(itemId);
-                            existing.greyReq = greyReq;
+                            existing.itemData = dynamicItemData;
                             existing.source = 'Both';
-                            existing.excelRow = exItem;
                             mergedItemsMap.set(itemId, existing);
                         } else {
                             mergedItemsMap.set(itemId, {
-                                itemId, fabConst, fabDetails, width, color, gsm, greyReq,
-                                knitProd: 0, startDate: '', endDate: '', planType: '', limitation: '', remarks: '',
-                                source: 'Excel', excelRow: exItem
+                                itemId: itemId, itemData: dynamicItemData,
+                                startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
                             });
                         }
                     });
 
                     group.mergedItems = Array.from(mergedItemsMap.values());
 
-                    // =========================================================
-                    // Step C: Determine Mutually Exclusive Status Routing
-                    // =========================================================
-                    group.isPending = false;
-                    group.isConfirm = false;
-                    group.isTentative = false;
-
-                    let hasPending = false;
-                    let hasTentative = false;
-                    let allConfirm = true;
+                    // Status Routing
+                    group.isPending = false; group.isConfirm = false; group.isTentative = false;
+                    let hasPending = false; let hasTentative = false; let allConfirm = true;
 
                     if (group.mergedItems.length === 0) {
-                        hasPending = true;
-                        allConfirm = false;
+                        hasPending = true; allConfirm = false;
                     } else {
                         group.mergedItems.forEach(item => {
                             if (!item.planType || item.planType === '' || item.planType === 'Select') {
-                                hasPending = true;
-                                allConfirm = false;
+                                hasPending = true; allConfirm = false;
                             } else if (item.planType === 'Tentative') {
-                                hasTentative = true;
-                                allConfirm = false;
+                                hasTentative = true; allConfirm = false;
                             }
                         });
                     }
 
-                    // Hierarchy of routing: Pending > Tentative > Confirm
-                    if (hasPending) {
-                        group.isPending = true;
-                    } else if (hasTentative) {
-                        group.isTentative = true;
-                    } else if (allConfirm) {
-                        group.isConfirm = true;
-                    }
+                    if (hasPending) group.isPending = true;
+                    else if (hasTentative) group.isTentative = true;
+                    else if (allConfirm) group.isConfirm = true;
 
-                    // General Info Extract
-                    const firstExcelItem = group.mergedItems.find(i => i.excelRow)?.excelRow || {};
-                    group.generalInfo = {
-                        EWO: getColData(firstExcelItem, ['OrderNo', 'EWO']),
-                        OrderQty: getColData(firstExcelItem, ['RequiredQtyKgs', 'Qty']),
-                        BookingUnit: getColData(firstExcelItem, ['BookingUnit']),
-                        Unit: getColData(firstExcelItem, ['Unit']),
-                        FinalConf: getColData(firstExcelItem, ['FinalConfirmation', 'Status']),
-                        EventDay: getColData(firstExcelItem, ['EventDay']),
-                        Ship1: formatExcelDate(getColData(firstExcelItem, ['1stShipmentDate', 'Ship1'])),
-                        ShipLast: formatExcelDate(getColData(firstExcelItem, ['LastShipmentDate', 'ShipLast'])),
-                        YarnDate: formatExcelDate(getColData(firstExcelItem, ['TAYarnDate', 'YarnDate'])),
-                        DeliStart: formatExcelDate(getColData(firstExcelItem, ['TADeliStart', 'DeliStart'])),
-                        DeliEnd: formatExcelDate(getColData(firstExcelItem, ['TADeliEnd', 'DeliEnd'])),
-                        KnitStart: formatExcelDate(getColData(firstExcelItem, ['TAKnittingStart', 'KnitStart'])),
-                        KnitEnd: formatExcelDate(getColData(firstExcelItem, ['TAKnittingEnd', 'KnitEnd'])),
-                        DyeStart: formatExcelDate(getColData(firstExcelItem, ['TADyeingStart', 'DyeStart'])),
-                        DyeEnd: formatExcelDate(getColData(firstExcelItem, ['TADyeingEnd', 'DyeEnd'])),
-                        FabNotes: getColData(firstExcelItem, ['FabricNotes', 'Notes'])
-                    };
-
-                    group.buyers.forEach(b => {
-                        if (b && b !== 'N/A') globalBuyersList.add(b);
-                    });
+                    group.buyers.forEach(b => { if (b && b !== 'N/A') globalBuyersList.add(b); });
                 });
 
                 renderBuyerTabs(Array.from(globalBuyersList));
                 currentPage = 1;
                 renderMainTable();
-
                 document.getElementById('loadingData').classList.add('hidden');
             } catch (e) {
                 console.error("Error processing data:", e);
@@ -790,14 +854,14 @@
             }
         }
 
+        // Filter and Render UI Functions remain same
         function renderBuyerTabs(buyers) {
             const container = document.getElementById('buyerFilterContainer');
             container.innerHTML = '';
             buyers.forEach(b => {
                 const btn = document.createElement('div');
                 btn.className = `buyer-tab ${activeBuyer !== '' && activeBuyer.toLowerCase() === b.toLowerCase() ? 'active' : ''}`;
-                btn.innerText = b;
-                btn.onclick = () => activateBuyerFilter(b);
+                btn.innerText = b; btn.onclick = () => activateBuyerFilter(b);
                 container.appendChild(btn);
             });
         }
@@ -808,43 +872,32 @@
                 if (t.innerText.toLowerCase() === buyer.toLowerCase()) t.classList.add('active');
                 else t.classList.remove('active');
             });
-            currentPage = 1;
-            renderMainTable();
+            currentPage = 1; renderMainTable();
         }
 
-        function filterByColumn(colIndex, val) {
-            colFilters[colIndex] = String(val).toLowerCase().trim();
-            currentPage = 1;
-            renderMainTable();
-        }
+        function filterByColumn(colIndex, val) { colFilters[colIndex] = String(val).toLowerCase().trim(); currentPage = 1; renderMainTable(); }
 
         function renderMainTable() {
             const tbody = document.getElementById('mainTableBody');
             const buyerFilterContainer = document.getElementById('buyerFilterContainer');
-            let data = Object.values(groupedData);
+            let data = Object.values(groupedData).filter(g => g.excelItems.length > 0 || (g.dbData && g.dbData[activeTabId] && g.dbData[activeTabId].length > 0));
 
             const emptyState = document.getElementById('emptyState');
             const dataTableWrapper = document.getElementById('dataTableContentWrapper');
             const paginationControls = document.getElementById('paginationControls');
 
             if (data.length === 0) {
-                dataTableWrapper.classList.add('hidden');
-                paginationControls.classList.add('hidden');
-                buyerFilterContainer.classList.add('hidden');
+                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
                 emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No data available. Please upload an Excel file from Data Management menu to view records.</p>`;
-                tbody.innerHTML = '';
-                return;
+                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No department data uploaded yet.</p>`;
+                tbody.innerHTML = ''; return;
             }
 
             if (activeMainTab === 'All') {
-                dataTableWrapper.classList.add('hidden');
-                paginationControls.classList.add('hidden');
-                buyerFilterContainer.classList.add('hidden');
+                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 emptyState.innerHTML = `<i class="fas fa-tools text-4xl mb-3 text-gray-300"></i><p class="text-gray-600 font-medium">All List feature will be updated later.</p>`;
-                tbody.innerHTML = '';
-                return;
+                tbody.innerHTML = ''; return;
             }
 
             if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
@@ -852,34 +905,23 @@
             else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
 
             const buyersSet = new Set();
-            data.forEach(d => {
-                d.buyers.forEach(b => {
-                    if (b && b !== 'N/A') buyersSet.add(b);
-                });
-            });
+            data.forEach(d => { d.buyers.forEach(b => { if (b && b !== 'N/A') buyersSet.add(b); }); });
             renderBuyerTabs(Array.from(buyersSet));
             buyerFilterContainer.classList.remove('hidden');
 
             if (activeBuyer === '') {
-                dataTableWrapper.classList.add('hidden');
-                paginationControls.classList.add('hidden');
-                emptyState.classList.remove('hidden');
+                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); emptyState.classList.remove('hidden');
                 emptyState.innerHTML = `<i class="fas fa-hand-pointer text-4xl mb-3 text-blue-300"></i><p class="text-gray-600 font-medium">Please select a buyer from the list above to view ${activeMainTab} data.</p>`;
-                tbody.innerHTML = '';
-                return;
+                tbody.innerHTML = ''; return;
             }
 
             if (activeBuyer !== '') {
                 const searchB = activeBuyer.toLowerCase().trim();
-                data = data.filter(d => {
-                    const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim());
-                    return bArr.includes(searchB);
-                });
+                data = data.filter(d => { const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim()); return bArr.includes(searchB); });
             }
 
             for (let col in colFilters) {
-                const searchVal = colFilters[col];
-                if (!searchVal) continue;
+                const searchVal = colFilters[col]; if (!searchVal) continue;
                 data = data.filter(d => {
                     const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
                     if (col == 1) return String(d.bookingNo).toLowerCase().includes(searchVal);
@@ -890,20 +932,15 @@
                 });
             }
 
-            const total = data.length;
-
-            dataTableWrapper.classList.remove('hidden');
-            emptyState.classList.add('hidden');
-
-            if (total === 0) {
+            dataTableWrapper.classList.remove('hidden'); emptyState.classList.add('hidden');
+            if (data.length === 0) {
                 paginationControls.classList.add('hidden');
                 tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 bg-white border-b border-gray-200"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found in ${activeMainTab} list.</td></tr>`;
                 return;
             }
 
             paginationControls.classList.remove('hidden');
-
-            const totalPages = Math.ceil(total / rowsPerPage);
+            const totalPages = Math.ceil(data.length / rowsPerPage);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
 
@@ -912,12 +949,10 @@
 
             let htmlContent = '';
             pagedData.forEach(d => {
-                const safeBookingNo = encodeURIComponent(d.bookingNo === 'N/A' ? d.excelItems[0]?.BookingNo || 'N/A' : d.bookingNo);
                 const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
-
                 htmlContent += `
                     <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
-                        <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${safeBookingNo}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
+                        <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
                         <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.bookingNo}</td>
                         <td class="p-2 border-r border-gray-200 text-center">${d.bookingDate}</td>
                         <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${displayBuyer}</td>
@@ -926,14 +961,12 @@
                 `;
             });
             tbody.innerHTML = htmlContent;
-
-            updatePaginationUI(start, start + pagedData.length, total, totalPages);
+            updatePaginationUI(start, start + pagedData.length, data.length, totalPages);
         }
 
         function updatePaginationUI(start, end, total, totalPages) {
             document.getElementById('pageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1}-${end} of ${total}`;
-            const btnContainer = document.getElementById('pageButtons');
-            btnContainer.innerHTML = '';
+            const btnContainer = document.getElementById('pageButtons'); btnContainer.innerHTML = '';
 
             const prev = document.createElement('button');
             prev.className = `px-3 py-1.5 border border-gray-300 rounded font-medium text-xs transition-colors ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`;
@@ -946,83 +979,80 @@
             next.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
 
             btnContainer.appendChild(prev);
-
-            const pageText = document.createElement('span');
-            pageText.className = "px-3 py-1 font-semibold text-gray-700 hidden sm:inline-block";
+            const pageText = document.createElement('span'); pageText.className = "px-3 py-1 font-semibold text-gray-700 hidden sm:inline-block";
             pageText.innerText = `Page ${totalPages === 0 ? 0 : currentPage} of ${totalPages}`;
-            btnContainer.appendChild(pageText);
-
-            btnContainer.appendChild(next);
+            btnContainer.appendChild(pageText); btnContainer.appendChild(next);
         }
 
-        function changeRowsPerPage() {
-            rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
-            currentPage = 1;
-            renderMainTable();
-        }
+        function changeRowsPerPage() { rowsPerPage = parseInt(document.getElementById('rowsPerPage').value); currentPage = 1; renderMainTable(); }
 
         function openDetailedView(encodedBookingNo) {
             const bookingNo = decodeURIComponent(encodedBookingNo);
-
             let data = groupedData[bookingNo];
             if (!data) return;
 
             currentViewIndex = bookingNo;
-
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.remove('hidden');
 
-            document.getElementById('detEWO').value = data.generalInfo.EWO || '';
-            document.getElementById('detBookingNo').value = data.bookingNo;
-            document.getElementById('detBookingDate').value = data.bookingDate;
-            document.getElementById('detBuyer').value = data.buyers.size > 0 ? Array.from(data.buyers).join(', ') : 'N/A';
-            document.getElementById('detBuyerTeam').value = data.buyerTeam;
-            document.getElementById('detOrderQty').value = data.generalInfo.OrderQty || '';
-            document.getElementById('detBookingUnit').value = data.generalInfo.BookingUnit || '';
-            document.getElementById('detUnit').value = data.generalInfo.Unit || '';
-            document.getElementById('detFinalConf').value = data.generalInfo.FinalConf || '';
+            const setSafeVal = (id, val) => {
+                document.getElementById(id).value = (val !== undefined && val !== null && val !== '') ? val : '';
+            };
 
-            document.getElementById('detEventDay').value = data.generalInfo.EventDay || '';
-            document.getElementById('detShip1').value = data.generalInfo.Ship1 || '';
-            document.getElementById('detShipLast').value = data.generalInfo.ShipLast || '';
-            document.getElementById('detYarnDate').value = data.generalInfo.YarnDate || '';
-            document.getElementById('detDeliStart').value = data.generalInfo.DeliStart || '';
-            document.getElementById('detDeliEnd').value = data.generalInfo.DeliEnd || '';
-            document.getElementById('detKnitStart').value = data.generalInfo.KnitStart || '';
-            document.getElementById('detKnitEnd').value = data.generalInfo.KnitEnd || '';
-            document.getElementById('detDyeStart').value = data.generalInfo.DyeStart || '';
-            document.getElementById('detDyeEnd').value = data.generalInfo.DyeEnd || '';
-            document.getElementById('detFabNotes').value = data.generalInfo.FabNotes || '';
+            setSafeVal('detEWO', data.generalInfo.EWO);
+            setSafeVal('detBookingNo', data.bookingNo);
+            setSafeVal('detBookingDate', data.bookingDate);
+            setSafeVal('detBuyer', data.buyers.size > 0 ? Array.from(data.buyers).join(', ') : 'N/A');
+            setSafeVal('detBuyerTeam', data.buyerTeam);
+            setSafeVal('detOrderQty', data.generalInfo.OrderQty);
+            setSafeVal('detBookingUnit', data.generalInfo.BookingUnit);
+            setSafeVal('detUnit', data.generalInfo.Unit);
+            setSafeVal('detFinalConf', data.generalInfo.FinalConf);
+            setSafeVal('detEventDay', data.generalInfo.EventDay);
+            setSafeVal('detShip1', data.generalInfo.Ship1);
+            setSafeVal('detShipLast', data.generalInfo.ShipLast);
+            setSafeVal('detYarnDate', data.generalInfo.YarnDate);
+            setSafeVal('detDeliStart', data.generalInfo.DeliStart);
+            setSafeVal('detDeliEnd', data.generalInfo.DeliEnd);
+            setSafeVal('detKnitStart', data.generalInfo.KnitStart);
+            setSafeVal('detKnitEnd', data.generalInfo.KnitEnd);
+            setSafeVal('detDyeStart', data.generalInfo.DyeStart);
+            setSafeVal('detDyeEnd', data.generalInfo.DyeEnd);
+            setSafeVal('detFabNotes', data.generalInfo.FabNotes);
 
             const itemBody = document.getElementById('detFabricItemsBody');
             let itemHtml = '';
 
-            // Show all items for the selected order (Total part e pending e dekhabe)
-            data.mergedItems.forEach((item) => {
-                const currentBala = (item.greyReq - (parseFloat(item.knitProd) || 0)).toFixed(2);
+            let itemsToShow = data.mergedItems;
+            if (activeMainTab === 'Pending') itemsToShow = itemsToShow.filter(item => item.planType !== 'Confirm' && item.planType !== 'Tentative');
+            else if (activeMainTab === 'Confirm') itemsToShow = itemsToShow.filter(item => item.planType === 'Confirm');
+            else if (activeMainTab === 'Tentative') itemsToShow = itemsToShow.filter(item => item.planType === 'Tentative');
 
+            itemsToShow.forEach((item) => {
                 let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row";
+                let encodedItemData = encodeURIComponent(JSON.stringify(item.itemData || {}));
+                itemHtml += `<tr class="${rowClass}" data-itemid="${item.itemId}" data-itemdata="${encodedItemData}">`;
+
+                // Dynamic Left Columns
+                if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                    const cols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance', 'YarnReq', 'AllocatedQty', 'YarnBala', 'GreyReq', 'KnitProd', 'KnitBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
+                    cols.forEach(c => {
+                        let val = item.itemData[c];
+                        let dispText = (val !== undefined && val !== null && val !== '') ? val : '';
+                        itemHtml += `<td class="p-2 border-r border-gray-200 text-center whitespace-normal min-w-[80px]">${dispText}</td>`;
+                    });
+                } else {
+                    const cols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
+                    cols.forEach(c => {
+                        let val = item.itemData[c];
+                        let dispText = (val !== undefined && val !== null && val !== '') ? val : '';
+                        itemHtml += `<td class="p-2 border-r border-gray-200 text-center whitespace-normal min-w-[80px]">${dispText}</td>`;
+                    });
+                }
 
                 itemHtml += `
-                <tr class="${rowClass}" data-itemid="${item.itemId}" data-fabconst="${item.fabConst}" data-fabdetails="${item.fabDetails}" data-width="${item.width}" data-color="${item.color}" data-gsm="${item.gsm}" data-greyreq="${item.greyReq}">
-                    <td class="p-2 border-r border-gray-200">${item.fabConst}</td>
-                    <td class="p-2 border-r border-gray-200 max-w-[200px] truncate" title="${item.fabDetails}">${item.fabDetails}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${item.width}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${item.color}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">${item.gsm}</td>
-                    <td class="p-2 border-r border-gray-200 font-semibold text-center">0</td>
-                    <td class="p-2 border-r border-gray-200 text-center">0</td>
-                    <td class="p-2 border-r border-gray-200 font-bold bg-gray-50 text-center">${item.greyReq}</td>
-                    <td class="p-2 border-r border-gray-200 bg-gray-50 text-center">
-                        <input type="number" class="row-knit-prod w-16 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none" value="${item.knitProd}" oninput="calculateBalance(this, ${item.greyReq})">
-                    </td>
-                    <td class="p-2 border-r border-gray-200 bg-gray-50 font-bold text-red-600 text-center">${currentBala}</td>
-                    <td class="p-2 border-r border-gray-200 text-center">
-                        <input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate}">
-                    </td>
-                    <td class="p-2 border-r border-gray-200 text-center">
-                        <input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate}">
-                    </td>
+                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate}"></td>
+                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate}"></td>
                     <td class="p-2 border-r border-gray-200 text-center">
                         <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                             <option value="" ${item.planType === '' ? 'selected' : ''}>Select</option>
@@ -1030,21 +1060,11 @@
                             <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
                         </select>
                     </td>
-                    <td class="p-2 border-r border-gray-200">
-                        <input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation}">
-                    </td>
-                    <td class="p-2 border-r border-gray-200">
-                        <input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks}">
-                    </td>
+                    <td class="p-2 border-r border-gray-200"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation}"></td>
+                    <td class="p-2 border-r border-gray-200"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks}"></td>
                 </tr>`;
             });
             itemBody.innerHTML = itemHtml;
-        }
-
-        function calculateBalance(input, req) {
-            const prod = parseFloat(input.value) || 0;
-            const balanceCell = input.parentElement.nextElementSibling;
-            balanceCell.innerText = (req - prod).toFixed(2);
         }
 
         function closeDetailedView() {
@@ -1053,6 +1073,7 @@
             currentViewIndex = null;
         }
 
+        // ================= DEPARTMENT SPECIFIC SAVING =================
         async function saveFabricPlanning() {
             const bookingNo = currentViewIndex;
             if (!bookingNo) return;
@@ -1062,36 +1083,14 @@
 
             const allItemsMap = new Map();
             if (existingData.mergedItems) {
-                existingData.mergedItems.forEach(item => {
-                    allItemsMap.set(item.itemId, {
-                        itemId: item.itemId,
-                        fabConst: item.fabConst,
-                        fabDetails: item.fabDetails,
-                        width: item.width,
-                        color: item.color,
-                        gsm: item.gsm,
-                        greyReq: item.greyReq,
-                        knitProd: item.knitProd,
-                        startDate: item.startDate,
-                        endDate: item.endDate,
-                        planType: item.planType,
-                        limitation: item.limitation,
-                        remarks: item.remarks
-                    });
-                });
+                existingData.mergedItems.forEach(item => allItemsMap.set(item.itemId, item));
             }
 
             document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
                 const id = row.dataset.itemid;
+                const itemData = JSON.parse(decodeURIComponent(row.dataset.itemdata));
                 allItemsMap.set(id, {
-                    itemId: id,
-                    fabConst: row.dataset.fabconst,
-                    fabDetails: row.dataset.fabdetails,
-                    width: row.dataset.width,
-                    color: row.dataset.color,
-                    gsm: row.dataset.gsm,
-                    greyReq: parseFloat(row.dataset.greyreq),
-                    knitProd: row.querySelector('.row-knit-prod').value,
+                    itemId: id, itemData: itemData,
                     startDate: row.querySelector('.row-start-date').value,
                     endDate: row.querySelector('.row-end-date').value,
                     planType: row.querySelector('.row-plan-type').value,
@@ -1102,10 +1101,7 @@
 
             const fabricItemsArr = Array.from(allItemsMap.values());
 
-            const payload = {
-                orderNo: bookingNo,
-                fabricItems: fabricItemsArr
-            };
+            const payload = { orderNo: bookingNo, department: activeTabId, fabricItems: fabricItemsArr };
 
             const saveBtn = document.getElementById('saveDatesBtn');
             const originalText = saveBtn.innerHTML;
@@ -1120,14 +1116,13 @@
                 if (res.ok) {
                     showToast("Planning Data Saved Successfully!");
                     await fetchAndProcessData();
-                    setTimeout(() => {
-                        closeDetailedView();
-                    }, 500);
+                    setTimeout(() => closeDetailedView(), 500);
                 }
             } catch (e) { alert("Server Error while saving"); }
             finally { saveBtn.innerHTML = originalText; saveBtn.disabled = false; }
         }
 
+        // ================= CATEGORY UPLOAD HANDLING =================
         async function handleExcelUpload() {
             const file = document.getElementById('excelFile').files[0];
             if (!file) return alert("Select file first");
@@ -1135,6 +1130,7 @@
             fd.append('document', file);
             fd.append('uploadedBy', localStorage.getItem('username'));
             fd.append('role', localStorage.getItem('role'));
+            fd.append('category', activeUploadCategory);
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/files/upload', { method: 'POST', body: fd });
@@ -1142,9 +1138,7 @@
                     showToast("Upload Success!");
                     document.getElementById('excelFile').value = '';
                     loadUploadedFiles();
-                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') {
-                        fetchAndProcessData();
-                    }
+                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();
                 } else { alert("Upload error"); }
             } catch (e) { alert("Server error"); }
         }
@@ -1160,11 +1154,12 @@
                     fileHtml = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">No files uploaded.</td></tr>';
                 } else {
                     files.forEach(f => {
+                        const catBadge = f.category ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold text-[10px]">${f.category}</span>` : `<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-bold text-[10px]">General</span>`;
                         fileHtml += `
                         <tr class="border-b hover:bg-gray-50 transition-colors">
+                            <td class="p-2">${catBadge}</td>
                             <td class="p-2 text-blue-600 font-medium"><i class="fas fa-file-excel mr-1 text-gray-400"></i> ${f.originalName}</td>
                             <td class="p-2 font-semibold">${f.uploadedBy}</td>
-                            <td class="p-2"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold text-[10px]">${f.role}</span></td>
                             <td class="p-2 text-xs text-gray-500">${new Date(f.createdAt).toLocaleString()}</td>
                             <td class="p-2 text-center">
                                 <button onclick="deleteFile('${f._id}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
@@ -1182,9 +1177,7 @@
                     await fetch(`https://abir-backend-api.onrender.com/api/files/${id}`, { method: 'DELETE' });
                     showToast("File deleted!");
                     loadUploadedFiles();
-                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') {
-                        fetchAndProcessData();
-                    }
+                    if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();
                 } catch (e) { alert("Delete error"); }
             }
         }
@@ -1193,62 +1186,42 @@
             for (let k of keys) {
                 let norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
                 for (let rk in row) {
-                    if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) return row[rk];
+                    if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) {
+                        let val = row[rk];
+                        return (val === undefined || val === null) ? '' : val;
+                    }
                 }
             }
             return '';
         }
-
         function formatExcelDate(val) {
             if (!val || val === 'N/A') return 'N/A';
             if (typeof val === 'number') return new Date(Math.round((val - 25569) * 86400 * 1000)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             return val;
         }
-
         function renderTabs() {
-            const container = document.getElementById('dynamicTabsWrapper');
-            let tabHtml = '';
+            const container = document.getElementById('dynamicTabsWrapper'); let tabHtml = '';
             openTabs.forEach(t => {
-                tabHtml += `
-                <div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.id}', '${t.title}')">
-                    ${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i>
-                </div>`;
+                tabHtml += `<div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.id}', '${t.title}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
             });
             container.innerHTML = tabHtml;
         }
-
         function closeTab(e, id) {
-            e.stopPropagation();
-            openTabs = openTabs.filter(t => t.id !== id);
-            if (openTabs.length === 0) showDashboardHome();
-            else loadMenuData(openTabs[0].id, openTabs[0].title);
+            e.stopPropagation(); openTabs = openTabs.filter(t => t.id !== id);
+            if (openTabs.length === 0) showDashboardHome(); else loadMenuData(openTabs[0].id, openTabs[0].title);
         }
-
         function toggleSubmenu(header, id) {
-            const m = document.getElementById(id);
-            const i = header.querySelector('.fa-chevron-left');
-            m.classList.toggle('hidden');
-            i.classList.toggle('-rotate-90');
+            const m = document.getElementById(id); const i = header.querySelector('.fa-chevron-left');
+            m.classList.toggle('hidden'); i.classList.toggle('-rotate-90');
         }
-
         function toggleSidebar() {
-            const s = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            if (window.innerWidth >= 768) {
-                s.classList.toggle('sidebar-collapsed');
-            } else {
-                s.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
+            const s = document.getElementById('sidebar'); const overlay = document.getElementById('mobileOverlay');
+            if (window.innerWidth >= 768) s.classList.toggle('sidebar-collapsed');
+            else { s.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
         }
-
         function closeSidebarMobile() {
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('-translate-x-full');
-                document.getElementById('mobileOverlay').classList.add('hidden');
-            }
+            if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobileOverlay').classList.add('hidden'); }
         }
-
     </script>
 </body>
 
