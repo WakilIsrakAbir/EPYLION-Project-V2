@@ -274,7 +274,8 @@
 
                 <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 shrink-0">
                     <h3 class="text-md font-bold mb-3 border-b pb-2 text-gray-700"><i
-                            class="fas fa-file-excel text-green-600 mr-2"></i> Uploaded Files Directory</h3>
+                            class="fas fa-file-excel text-green-600 mr-2"></i> Uploaded Files Directory (<span
+                            id="directoryLabel">General</span>)</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm border-collapse">
                             <thead>
@@ -507,7 +508,7 @@
         let groupedData = {};
         let openTabs = [];
         let activeTabId = 'dashboard';
-        let activeUploadCategory = 'General'; // Default Upload Tab
+        let activeUploadCategory = 'General';
 
         let currentPage = 1;
         let rowsPerPage = 10;
@@ -548,7 +549,6 @@
             toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
         }
 
-        // ================= VIEW NAVIGATION =================
         function showDashboardHome() {
             activeTabId = 'dashboard';
             document.getElementById('dataManagementView').classList.add('hidden');
@@ -581,20 +581,21 @@
             activateMainTab('Pending');
             activeBuyer = '';
 
-            renderDynamicHeaders(); // Hybrid Header Injection
+            renderDynamicHeaders();
             await fetchAndProcessData();
             closeSidebarMobile();
         }
 
-        // ================= UPLOAD TAB MANAGEMENT =================
         function setUploadCategory(cat) {
             activeUploadCategory = cat;
             document.querySelectorAll('.upload-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab' + cat).classList.add('active');
             document.getElementById('currentUploadLabel').innerText = cat + ' Data';
+            document.getElementById('directoryLabel').innerText = cat;
+
+            loadUploadedFiles();
         }
 
-        // ================= HYBRID TABLE HEADER GENERATOR =================
         function renderDynamicHeaders() {
             document.querySelectorAll('.dynamic-th').forEach(e => e.remove());
 
@@ -616,26 +617,18 @@
             document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', subHtml);
         }
 
-        // ================= SMART COMPOSITE KEY =================
-        function generateItemId(item, tabId) {
-            let bNoVal = getColData(item, ['OrderNo', 'BookingNo', 'EWO', 'Booking']);
-            const bNo = String(bNoVal !== '' ? bNoVal : 'N/A').trim();
+        function generateItemId(itemData, tabId) {
+            if (!itemData) return Date.now().toString();
 
-            let colorVal = getColData(item, ['Color']);
-            const color = String(colorVal !== '' ? colorVal : 'N/A').trim();
+            let bNo = String(itemData.OrderNo !== undefined && itemData.OrderNo !== null ? itemData.OrderNo : 'N/A').trim();
+            let color = String(itemData.Color !== undefined && itemData.Color !== null ? itemData.Color : 'N/A').trim();
 
             if (tabId === 'knitting' || tabId === 'delivery') {
-                let fabConstVal = getColData(item, ['FabricConstruction']);
-                const fabConst = String(fabConstVal !== '' ? fabConstVal : 'N/A').trim();
-
-                let gsmVal = getColData(item, ['GSM']);
-                const gsm = String(gsmVal !== '' ? gsmVal : 'N/A').trim();
-
+                let fabConst = String(itemData.FabricConstruction !== undefined && itemData.FabricConstruction !== null ? itemData.FabricConstruction : 'N/A').trim();
+                let gsm = String(itemData.GSM !== undefined && itemData.GSM !== null ? itemData.GSM : 'N/A').trim();
                 return `${bNo}_${color}_${fabConst}_${gsm}`.toLowerCase().replace(/\s+/g, '');
             } else {
-                let procVal = getColData(item, ['Process Name', 'ProcessName', 'Process']);
-                const procName = String(procVal !== '' ? procVal : 'N/A').trim();
-
+                let procName = String(itemData.ProcessName !== undefined && itemData.ProcessName !== null ? itemData.ProcessName : 'N/A').trim();
                 return `${bNo}_${color}_${procName}`.toLowerCase().replace(/\s+/g, '');
             }
         }
@@ -656,7 +649,7 @@
             renderMainTable();
         }
 
-        // ================= ISOLATED DATA FETCHING =================
+        // ================= SMART FETCH & FILTERING (CORE FIX) =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
             document.getElementById('dataTableContentWrapper').classList.add('hidden');
@@ -665,19 +658,36 @@
             document.getElementById('buyerFilterContainer').innerHTML = '';
 
             try {
-                const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
+                // Fetch with Cache-Buster
+                const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
                 const allFiles = await res.json();
 
-                // Filter files by category
-                const targetCategory = activeTabId.charAt(0).toUpperCase() + activeTabId.slice(1); // 'knitting' -> 'Knitting'
-                const generalFiles = allFiles.filter(f => f.category === 'General' || !f.category);
-                const deptFiles = allFiles.filter(f => f.category === targetCategory);
+                const targetCategory = activeTabId.charAt(0).toUpperCase() + activeTabId.slice(1);
+                const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
+                const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
+
+                // === EXTREMELY IMPORTANT: Get ONLY the latest version of each file ===
+                const getLatestFiles = (filesArray) => {
+                    const map = new Map();
+                    // Assuming files are returned newest-first from backend
+                    filesArray.forEach(f => {
+                        if (!map.has(f.originalName)) {
+                            map.set(f.originalName, f);
+                        }
+                    });
+                    return Array.from(map.values());
+                };
+
+                const generalFiles = getLatestFiles(generalFilesRaw);
+                const deptFiles = getLatestFiles(deptFilesRaw);
+
+                const hasDeptFile = deptFiles.length > 0;
 
                 const readFiles = async (fileList) => {
                     let raw = [];
                     for (let file of fileList) {
                         try {
-                            const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
+                            const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
                             if (!fRes.ok) continue;
                             const ab = await fRes.arrayBuffer();
                             const wb = XLSX.read(ab, { type: 'array' });
@@ -692,7 +702,6 @@
 
                 groupedData = {};
 
-                // Initialize groups securely
                 const initGroup = (bNo) => {
                     if (!groupedData[bNo]) {
                         groupedData[bNo] = {
@@ -705,7 +714,6 @@
                     }
                 };
 
-                // 1. Process General Data
                 generalRawData.forEach((row, index) => {
                     let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
@@ -717,7 +725,6 @@
                     initGroup(bNo);
                     if (buyer) groupedData[bNo].buyers.add(buyer);
 
-                    // Map general info if not mapped yet
                     if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
                         let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
                         groupedData[bNo].bookingDate = formatExcelDate(dateVal);
@@ -749,7 +756,6 @@
                     }
                 });
 
-                // 2. Process Department Data (Fabric Items)
                 deptRawData.forEach((row, index) => {
                     let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
@@ -757,71 +763,87 @@
                     groupedData[bNo].excelItems.push(row);
                 });
 
-                // 3. Fetch Department DB Items
                 try {
-                    const datesRes = await fetch('https://abir-backend-api.onrender.com/api/files/all-dates');
+                    const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
                     if (datesRes.ok) {
                         const savedPlans = await datesRes.json();
                         savedPlans.forEach(plan => {
                             if (groupedData[plan.orderNo]) groupedData[plan.orderNo].dbData = plan;
+                            else {
+                                groupedData[plan.orderNo] = {
+                                    bookingNo: plan.orderNo, bookingDate: 'N/A', buyers: new Set(), buyerTeam: 'N/A', status: 'N/A',
+                                    excelItems: [], generalInfo: {}, dbData: plan
+                                };
+                            }
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
 
-                // 4. The Smart Merge Logic for HYBRID DATA
                 const globalBuyersList = new Set();
 
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
-                    // Only load DB items specific to CURRENT Department!
-                    const dbDepartmentItems = group.dbData && group.dbData[activeTabId] ? group.dbData[activeTabId] : [];
+                    if (hasDeptFile) {
+                        const dbDepartmentItems = group.dbData && group.dbData[activeTabId] ? group.dbData[activeTabId] : [];
+                        dbDepartmentItems.forEach(dbItem => {
+                            if (dbItem.itemData) {
+                                const strictId = generateItemId(dbItem.itemData, activeTabId);
+                                dbItem.itemId = strictId;
+                                mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
+                            } else if (dbItem.itemId) {
+                                mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
+                            }
+                        });
 
-                    dbDepartmentItems.forEach(dbItem => {
-                        if (dbItem.itemId) mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
-                    });
+                        group.excelItems.forEach(exItem => {
+                            let dynamicItemData = {};
+                            if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                                dynamicItemData = {
+                                    OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), FabricConstruction: getColData(exItem, ['FabricConstruction']),
+                                    GSM: getColData(exItem, ['GSM']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']), Buyer: getColData(exItem, ['Buyer', 'BuyerName']),
+                                    Allowance: getColData(exItem, ['Allowance %', 'Allowance']), YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']), AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
+                                    YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']), GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                                    KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']), NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']),
+                                    RFD: getColData(exItem, ['RFD']), Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                                };
+                            } else {
+                                dynamicItemData = {
+                                    OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']),
+                                    Buyer: getColData(exItem, ['Buyer', 'BuyerName']), Unit: getColData(exItem, ['Unit']), ProcessName: getColData(exItem, ['Process Name', 'ProcessName']),
+                                    GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']), KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                                    BPQty: getColData(exItem, ['BP Qty', 'BPQty']), DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']), DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
+                                    NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']), RFD: getColData(exItem, ['RFD']),
+                                    Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                                };
+                            }
 
-                    // Map current department Excel items
-                    group.excelItems.forEach(exItem => {
-                        const itemId = generateItemId(exItem, activeTabId);
+                            const strictId = generateItemId(dynamicItemData, activeTabId);
 
-                        let dynamicItemData = {};
-                        if (activeTabId === 'knitting' || activeTabId === 'delivery') {
-                            dynamicItemData = {
-                                OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), FabricConstruction: getColData(exItem, ['FabricConstruction']),
-                                GSM: getColData(exItem, ['GSM']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']), Buyer: getColData(exItem, ['Buyer', 'BuyerName']),
-                                Allowance: getColData(exItem, ['Allowance %', 'Allowance']), YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']), AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
-                                YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']), GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
-                                KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']), NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']),
-                                RFD: getColData(exItem, ['RFD']), Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
-                            };
-                        } else {
-                            dynamicItemData = {
-                                OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']),
-                                Buyer: getColData(exItem, ['Buyer', 'BuyerName']), Unit: getColData(exItem, ['Unit']), ProcessName: getColData(exItem, ['Process Name', 'ProcessName']),
-                                GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']), KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
-                                BPQty: getColData(exItem, ['BP Qty', 'BPQty']), DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']), DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
-                                NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']), RFD: getColData(exItem, ['RFD']),
-                                Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
-                            };
-                        }
+                            if (mergedItemsMap.has(strictId)) {
+                                // Row exists (ID matched) -> Just update the inner Data!
+                                const existing = mergedItemsMap.get(strictId);
 
-                        if (mergedItemsMap.has(itemId)) {
-                            const existing = mergedItemsMap.get(itemId);
-                            existing.itemData = dynamicItemData;
-                            existing.source = 'Both';
-                            mergedItemsMap.set(itemId, existing);
-                        } else {
-                            mergedItemsMap.set(itemId, {
-                                itemId: itemId, itemData: dynamicItemData,
-                                startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
-                            });
-                        }
-                    });
+                                // Update the excel data (quantities, etc.)
+                                existing.itemData = dynamicItemData;
+                                existing.source = 'Both';
+
+                                // WE DO NOT TOUCH planType OR remarks HERE.
+                                // If it was Confirm, it stays Confirm. If Pending, stays Pending.
+
+                                mergedItemsMap.set(strictId, existing);
+                            } else {
+                                // Only if ID changed -> Create a fresh row
+                                mergedItemsMap.set(strictId, {
+                                    itemId: strictId, itemData: dynamicItemData,
+                                    startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
+                                });
+                            }
+                        });
+                    }
 
                     group.mergedItems = Array.from(mergedItemsMap.values());
 
-                    // Status Routing
                     group.isPending = false; group.isConfirm = false; group.isTentative = false;
                     let hasPending = false; let hasTentative = false; let allConfirm = true;
 
@@ -854,7 +876,6 @@
             }
         }
 
-        // Filter and Render UI Functions remain same
         function renderBuyerTabs(buyers) {
             const container = document.getElementById('buyerFilterContainer');
             container.innerHTML = '';
@@ -880,16 +901,20 @@
         function renderMainTable() {
             const tbody = document.getElementById('mainTableBody');
             const buyerFilterContainer = document.getElementById('buyerFilterContainer');
-            let data = Object.values(groupedData).filter(g => g.excelItems.length > 0 || (g.dbData && g.dbData[activeTabId] && g.dbData[activeTabId].length > 0));
-
             const emptyState = document.getElementById('emptyState');
             const dataTableWrapper = document.getElementById('dataTableContentWrapper');
             const paginationControls = document.getElementById('paginationControls');
 
+            let data = Object.values(groupedData).filter(g =>
+                Object.keys(g.generalInfo).length > 0 ||
+                g.excelItems.length > 0 ||
+                (g.dbData && g.dbData[activeTabId] && g.dbData[activeTabId].length > 0)
+            );
+
             if (data.length === 0) {
                 dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
                 emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No department data uploaded yet.</p>`;
+                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No data uploaded yet.</p>`;
                 tbody.innerHTML = ''; return;
             }
 
@@ -906,6 +931,17 @@
 
             const buyersSet = new Set();
             data.forEach(d => { d.buyers.forEach(b => { if (b && b !== 'N/A') buyersSet.add(b); }); });
+
+            if (data.length === 0 || buyersSet.size === 0) {
+                dataTableWrapper.classList.add('hidden');
+                paginationControls.classList.add('hidden');
+                buyerFilterContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No ${activeMainTab} data available.</p>`;
+                tbody.innerHTML = '';
+                return;
+            }
+
             renderBuyerTabs(Array.from(buyersSet));
             buyerFilterContainer.classList.remove('hidden');
 
@@ -1024,16 +1060,13 @@
             let itemHtml = '';
 
             let itemsToShow = data.mergedItems;
-            if (activeMainTab === 'Pending') itemsToShow = itemsToShow.filter(item => item.planType !== 'Confirm' && item.planType !== 'Tentative');
-            else if (activeMainTab === 'Confirm') itemsToShow = itemsToShow.filter(item => item.planType === 'Confirm');
-            else if (activeMainTab === 'Tentative') itemsToShow = itemsToShow.filter(item => item.planType === 'Tentative');
 
             itemsToShow.forEach((item) => {
-                let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row";
+                let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row bg-white";
                 let encodedItemData = encodeURIComponent(JSON.stringify(item.itemData || {}));
+
                 itemHtml += `<tr class="${rowClass}" data-itemid="${item.itemId}" data-itemdata="${encodedItemData}">`;
 
-                // Dynamic Left Columns
                 if (activeTabId === 'knitting' || activeTabId === 'delivery') {
                     const cols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance', 'YarnReq', 'AllocatedQty', 'YarnBala', 'GreyReq', 'KnitProd', 'KnitBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
                     cols.forEach(c => {
@@ -1073,10 +1106,14 @@
             currentViewIndex = null;
         }
 
-        // ================= DEPARTMENT SPECIFIC SAVING =================
         async function saveFabricPlanning() {
             const bookingNo = currentViewIndex;
             if (!bookingNo) return;
+
+            if (document.querySelectorAll('#detFabricItemsBody .fabric-row').length === 0) {
+                showToast("No fabric items to save! Please upload department data first.");
+                return;
+            }
 
             const existingData = groupedData[bookingNo];
             if (!existingData) return;
@@ -1122,7 +1159,6 @@
             finally { saveBtn.innerHTML = originalText; saveBtn.disabled = false; }
         }
 
-        // ================= CATEGORY UPLOAD HANDLING =================
         async function handleExcelUpload() {
             const file = document.getElementById('excelFile').files[0];
             if (!file) return alert("Select file first");
@@ -1145,15 +1181,29 @@
 
         async function loadUploadedFiles() {
             try {
-                const res = await fetch('https://abir-backend-api.onrender.com/api/files/all');
-                const files = await res.json();
+                const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+                const allFiles = await res.json();
                 const body = document.getElementById('fileListBody');
 
+                const filteredFiles = allFiles.filter(f => {
+                    const fileCat = f.category || 'General';
+                    return fileCat === activeUploadCategory;
+                });
+
+                const uniqueFilesMap = new Map();
+                filteredFiles.forEach(f => {
+                    if (!uniqueFilesMap.has(f.originalName)) {
+                        uniqueFilesMap.set(f.originalName, f);
+                    }
+                });
+
+                const displayFiles = Array.from(uniqueFilesMap.values());
+
                 let fileHtml = '';
-                if (files.length === 0) {
-                    fileHtml = '<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">No files uploaded.</td></tr>';
+                if (displayFiles.length === 0) {
+                    fileHtml = `<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">No ${activeUploadCategory} files uploaded yet.</td></tr>`;
                 } else {
-                    files.forEach(f => {
+                    displayFiles.forEach(f => {
                         const catBadge = f.category ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold text-[10px]">${f.category}</span>` : `<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-bold text-[10px]">General</span>`;
                         fileHtml += `
                         <tr class="border-b hover:bg-gray-50 transition-colors">
@@ -1162,7 +1212,7 @@
                             <td class="p-2 font-semibold">${f.uploadedBy}</td>
                             <td class="p-2 text-xs text-gray-500">${new Date(f.createdAt).toLocaleString()}</td>
                             <td class="p-2 text-center">
-                                <button onclick="deleteFile('${f._id}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
+                                <button onclick="deleteFileGroup('${f.originalName}', '${f.category || 'General'}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>`;
                     });
@@ -1171,11 +1221,18 @@
             } catch (e) { console.error("Load file err", e); }
         }
 
-        async function deleteFile(id) {
-            if (confirm("Are you sure you want to delete this file?")) {
+        async function deleteFileGroup(originalName, category) {
+            if (confirm(`Are you sure you want to delete '${originalName}' and all its updated versions?`)) {
                 try {
-                    await fetch(`https://abir-backend-api.onrender.com/api/files/${id}`, { method: 'DELETE' });
-                    showToast("File deleted!");
+                    const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+                    const allFiles = await res.json();
+                    const filesToDelete = allFiles.filter(f => f.originalName === originalName && (f.category || 'General') === category);
+
+                    showToast("Deleting files...");
+                    for (let f of filesToDelete) {
+                        await fetch(`https://abir-backend-api.onrender.com/api/files/${f._id}`, { method: 'DELETE' });
+                    }
+                    showToast("All versions deleted!");
                     loadUploadedFiles();
                     if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();
                 } catch (e) { alert("Delete error"); }
