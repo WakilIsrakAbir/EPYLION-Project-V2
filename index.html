@@ -7,6 +7,7 @@
     <title>Abir Group - Order Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Excel Parser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
@@ -140,17 +141,20 @@
 
 <body class="flex h-screen bg-[#f4f5f7] text-gray-800 overflow-hidden text-[13px] font-sans" onload="initDashboard()">
 
+    <!-- Toast Notification -->
     <div id="toast"
         class="fixed top-5 right-5 bg-gray-800 text-white px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3">
         <i class="fas fa-info-circle text-blue-400"></i>
         <span id="toastMessage">Action triggered</span>
     </div>
 
+    <!-- Sidebar -->
     <div id="sidebar"
         class="shrink-0 fixed md:relative z-50 h-full bg-sidebar transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
         <div class="w-[280px] h-full flex flex-col overflow-y-auto custom-scrollbar text-textMuted relative">
             <div class="absolute top-4 right-4 text-white cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
-                <i class="fas fa-times text-lg"></i></div>
+                <i class="fas fa-times text-lg"></i>
+            </div>
             <div
                 class="p-4 bg-sidebarDark text-white text-xl font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
                 <span class="text-epylionGreen tracking-wider">Abir LTD</span>
@@ -159,7 +163,8 @@
                 onclick="showDashboardHome()">
                 <div
                     class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-white shrink-0">
-                    <i class="fas fa-user text-sm"></i></div>
+                    <i class="fas fa-user text-sm"></i>
+                </div>
                 <span class="text-[13px] text-gray-200" id="displayUsername">Loading...</span>
                 <i class="fas fa-sign-out-alt ml-auto text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
                     title="Logout"></i>
@@ -181,18 +186,44 @@
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="orderMenu">
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('knitting', 'Knitting Plan')">Knitting Plan</a></li>
+                                onclick="loadMenuData('knitting', 'Knitting Plan', 'manage')">Knitting Plan</a></li>
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('dyeing', 'Dyeing Plan')">Dyeing Plan</a></li>
+                                onclick="loadMenuData('dyeing', 'Dyeing Plan', 'manage')">Dyeing Plan</a></li>
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('finishing', 'Finishing Plan')">Finishing Plan</a></li>
+                                onclick="loadMenuData('finishing', 'Finishing Plan', 'manage')">Finishing Plan</a></li>
                         <li><a href="#"
                                 class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('delivery', 'Delivery Plan')">Delivery Plan</a></li>
+                                onclick="loadMenuData('delivery', 'Delivery Plan', 'manage')">Delivery Plan</a></li>
                     </ul>
                 </li>
+
+                <!-- NEW REPORT MENU -->
+                <li>
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                        onclick="toggleSubmenu(this, 'reportMenu')">
+                        <div class="flex items-center"><i class="fas fa-chart-bar text-gray-400 w-6"></i> <span
+                                class="ml-2">Report</span></div>
+                        <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
+                    </div>
+                    <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="reportMenu">
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Knitting Plan</a></li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Dyeing Plan</a></li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Finishing Plan</a>
+                        </li>
+                        <li><a href="#"
+                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Delivery Plan</a></li>
+                    </ul>
+                </li>
+
                 <li id="sidebarManageUsers" class="hidden">
                     <a href="users.html"
                         class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer block">
@@ -203,16 +234,20 @@
         </div>
     </div>
 
+    <!-- Mobile Overlay -->
     <div id="mobileOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity"
         onclick="closeSidebarMobile()"></div>
 
+    <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
 
+        <!-- Top Header -->
         <div class="bg-white border-b border-gray-200 flex items-center justify-between px-4 h-[40px] shrink-0">
             <i class="fas fa-bars text-gray-500 cursor-pointer hover:text-activeBlue text-lg transition-transform hover:scale-110"
                 onclick="toggleSidebar()"></i>
         </div>
 
+        <!-- ================= DASHBOARD HOME VIEW ================= -->
         <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto custom-scrollbar">
@@ -226,12 +261,13 @@
                     class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
                     <div class="relative z-10">
                         <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
-                        <p class="text-gray-300">Select a Production Plan from the sidebar to manage data.</p>
+                        <p class="text-gray-300">Select a Production Plan or Report from the sidebar to manage data.</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- ================= DATA MANAGEMENT VIEW ================= -->
         <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0">
                 <div
@@ -294,101 +330,151 @@
             </div>
         </div>
 
+        <!-- ================= MAIN TABLE AND REPORT CONTAINER ================= -->
         <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full"
                 id="tabBarContainer">
                 <div id="dynamicTabsWrapper" class="flex gap-1 items-end"></div>
             </div>
 
-            <div class="p-3 flex-1 flex flex-col min-h-0 w-full">
+            <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
 
-                <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
-                    <div class="flex flex-wrap gap-2">
-                        <div id="btnPending"
-                            class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors"
-                            onclick="activateMainTab('Pending')">Pending List</div>
-                        <div id="btnConfirm"
-                            class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
-                            onclick="activateMainTab('Confirm')">Confirm List</div>
-                        <div id="btnTentative"
-                            class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
-                            onclick="activateMainTab('Tentative')">Tentative List</div>
-                        <div id="btnAll"
-                            class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
-                            onclick="activateMainTab('All')">All List</div>
-                    </div>
-                    <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
-                        id="buyerFilterContainer"></div>
+                <!-- Shared Loading Spinner -->
+                <div id="loadingData"
+                    class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white/80 z-30">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
+                    <p>Processing Department Data...</p>
                 </div>
 
-                <div
-                    class="border border-gray-300 w-full bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0 relative">
-
-                    <div id="loadingData"
-                        class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white z-30">
-                        <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
-                        <p>Processing Department Data...</p>
-                    </div>
-
-                    <div id="emptyState"
-                        class="hidden flex-1 flex-col justify-center items-center bg-white text-gray-500 w-full h-full p-10 text-center">
-                        <i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i>
-                        <p>No data available for this plan.</p>
-                    </div>
-
-                    <div class="flex-1 overflow-auto custom-scrollbar w-full bg-white" id="dataTableContentWrapper">
-                        <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
-                            <thead class="sticky top-0 z-20 bg-tableHeader shadow-sm">
-                                <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
-                                    <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">Manage
-                                    </th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
-                                    <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date
-                                    </th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Status</th>
-                                </tr>
-                                <tr class="bg-white border-b border-gray-300">
-                                    <th class="p-1 border-r border-gray-300 bg-white"></th>
-                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
-                                            class="header-search" oninput="filterByColumn(1, this.value)"
-                                            placeholder="Search No..."></th>
-                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
-                                            class="header-search" oninput="filterByColumn(2, this.value)"
-                                            placeholder="Search Date..."></th>
-                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
-                                            class="header-search" oninput="filterByColumn(3, this.value)"
-                                            placeholder="Search Buyer..."></th>
-                                    <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
-                                            class="header-search" oninput="filterByColumn(4, this.value)"
-                                            placeholder="Search Status..."></th>
-                                </tr>
-                            </thead>
-                            <tbody id="mainTableBody" class="text-gray-700 text-[11px]">
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="paginationControls"
-                        class="bg-white border-t border-gray-300 p-2 md:px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-700 shrink-0 gap-3 hidden">
-                        <div class="flex items-center gap-2">
-                            <span>Rows per page:</span>
-                            <select id="rowsPerPage"
-                                class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400 bg-gray-50 cursor-pointer"
-                                onchange="changeRowsPerPage()">
-                                <option value="10">10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                            <span id="pageInfo" class="ml-2 font-medium">Showing 0-0 of 0</span>
+                <!-- ================= 1. NORMAL LIST CONTAINER (Order Management) ================= -->
+                <div id="normalListContainer" class="flex-1 flex flex-col min-h-0 w-full">
+                    <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
+                        <div class="flex flex-wrap gap-2 justify-between items-center w-full">
+                            <div class="flex flex-wrap gap-2">
+                                <div id="btnPending"
+                                    class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors"
+                                    onclick="activateMainTab('Pending')">Pending List</div>
+                                <div id="btnConfirm"
+                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    onclick="activateMainTab('Confirm')">Confirm List</div>
+                                <div id="btnTentative"
+                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    onclick="activateMainTab('Tentative')">Tentative List</div>
+                                <div id="btnAll"
+                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    onclick="activateMainTab('All')">All List</div>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1" id="pageButtons"></div>
+                        <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
+                            id="buyerFilterContainer"></div>
+                    </div>
+
+                    <div
+                        class="border border-gray-300 w-full bg-white flex-1 flex flex-col rounded-sm shadow-sm overflow-hidden min-h-0 relative">
+                        <div id="emptyState"
+                            class="hidden flex-1 flex-col justify-center items-center bg-white text-gray-500 w-full h-full p-10 text-center">
+                            <i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i>
+                            <p>No data available for this plan.</p>
+                        </div>
+
+                        <div class="flex-1 overflow-auto custom-scrollbar w-full bg-white" id="dataTableContentWrapper">
+                            <table class="w-full text-left whitespace-nowrap min-w-[1000px]" id="dataTableContent">
+                                <thead class="sticky top-0 z-20 bg-tableHeader shadow-sm">
+                                    <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
+                                        <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">
+                                            Manage</th>
+                                        <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+                                        <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date
+                                        </th>
+                                        <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
+                                        <th class="p-2 border-r border-gray-300 bg-tableHeader">Status</th>
+                                    </tr>
+                                    <tr class="bg-white border-b border-gray-300">
+                                        <th class="p-1 border-r border-gray-300 bg-white"></th>
+                                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                                class="header-search" oninput="filterByColumn(1, this.value)"
+                                                placeholder="Search No..."></th>
+                                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                                class="header-search" oninput="filterByColumn(2, this.value)"
+                                                placeholder="Search Date..."></th>
+                                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                                class="header-search" oninput="filterByColumn(3, this.value)"
+                                                placeholder="Search Buyer..."></th>
+                                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text"
+                                                class="header-search" oninput="filterByColumn(4, this.value)"
+                                                placeholder="Search Status..."></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mainTableBody" class="text-gray-700 text-[11px]">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="paginationControls"
+                            class="bg-white border-t border-gray-300 p-2 md:px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-700 shrink-0 gap-3 hidden">
+                            <div class="flex items-center gap-2">
+                                <span>Rows per page:</span>
+                                <select id="rowsPerPage"
+                                    class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400 bg-gray-50 cursor-pointer"
+                                    onchange="changeRowsPerPage()">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span id="pageInfo" class="ml-2 font-medium">Showing 0-0 of 0</span>
+                            </div>
+                            <div class="flex items-center gap-1" id="pageButtons"></div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- ================= 2. REPORT ACTION CONTAINER (Clean Card UI for Reports) ================= -->
+                <div id="reportActionContainer"
+                    class="hidden flex-1 flex-col items-center justify-center bg-white rounded-md shadow-sm border border-gray-200 w-full min-h-0 p-6 md:p-10">
+                    <h2 class="text-2xl font-bold text-[#313644] mb-10" id="reportPageHeader">Department Reports</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-4xl w-full">
+                        <!-- Confirm List Card -->
+                        <div
+                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#22c55e]">
+                            <div
+                                class="w-20 h-20 bg-[#dcfce7] text-[#16a34a] rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Updated Confirm List</h3>
+                            <p class="text-gray-500 text-[13px] mb-8 leading-relaxed">Extract and download all confirmed
+                                planning data. The downloaded Excel file will have <strong
+                                    class="text-gray-700">separate sheets for each confirmed Buyer.</strong></p>
+                            <button onclick="exportReportToExcel('Confirm')"
+                                class="mt-auto w-full max-w-[280px] py-3.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
+                                <i class="fas fa-file-excel text-lg"></i> Download Confirm Data
+                            </button>
+                        </div>
+
+                        <!-- Tentative List Card -->
+                        <div
+                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#eab308]">
+                            <div
+                                class="w-20 h-20 bg-[#fef9c3] text-[#ca8a04] rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Updated Tentative List</h3>
+                            <p class="text-gray-500 text-[13px] mb-8 leading-relaxed">Extract and download all tentative
+                                planning data. The downloaded Excel file will have <strong
+                                    class="text-gray-700">separate sheets for each tentative Buyer.</strong></p>
+                            <button onclick="exportReportToExcel('Tentative')"
+                                class="mt-auto w-full max-w-[280px] py-3.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
+                                <i class="fas fa-file-excel text-lg"></i> Download Tentative Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
+        <!-- ================= DETAILED VIEW (Order Management Only) ================= -->
         <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex items-center px-4 py-2 shrink-0 justify-between w-full">
@@ -411,6 +497,7 @@
             <div
                 class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-3 md:p-4 flex flex-col gap-4 w-full min-h-0">
 
+                <!-- General Info Panel -->
                 <div class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full">
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
                         <div class="flex flex-col gap-2">
@@ -470,6 +557,7 @@
                     </div>
                 </div>
 
+                <!-- Fabric Items Information Panel -->
                 <div
                     class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col">
                     <div
@@ -482,6 +570,9 @@
                             <thead class="bg-white shadow-sm">
                                 <tr class="text-[10px] font-bold text-gray-700 bg-gray-100 border-b border-gray-300"
                                     id="mainHeaderRow">
+                                    <!-- Dynamic Left Headers injected here via JS -->
+
+                                    <!-- Fixed Hardcoded Right Headers -->
                                     <th class="p-2 border-r border-gray-300 text-center bg-gray-200" colspan="2"
                                         id="planningHeaderText">Planning</th>
                                     <th class="p-2 border-r border-gray-300 text-center">Plan Type</th>
@@ -489,6 +580,7 @@
                                     <th class="p-2 border-r border-gray-300">Remarks</th>
                                 </tr>
                                 <tr class="text-[9px] bg-gray-50 border-b border-gray-300" id="subHeaderRow">
+                                    <!-- Dynamic Sub Headers injected here via JS -->
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">Start Date</th>
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">End Date</th>
                                     <th class="border-r border-gray-300" colspan="3"></th>
@@ -509,6 +601,7 @@
         let openTabs = [];
         let activeTabId = 'dashboard';
         let activeUploadCategory = 'General';
+        let isReportMode = false;
 
         let currentPage = 1;
         let rowsPerPage = 10;
@@ -567,21 +660,40 @@
             renderTabs(); closeSidebarMobile();
         }
 
-        async function loadMenuData(dataKey, menuName) {
-            activeTabId = dataKey;
+        // ================= LOAD MENU LOGIC (UPDATED WITH CARD UI TOGGLE) =================
+        async function loadMenuData(deptKey, menuName, mode = 'manage') {
+            const uniqueId = mode === 'report' ? `${deptKey}_report` : deptKey;
+            activeTabId = uniqueId;
+            isReportMode = (mode === 'report');
+
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('listView').classList.remove('hidden');
 
-            if (!openTabs.find(tab => tab.id === dataKey)) openTabs.push({ id: dataKey, title: menuName });
+            if (isReportMode) {
+                // Report Mode: Hide normal list, show cards
+                document.getElementById('normalListContainer').classList.add('hidden');
+                document.getElementById('reportActionContainer').classList.remove('hidden');
+                document.getElementById('reportActionContainer').style.display = 'flex';
+                document.getElementById('reportPageHeader').innerText = `${deptKey.charAt(0).toUpperCase() + deptKey.slice(1)} Department Reports`;
+            } else {
+                // Manage Mode: Show normal list, hide cards
+                document.getElementById('normalListContainer').classList.remove('hidden');
+                document.getElementById('reportActionContainer').classList.add('hidden');
+                document.getElementById('reportActionContainer').style.display = 'none';
+                activateMainTab('Pending');
+            }
+
+            if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuName, dept: deptKey, mode: mode });
             renderTabs();
+
             document.querySelectorAll('.header-search').forEach(inp => inp.value = '');
             colFilters = {};
-            activateMainTab('Pending');
             activeBuyer = '';
 
-            renderDynamicHeaders();
+            if (!isReportMode) renderDynamicHeaders();
+
             await fetchAndProcessData();
             closeSidebarMobile();
         }
@@ -592,15 +704,15 @@
             document.getElementById('tab' + cat).classList.add('active');
             document.getElementById('currentUploadLabel').innerText = cat + ' Data';
             document.getElementById('directoryLabel').innerText = cat;
-
             loadUploadedFiles();
         }
 
         function renderDynamicHeaders() {
             document.querySelectorAll('.dynamic-th').forEach(e => e.remove());
 
+            const currentDept = activeTabId.replace('_report', '');
             let mainCols = [];
-            if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+            if (currentDept === 'knitting' || currentDept === 'delivery') {
                 mainCols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance %', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
                 document.getElementById('planningHeaderText').innerText = 'Knitting Planning';
                 document.getElementById('limitationHeaderText').innerText = 'Knitting Limitation';
@@ -619,11 +731,11 @@
 
         function generateItemId(itemData, tabId) {
             if (!itemData) return Date.now().toString();
-
+            const currentDept = tabId.replace('_report', '');
             let bNo = String(itemData.OrderNo !== undefined && itemData.OrderNo !== null ? itemData.OrderNo : 'N/A').trim();
             let color = String(itemData.Color !== undefined && itemData.Color !== null ? itemData.Color : 'N/A').trim();
 
-            if (tabId === 'knitting' || tabId === 'delivery') {
+            if (currentDept === 'knitting' || currentDept === 'delivery') {
                 let fabConst = String(itemData.FabricConstruction !== undefined && itemData.FabricConstruction !== null ? itemData.FabricConstruction : 'N/A').trim();
                 let gsm = String(itemData.GSM !== undefined && itemData.GSM !== null ? itemData.GSM : 'N/A').trim();
                 return `${bNo}_${color}_${fabConst}_${gsm}`.toLowerCase().replace(/\s+/g, '');
@@ -649,27 +761,22 @@
             renderMainTable();
         }
 
-        // ================= SMART FETCH & FILTERING (CORE FIX) =================
+        // ================= SMART DATA FETCHING (CRITICAL REPORT FIX) =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
-            document.getElementById('dataTableContentWrapper').classList.add('hidden');
-            document.getElementById('paginationControls').classList.add('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
-            document.getElementById('buyerFilterContainer').innerHTML = '';
+
+            const currentDept = activeTabId.replace('_report', '');
 
             try {
-                // Fetch with Cache-Buster
                 const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
                 const allFiles = await res.json();
 
-                const targetCategory = activeTabId.charAt(0).toUpperCase() + activeTabId.slice(1);
+                const targetCategory = currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
                 const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
                 const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
 
-                // === EXTREMELY IMPORTANT: Get ONLY the latest version of each file ===
                 const getLatestFiles = (filesArray) => {
                     const map = new Map();
-                    // Assuming files are returned newest-first from backend
                     filesArray.forEach(f => {
                         if (!map.has(f.originalName)) {
                             map.set(f.originalName, f);
@@ -681,6 +788,7 @@
                 const generalFiles = getLatestFiles(generalFilesRaw);
                 const deptFiles = getLatestFiles(deptFilesRaw);
 
+                // Both Manage and Report mode NEED to know if files exist
                 const hasDeptFile = deptFiles.length > 0;
 
                 const readFiles = async (fileList) => {
@@ -784,11 +892,12 @@
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
+                    // FIX: Process the same way for BOTH Report and Manage mode
                     if (hasDeptFile) {
-                        const dbDepartmentItems = group.dbData && group.dbData[activeTabId] ? group.dbData[activeTabId] : [];
+                        const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
-                                const strictId = generateItemId(dbItem.itemData, activeTabId);
+                                const strictId = generateItemId(dbItem.itemData, currentDept);
                                 dbItem.itemId = strictId;
                                 mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
                             } else if (dbItem.itemId) {
@@ -798,7 +907,7 @@
 
                         group.excelItems.forEach(exItem => {
                             let dynamicItemData = {};
-                            if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                            if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
                                     OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), FabricConstruction: getColData(exItem, ['FabricConstruction']),
                                     GSM: getColData(exItem, ['GSM']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']), Buyer: getColData(exItem, ['Buyer', 'BuyerName']),
@@ -818,22 +927,14 @@
                                 };
                             }
 
-                            const strictId = generateItemId(dynamicItemData, activeTabId);
+                            const strictId = generateItemId(dynamicItemData, currentDept);
 
                             if (mergedItemsMap.has(strictId)) {
-                                // Row exists (ID matched) -> Just update the inner Data!
                                 const existing = mergedItemsMap.get(strictId);
-
-                                // Update the excel data (quantities, etc.)
                                 existing.itemData = dynamicItemData;
                                 existing.source = 'Both';
-
-                                // WE DO NOT TOUCH planType OR remarks HERE.
-                                // If it was Confirm, it stays Confirm. If Pending, stays Pending.
-
                                 mergedItemsMap.set(strictId, existing);
                             } else {
-                                // Only if ID changed -> Create a fresh row
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId, itemData: dynamicItemData,
                                     startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
@@ -866,14 +967,86 @@
                     group.buyers.forEach(b => { if (b && b !== 'N/A') globalBuyersList.add(b); });
                 });
 
-                renderBuyerTabs(Array.from(globalBuyersList));
-                currentPage = 1;
-                renderMainTable();
+                if (!isReportMode) {
+                    renderBuyerTabs(Array.from(globalBuyersList));
+                    currentPage = 1;
+                    renderMainTable();
+                }
+
                 document.getElementById('loadingData').classList.add('hidden');
             } catch (e) {
                 console.error("Error processing data:", e);
                 document.getElementById('loadingData').classList.add('hidden');
             }
+        }
+
+        // ================= EXCEL EXPORT LOGIC FOR REPORTS =================
+        function exportReportToExcel(targetPlanType) {
+            if (!groupedData || Object.keys(groupedData).length === 0) {
+                showToast("No data available to export!");
+                return;
+            }
+
+            let buyerDataMap = {};
+
+            Object.values(groupedData).forEach(group => {
+                // Ensure we only process groups that have exactly this status globally
+                // This matches exactly what the Order Management table does.
+                let isGroupMatching = false;
+                if (targetPlanType === 'Confirm' && group.isConfirm) isGroupMatching = true;
+                if (targetPlanType === 'Tentative' && group.isTentative) isGroupMatching = true;
+
+                if (isGroupMatching && group.mergedItems) {
+                    group.mergedItems.forEach(item => {
+                        // EXPORT ONLY the items matching exactly the selected Status
+                        if (item.planType === targetPlanType) {
+                            let rowData = { ...item.itemData };
+
+                            rowData['Plan Start Date'] = item.startDate || '';
+                            rowData['Plan End Date'] = item.endDate || '';
+                            rowData['Plan Type'] = item.planType;
+                            rowData['Limitation'] = item.limitation || '';
+                            rowData['Remarks'] = item.remarks || '';
+
+                            let buyer = rowData.Buyer || rowData.BuyerName || 'General';
+                            buyer = String(buyer).trim();
+                            if (buyer === '' || buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') {
+                                buyer = 'General';
+                            }
+
+                            // Sanitize Buyer name
+                            buyer = buyer.replace(/[\[\]\/\*\\\?\:]/g, '_').substring(0, 31);
+
+                            if (!buyerDataMap[buyer]) {
+                                buyerDataMap[buyer] = [];
+                            }
+                            buyerDataMap[buyer].push(rowData);
+                        }
+                    });
+                }
+            });
+
+            const buyers = Object.keys(buyerDataMap);
+
+            if (buyers.length === 0) {
+                showToast(`No ${targetPlanType} data found to export!`);
+                return;
+            }
+
+            showToast(`Generating Excel file for ${targetPlanType} List...`);
+
+            const wb = XLSX.utils.book_new();
+
+            buyers.forEach(buyer => {
+                const ws = XLSX.utils.json_to_sheet(buyerDataMap[buyer]);
+                XLSX.utils.book_append_sheet(wb, ws, buyer);
+            });
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const currentDept = activeTabId.replace('_report', '');
+            const filename = `${currentDept.toUpperCase()}_${targetPlanType}_Report_${dateStr}.xlsx`;
+
+            XLSX.writeFile(wb, filename);
         }
 
         function renderBuyerTabs(buyers) {
@@ -908,7 +1081,7 @@
             let data = Object.values(groupedData).filter(g =>
                 Object.keys(g.generalInfo).length > 0 ||
                 g.excelItems.length > 0 ||
-                (g.dbData && g.dbData[activeTabId] && g.dbData[activeTabId].length > 0)
+                (g.dbData && g.dbData[activeTabId.replace('_report', '')] && g.dbData[activeTabId.replace('_report', '')].length > 0)
             );
 
             if (data.length === 0) {
@@ -1060,6 +1233,7 @@
             let itemHtml = '';
 
             let itemsToShow = data.mergedItems;
+            const currentDept = activeTabId.replace('_report', '');
 
             itemsToShow.forEach((item) => {
                 let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row bg-white";
@@ -1067,7 +1241,7 @@
 
                 itemHtml += `<tr class="${rowClass}" data-itemid="${item.itemId}" data-itemdata="${encodedItemData}">`;
 
-                if (activeTabId === 'knitting' || activeTabId === 'delivery') {
+                if (currentDept === 'knitting' || currentDept === 'delivery') {
                     const cols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance', 'YarnReq', 'AllocatedQty', 'YarnBala', 'GreyReq', 'KnitProd', 'KnitBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
                     cols.forEach(c => {
                         let val = item.itemData[c];
@@ -1137,8 +1311,8 @@
             });
 
             const fabricItemsArr = Array.from(allItemsMap.values());
-
-            const payload = { orderNo: bookingNo, department: activeTabId, fabricItems: fabricItemsArr };
+            const currentDept = activeTabId.replace('_report', '');
+            const payload = { orderNo: bookingNo, department: currentDept, fabricItems: fabricItemsArr };
 
             const saveBtn = document.getElementById('saveDatesBtn');
             const originalText = saveBtn.innerHTML;
@@ -1259,13 +1433,13 @@
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper'); let tabHtml = '';
             openTabs.forEach(t => {
-                tabHtml += `<div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.id}', '${t.title}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
+                tabHtml += `<div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.dept}', '${t.title}', '${t.mode}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
             });
             container.innerHTML = tabHtml;
         }
         function closeTab(e, id) {
             e.stopPropagation(); openTabs = openTabs.filter(t => t.id !== id);
-            if (openTabs.length === 0) showDashboardHome(); else loadMenuData(openTabs[0].id, openTabs[0].title);
+            if (openTabs.length === 0) showDashboardHome(); else loadMenuData(openTabs[0].dept, openTabs[0].title, openTabs[0].mode);
         }
         function toggleSubmenu(header, id) {
             const m = document.getElementById(id); const i = header.querySelector('.fa-chevron-left');
