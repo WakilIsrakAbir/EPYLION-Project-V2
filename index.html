@@ -218,17 +218,17 @@
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="reportMenu">
                         <li><a href="#" id="menu-knitting-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Updated Knitting Plan</a></li>
+                                onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Knitting Plan</a></li>
                         <li><a href="#" id="menu-dyeing-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Updated Dyeing Plan</a></li>
+                                onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Dyeing Plan</a></li>
                         <li><a href="#" id="menu-finishing-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Updated Finishing Plan</a>
+                                onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Finishing Plan</a>
                         </li>
                         <li><a href="#" id="menu-delivery-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Updated Delivery Plan</a></li>
+                                onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Delivery Plan</a></li>
                     </ul>
                 </li>
 
@@ -631,7 +631,6 @@
 
         // ================= HIGHLIGHT ACTIVE MENU FUNCTION =================
         function setActiveSidebarMenu(activeId) {
-            // Remove active classes from all menu items
             document.querySelectorAll('.sidebar-menu-item').forEach(el => {
                 el.classList.remove('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
                 el.classList.add('border-transparent');
@@ -641,13 +640,11 @@
                 }
             });
 
-            // Add active classes to the currently clicked item
             const activeEl = document.getElementById(activeId);
             if (activeEl) {
                 activeEl.classList.remove('border-transparent', 'text-gray-400');
                 activeEl.classList.add('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
 
-                // Auto-expand the parent folder (Order Management or Report) if it's a submenu
                 const parentMenu = activeEl.closest('ul');
                 if (parentMenu && parentMenu.classList.contains('hidden')) {
                     parentMenu.classList.remove('hidden');
@@ -686,7 +683,7 @@
             document.getElementById('dashboardHomeView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
-            setActiveSidebarMenu('menu-dashboard'); // Call highlight function
+            setActiveSidebarMenu('menu-dashboard');
         }
 
         function showDataManagementView() {
@@ -697,10 +694,9 @@
             document.getElementById('dataManagementView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
-            setActiveSidebarMenu('menu-data-mgmt'); // Call highlight function
+            setActiveSidebarMenu('menu-data-mgmt');
         }
 
-        // ================= LOAD MENU LOGIC =================
         async function loadMenuData(deptKey, menuName, mode = 'manage') {
             const uniqueId = mode === 'report' ? `${deptKey}_report` : deptKey;
             activeTabId = uniqueId;
@@ -712,13 +708,11 @@
             document.getElementById('listView').classList.remove('hidden');
 
             if (isReportMode) {
-                // Report Mode
                 document.getElementById('normalListContainer').classList.add('hidden');
                 document.getElementById('reportActionContainer').classList.remove('hidden');
                 document.getElementById('reportActionContainer').style.display = 'flex';
                 document.getElementById('reportPageHeader').innerText = `${deptKey.charAt(0).toUpperCase() + deptKey.slice(1)} Department Reports`;
             } else {
-                // Manage Mode
                 document.getElementById('normalListContainer').classList.remove('hidden');
                 document.getElementById('reportActionContainer').classList.add('hidden');
                 document.getElementById('reportActionContainer').style.display = 'none';
@@ -733,8 +727,6 @@
             activeBuyer = '';
 
             if (!isReportMode) renderDynamicHeaders();
-
-            // Set dynamic active ID based on the menu clicked
             setActiveSidebarMenu('menu-' + deptKey + '-' + mode);
 
             await fetchAndProcessData();
@@ -804,6 +796,7 @@
             renderMainTable();
         }
 
+        // ================= SMART DATA FETCHING (CRITICAL MISSING ORDERS & DUPLICATE ROW FIX) =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
 
@@ -864,15 +857,15 @@
                 };
 
                 generalRawData.forEach((row, index) => {
-                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
+                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
 
                     let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerVal !== '' ? buyerVal : '').trim();
-                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') buyer = '';
+                    let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
+                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
 
                     initGroup(bNo);
-                    if (buyer) groupedData[bNo].buyers.add(buyer);
+                    groupedData[bNo].buyers.add(buyer);
 
                     if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
                         let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
@@ -886,7 +879,7 @@
 
                         groupedData[bNo].generalInfo = {
                             EWO: getColData(row, ['OrderNo', 'EWO']),
-                            OrderQty: getColData(row, ['RequiredQtyKgs', 'Qty']),
+                            OrderQty: getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']),
                             BookingUnit: getColData(row, ['BookingUnit']),
                             Unit: getColData(row, ['Unit']),
                             FinalConf: getColData(row, ['FinalConfirmation', 'Status']),
@@ -906,9 +899,15 @@
                 });
 
                 deptRawData.forEach((row, index) => {
-                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking']);
+                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
                     initGroup(bNo);
+
+                    let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                    let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
+                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
+                    groupedData[bNo].buyers.add(buyer);
+
                     groupedData[bNo].excelItems.push(row);
                 });
 
@@ -924,6 +923,16 @@
                                     excelItems: [], generalInfo: {}, dbData: plan
                                 };
                             }
+
+                            ['knitting', 'dyeing', 'finishing', 'delivery'].forEach(dept => {
+                                if (plan[dept] && Array.isArray(plan[dept])) {
+                                    plan[dept].forEach(item => {
+                                        let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim() : 'General';
+                                        if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
+                                        groupedData[plan.orderNo].buyers.add(b);
+                                    });
+                                }
+                            });
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
@@ -933,11 +942,18 @@
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
-                    if (hasDeptFile) {
+                    // Regardless of Report or Manage, we map DB items first
+                    if (hasDeptFile || group.dbData) {
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
+
+                        // FIX: Track occurrences to prevent overwriting identical DB rows
+                        let dbOccurrence = {};
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
-                                const strictId = generateItemId(dbItem.itemData, currentDept);
+                                let baseId = generateItemId(dbItem.itemData, currentDept);
+                                dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
+                                let strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
+
                                 dbItem.itemId = strictId;
                                 mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
                             } else if (dbItem.itemId) {
@@ -945,29 +961,56 @@
                             }
                         });
 
+                        // FIX: Track occurrences to prevent overwriting identical Excel rows
+                        let excelOccurrence = {};
                         group.excelItems.forEach(exItem => {
                             let dynamicItemData = {};
                             if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
-                                    OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), FabricConstruction: getColData(exItem, ['FabricConstruction']),
-                                    GSM: getColData(exItem, ['GSM']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']), Buyer: getColData(exItem, ['Buyer', 'BuyerName']),
-                                    Allowance: getColData(exItem, ['Allowance %', 'Allowance']), YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']), AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
-                                    YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']), GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
-                                    KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']), NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']),
-                                    RFD: getColData(exItem, ['RFD']), Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                                    OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                                    Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
+                                    FabricConstruction: getColData(exItem, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']),
+                                    GSM: getColData(exItem, ['GSM', 'G.S.M']),
+                                    RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
+                                    Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
+                                    Allowance: getColData(exItem, ['Allowance %', 'Allowance']),
+                                    YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']),
+                                    AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
+                                    YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']),
+                                    GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
+                                    KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                                    KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                                    NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
+                                    NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
+                                    RFD: getColData(exItem, ['RFD']),
+                                    Slowmoving: getColData(exItem, ['Slowmoving']),
+                                    FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
                                 };
                             } else {
                                 dynamicItemData = {
-                                    OrderNo: getColData(exItem, ['OrderNo']), Color: getColData(exItem, ['Color']), RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs']),
-                                    Buyer: getColData(exItem, ['Buyer', 'BuyerName']), Unit: getColData(exItem, ['Unit']), ProcessName: getColData(exItem, ['Process Name', 'ProcessName']),
-                                    GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']), KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']), KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
-                                    BPQty: getColData(exItem, ['BP Qty', 'BPQty']), DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']), DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
-                                    NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty']), NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty']), RFD: getColData(exItem, ['RFD']),
-                                    Slowmoving: getColData(exItem, ['Slowmoving']), FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                                    OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                                    Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
+                                    RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
+                                    Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
+                                    Unit: getColData(exItem, ['Unit']),
+                                    ProcessName: getColData(exItem, ['Process Name', 'ProcessName', 'Process']),
+                                    GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
+                                    KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                                    KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                                    BPQty: getColData(exItem, ['BP Qty', 'BPQty']),
+                                    DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']),
+                                    DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
+                                    NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
+                                    NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
+                                    RFD: getColData(exItem, ['RFD']),
+                                    Slowmoving: getColData(exItem, ['Slowmoving']),
+                                    FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
                                 };
                             }
 
-                            const strictId = generateItemId(dynamicItemData, currentDept);
+                            let baseId = generateItemId(dynamicItemData, currentDept);
+                            excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
+                            let strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
 
                             if (mergedItemsMap.has(strictId)) {
                                 const existing = mergedItemsMap.get(strictId);
@@ -986,25 +1029,28 @@
                     group.mergedItems = Array.from(mergedItemsMap.values());
 
                     group.isPending = false; group.isConfirm = false; group.isTentative = false;
-                    let hasPending = false; let hasTentative = false; let allConfirm = true;
 
                     if (group.mergedItems.length === 0) {
-                        hasPending = true; allConfirm = false;
+                        group.isPending = true;
                     } else {
                         group.mergedItems.forEach(item => {
                             if (!item.planType || item.planType === '' || item.planType === 'Select') {
-                                hasPending = true; allConfirm = false;
-                            } else if (item.planType === 'Tentative') {
-                                hasTentative = true; allConfirm = false;
+                                group.isPending = true;
+                            }
+                            if (item.planType === 'Tentative') {
+                                group.isTentative = true;
+                            }
+                            if (item.planType === 'Confirm') {
+                                group.isConfirm = true;
                             }
                         });
                     }
 
-                    if (hasPending) group.isPending = true;
-                    else if (hasTentative) group.isTentative = true;
-                    else if (allConfirm) group.isConfirm = true;
-
-                    group.buyers.forEach(b => { if (b && b !== 'N/A') globalBuyersList.add(b); });
+                    if (group.buyers.size === 0) group.buyers.add('General');
+                    group.buyers.forEach(b => {
+                        if (b && b.trim() !== '' && b !== 'N/A') globalBuyersList.add(b);
+                        else globalBuyersList.add('General');
+                    });
                 });
 
                 if (!isReportMode) {
