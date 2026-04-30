@@ -796,7 +796,6 @@
             renderMainTable();
         }
 
-        // ================= SMART DATA FETCHING & PROCESSING =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
 
@@ -810,29 +809,30 @@
                 const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
                 const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
 
-                // SORT FILES CHRONOLOGICALLY (Oldest to Newest) to allow merging & row creation
-                generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                deptFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                const getLatestFiles = (filesArray) => {
+                    const map = new Map();
+                    filesArray.forEach(f => {
+                        if (!map.has(f.originalName)) {
+                            map.set(f.originalName, f);
+                        }
+                    });
+                    return Array.from(map.values());
+                };
 
-                const generalFiles = generalFilesRaw;
-                const deptFiles = deptFilesRaw;
+                const generalFiles = getLatestFiles(generalFilesRaw);
+                const deptFiles = getLatestFiles(deptFilesRaw);
 
                 const hasDeptFile = deptFiles.length > 0;
 
                 const readFiles = async (fileList) => {
                     let raw = [];
-                    for (let i = 0; i < fileList.length; i++) {
-                        let file = fileList[i];
+                    for (let file of fileList) {
                         try {
                             const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
                             if (!fRes.ok) continue;
                             const ab = await fRes.arrayBuffer();
                             const wb = XLSX.read(ab, { type: 'array' });
-                            let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                            sheetData.forEach(row => {
-                                row._fileIndex = i; // TAG WHICH FILE THIS CAME FROM
-                                raw.push(row);
-                            });
+                            raw = raw.concat(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
                         } catch (e) { console.error("File read err:", e); }
                     }
                     return raw;
@@ -866,52 +866,34 @@
                     initGroup(bNo);
                     groupedData[bNo].buyers.add(buyer);
 
-                    // Since oldest comes first, we can continuously overwrite the object, meaning the newest file's data persists
-                    let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
-                    if (dateVal) groupedData[bNo].bookingDate = formatExcelDate(dateVal);
-
-                    let teamVal = getColData(row, ['BuyerTeam', 'Team']);
-                    if (teamVal) groupedData[bNo].buyerTeam = String(teamVal);
-
-                    let statusVal = getColData(row, ['Status']);
-                    if (statusVal) groupedData[bNo].status = String(statusVal);
-
-                    let ewo = getColData(row, ['OrderNo', 'EWO']);
-                    let orderQty = getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']);
-                    let bUnit = getColData(row, ['BookingUnit']);
-                    let unit = getColData(row, ['Unit']);
-                    let finalConf = getColData(row, ['FinalConfirmation', 'Status']);
-                    let eventDay = getColData(row, ['EventDay']);
-                    let ship1 = formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1']));
-                    let shipLast = formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast']));
-                    let yarnDate = formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate']));
-                    let deliStart = formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart']));
-                    let deliEnd = formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd']));
-                    let knitStart = formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart']));
-                    let knitEnd = formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd']));
-                    let dyeStart = formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart']));
-                    let dyeEnd = formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd']));
-                    let fabNotes = getColData(row, ['FabricNotes', 'Notes']);
-
                     if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
-                        groupedData[bNo].generalInfo = { EWO: ewo, OrderQty: orderQty, BookingUnit: bUnit, Unit: unit, FinalConf: finalConf, EventDay: eventDay, Ship1: ship1, ShipLast: shipLast, YarnDate: yarnDate, DeliStart: deliStart, DeliEnd: deliEnd, KnitStart: knitStart, KnitEnd: knitEnd, DyeStart: dyeStart, DyeEnd: dyeEnd, FabNotes: fabNotes };
-                    } else {
-                        if (ewo) groupedData[bNo].generalInfo.EWO = ewo;
-                        if (orderQty) groupedData[bNo].generalInfo.OrderQty = orderQty;
-                        if (bUnit) groupedData[bNo].generalInfo.BookingUnit = bUnit;
-                        if (unit) groupedData[bNo].generalInfo.Unit = unit;
-                        if (finalConf) groupedData[bNo].generalInfo.FinalConf = finalConf;
-                        if (eventDay) groupedData[bNo].generalInfo.EventDay = eventDay;
-                        if (ship1 !== 'N/A') groupedData[bNo].generalInfo.Ship1 = ship1;
-                        if (shipLast !== 'N/A') groupedData[bNo].generalInfo.ShipLast = shipLast;
-                        if (yarnDate !== 'N/A') groupedData[bNo].generalInfo.YarnDate = yarnDate;
-                        if (deliStart !== 'N/A') groupedData[bNo].generalInfo.DeliStart = deliStart;
-                        if (deliEnd !== 'N/A') groupedData[bNo].generalInfo.DeliEnd = deliEnd;
-                        if (knitStart !== 'N/A') groupedData[bNo].generalInfo.KnitStart = knitStart;
-                        if (knitEnd !== 'N/A') groupedData[bNo].generalInfo.KnitEnd = knitEnd;
-                        if (dyeStart !== 'N/A') groupedData[bNo].generalInfo.DyeStart = dyeStart;
-                        if (dyeEnd !== 'N/A') groupedData[bNo].generalInfo.DyeEnd = dyeEnd;
-                        if (fabNotes) groupedData[bNo].generalInfo.FabNotes = fabNotes;
+                        let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
+                        groupedData[bNo].bookingDate = formatExcelDate(dateVal);
+
+                        let teamVal = getColData(row, ['BuyerTeam', 'Team']);
+                        groupedData[bNo].buyerTeam = String(teamVal !== '' ? teamVal : 'N/A');
+
+                        let statusVal = getColData(row, ['Status']);
+                        groupedData[bNo].status = String(statusVal !== '' ? statusVal : 'Pending');
+
+                        groupedData[bNo].generalInfo = {
+                            EWO: getColData(row, ['OrderNo', 'EWO']),
+                            OrderQty: getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']),
+                            BookingUnit: getColData(row, ['BookingUnit']),
+                            Unit: getColData(row, ['Unit']),
+                            FinalConf: getColData(row, ['FinalConfirmation', 'Status']),
+                            EventDay: getColData(row, ['EventDay']),
+                            Ship1: formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1'])),
+                            ShipLast: formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast'])),
+                            YarnDate: formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate'])),
+                            DeliStart: formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart'])),
+                            DeliEnd: formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd'])),
+                            KnitStart: formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart'])),
+                            KnitEnd: formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd'])),
+                            DyeStart: formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart'])),
+                            DyeEnd: formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd'])),
+                            FabNotes: getColData(row, ['FabricNotes', 'Notes'])
+                        };
                     }
                 });
 
@@ -960,9 +942,8 @@
                     const mergedItemsMap = new Map();
 
                     if (hasDeptFile || group.dbData) {
-
-                        // 1. Process DB Items first
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
+
                         let dbOccurrence = {};
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
@@ -972,20 +953,13 @@
 
                                 dbItem.itemId = strictId;
                                 mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
+                            } else if (dbItem.itemId) {
+                                mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
                             }
                         });
 
-                        // 2. Process Excel Items (chronologically, allowing ID changes to create new rows and same IDs to update)
                         let excelOccurrence = {};
-                        let currentFileIndex = -1;
-
                         group.excelItems.forEach(exItem => {
-                            // IF WE SWITCH TO A NEW EXCEL FILE, RESET THE OCCURRENCE TRACKER!
-                            if (exItem._fileIndex !== currentFileIndex) {
-                                excelOccurrence = {};
-                                currentFileIndex = exItem._fileIndex;
-                            }
-
                             let dynamicItemData = {};
                             if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
@@ -1035,13 +1009,11 @@
                             let strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
 
                             if (mergedItemsMap.has(strictId)) {
-                                // Exists: Update it (Old row kept, data updated)
                                 const existing = mergedItemsMap.get(strictId);
                                 existing.itemData = dynamicItemData;
                                 existing.source = 'Both';
                                 mergedItemsMap.set(strictId, existing);
                             } else {
-                                // New ID generated: Create new row!
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId, itemData: dynamicItemData,
                                     startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
@@ -1052,7 +1024,6 @@
 
                     group.mergedItems = Array.from(mergedItemsMap.values());
 
-                    // ================= CORRECT STATUS ROUTING LOGIC =================
                     group.isPending = false;
                     group.isConfirm = false;
                     group.isTentative = false;
@@ -1067,7 +1038,7 @@
 
                         group.mergedItems.forEach(item => {
                             if (!item.planType || item.planType === '' || item.planType === 'Select') {
-                                hasSelect = true; // Any 'Select' found!
+                                hasSelect = true;
                             } else if (item.planType === 'Tentative') {
                                 hasTentative = true;
                             } else if (item.planType === 'Confirm') {
@@ -1075,21 +1046,14 @@
                             }
                         });
 
-                        // CORE RULE: 
-                        // If ANY item is missing a plan (Select), the entire order stays Pending.
+                        // CORE STATUS LOGIC FIX
                         if (hasSelect) {
                             group.isPending = true;
-                        }
-                        // If no item is missing a plan, but AT LEAST ONE is Tentative, it goes to Tentative List.
-                        else if (hasTentative) {
+                        } else if (hasTentative) {
                             group.isTentative = true;
-                        }
-                        // ONLY IF ALL items are Confirm, it goes to Confirm List.
-                        else if (confirmCount === totalItems && totalItems > 0) {
+                        } else if (confirmCount === totalItems && totalItems > 0) {
                             group.isConfirm = true;
-                        }
-                        // Fallback
-                        else {
+                        } else {
                             group.isPending = true;
                         }
                     }
@@ -1128,7 +1092,6 @@
                 if (targetPlanType === 'Confirm' && group.isConfirm) isGroupMatching = true;
                 if (targetPlanType === 'Tentative' && group.isTentative) isGroupMatching = true;
 
-                // When exporting, export ALL items inside the order that matches the status
                 if (isGroupMatching && group.mergedItems) {
                     group.mergedItems.forEach(item => {
                         let rowData = { ...item.itemData };
