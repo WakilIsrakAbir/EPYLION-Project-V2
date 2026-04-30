@@ -159,7 +159,10 @@
                 class="p-4 bg-sidebarDark text-white text-xl font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
                 <span class="text-epylionGreen tracking-wider">Abir LTD</span>
             </div>
-            <div class="p-4 flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
+
+            <!-- Dashboard Menu -->
+            <div id="menu-dashboard"
+                class="sidebar-menu-item py-4 pr-4 pl-3 border-l-4 border-transparent flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
                 onclick="showDashboardHome()">
                 <div
                     class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-white shrink-0">
@@ -169,13 +172,18 @@
                 <i class="fas fa-sign-out-alt ml-auto text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
                     title="Logout"></i>
             </div>
+
             <ul class="py-2 w-full">
+                <!-- Data Management Menu -->
                 <li id="sidebarDataManagement">
-                    <div class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div id="menu-data-mgmt"
+                        class="sidebar-menu-item py-3 pr-4 pl-3 border-l-4 border-transparent flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="showDataManagementView()">
                         <i class="fas fa-database text-gray-400 w-6"></i> <span class="ml-2">Data Management</span>
                     </div>
                 </li>
+
+                <!-- Order Management Menus -->
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'orderMenu')">
@@ -184,22 +192,22 @@
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="orderMenu">
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                        <li><a href="#" id="menu-knitting-manage"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('knitting', 'Knitting Plan', 'manage')">Knitting Plan</a></li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                        <li><a href="#" id="menu-dyeing-manage"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('dyeing', 'Dyeing Plan', 'manage')">Dyeing Plan</a></li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                        <li><a href="#" id="menu-finishing-manage"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('finishing', 'Finishing Plan', 'manage')">Finishing Plan</a></li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
+                        <li><a href="#" id="menu-delivery-manage"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('delivery', 'Delivery Plan', 'manage')">Delivery Plan</a></li>
                     </ul>
                 </li>
 
-                <!-- NEW REPORT MENU -->
+                <!-- REPORT MENU -->
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'reportMenu')">
@@ -208,19 +216,19 @@
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="reportMenu">
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Knitting Plan</a></li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Dyeing Plan</a></li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Finishing Plan</a>
+                        <li><a href="#" id="menu-knitting-report"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Updated Knitting Plan</a></li>
+                        <li><a href="#" id="menu-dyeing-report"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Updated Dyeing Plan</a></li>
+                        <li><a href="#" id="menu-finishing-report"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Updated Finishing Plan</a>
                         </li>
-                        <li><a href="#"
-                                class="submenu-link block py-2 pl-12 pr-4 text-gray-400 hover:text-white transition-colors"
-                                onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Delivery Plan</a></li>
+                        <li><a href="#" id="menu-delivery-report"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Updated Delivery Plan</a></li>
                     </ul>
                 </li>
 
@@ -621,6 +629,34 @@
             loadUploadedFiles();
         }
 
+        // ================= HIGHLIGHT ACTIVE MENU FUNCTION =================
+        function setActiveSidebarMenu(activeId) {
+            // Remove active classes from all menu items
+            document.querySelectorAll('.sidebar-menu-item').forEach(el => {
+                el.classList.remove('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
+                el.classList.add('border-transparent');
+
+                if (el.classList.contains('submenu-item')) {
+                    el.classList.add('text-gray-400');
+                }
+            });
+
+            // Add active classes to the currently clicked item
+            const activeEl = document.getElementById(activeId);
+            if (activeEl) {
+                activeEl.classList.remove('border-transparent', 'text-gray-400');
+                activeEl.classList.add('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
+
+                // Auto-expand the parent folder (Order Management or Report) if it's a submenu
+                const parentMenu = activeEl.closest('ul');
+                if (parentMenu && parentMenu.classList.contains('hidden')) {
+                    parentMenu.classList.remove('hidden');
+                    const chevron = parentMenu.previousElementSibling.querySelector('.fa-chevron-left');
+                    if (chevron) chevron.classList.add('-rotate-90');
+                }
+            }
+        }
+
         function applyPermissions(role) {
             const sidebarManageUsers = document.getElementById('sidebarManageUsers');
             const sidebarDataManagement = document.getElementById('sidebarDataManagement');
@@ -648,7 +684,9 @@
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dashboardHomeView').classList.remove('hidden');
-            renderTabs(); closeSidebarMobile();
+            renderTabs();
+            closeSidebarMobile();
+            setActiveSidebarMenu('menu-dashboard'); // Call highlight function
         }
 
         function showDataManagementView() {
@@ -657,10 +695,12 @@
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.remove('hidden');
-            renderTabs(); closeSidebarMobile();
+            renderTabs();
+            closeSidebarMobile();
+            setActiveSidebarMenu('menu-data-mgmt'); // Call highlight function
         }
 
-        // ================= LOAD MENU LOGIC (UPDATED WITH CARD UI TOGGLE) =================
+        // ================= LOAD MENU LOGIC =================
         async function loadMenuData(deptKey, menuName, mode = 'manage') {
             const uniqueId = mode === 'report' ? `${deptKey}_report` : deptKey;
             activeTabId = uniqueId;
@@ -672,13 +712,13 @@
             document.getElementById('listView').classList.remove('hidden');
 
             if (isReportMode) {
-                // Report Mode: Hide normal list, show cards
+                // Report Mode
                 document.getElementById('normalListContainer').classList.add('hidden');
                 document.getElementById('reportActionContainer').classList.remove('hidden');
                 document.getElementById('reportActionContainer').style.display = 'flex';
                 document.getElementById('reportPageHeader').innerText = `${deptKey.charAt(0).toUpperCase() + deptKey.slice(1)} Department Reports`;
             } else {
-                // Manage Mode: Show normal list, hide cards
+                // Manage Mode
                 document.getElementById('normalListContainer').classList.remove('hidden');
                 document.getElementById('reportActionContainer').classList.add('hidden');
                 document.getElementById('reportActionContainer').style.display = 'none';
@@ -693,6 +733,9 @@
             activeBuyer = '';
 
             if (!isReportMode) renderDynamicHeaders();
+
+            // Set dynamic active ID based on the menu clicked
+            setActiveSidebarMenu('menu-' + deptKey + '-' + mode);
 
             await fetchAndProcessData();
             closeSidebarMobile();
@@ -761,7 +804,6 @@
             renderMainTable();
         }
 
-        // ================= SMART DATA FETCHING (CRITICAL REPORT FIX) =================
         async function fetchAndProcessData() {
             document.getElementById('loadingData').classList.remove('hidden');
 
@@ -788,7 +830,6 @@
                 const generalFiles = getLatestFiles(generalFilesRaw);
                 const deptFiles = getLatestFiles(deptFilesRaw);
 
-                // Both Manage and Report mode NEED to know if files exist
                 const hasDeptFile = deptFiles.length > 0;
 
                 const readFiles = async (fileList) => {
@@ -892,7 +933,6 @@
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
-                    // FIX: Process the same way for BOTH Report and Manage mode
                     if (hasDeptFile) {
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
                         dbDepartmentItems.forEach(dbItem => {
@@ -990,8 +1030,6 @@
             let buyerDataMap = {};
 
             Object.values(groupedData).forEach(group => {
-                // Ensure we only process groups that have exactly this status globally
-                // This matches exactly what the Order Management table does.
                 let isGroupMatching = false;
                 if (targetPlanType === 'Confirm' && group.isConfirm) isGroupMatching = true;
                 if (targetPlanType === 'Tentative' && group.isTentative) isGroupMatching = true;
