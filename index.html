@@ -29,6 +29,13 @@
         }
     </script>
     <style>
+        /* CSS Fix for Mobile Browsers */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+        }
+
         /* Custom Smooth Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             height: 6px;
@@ -266,10 +273,11 @@
             </div>
             <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6 min-h-0">
                 <div
-                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
+                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-5 sm:p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
                     <div class="relative z-10">
-                        <h2 class="text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
-                        <p class="text-gray-300">Select a Production Plan or Report from the sidebar to manage data.</p>
+                        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
+                        <p class="text-gray-300 text-sm sm:text-base">Select a Production Plan or Report from the
+                            sidebar to manage data.</p>
                     </div>
                 </div>
             </div>
@@ -306,11 +314,11 @@
                         <p class="text-xs text-gray-500">Currently uploading for: <strong class="text-blue-600"
                                 id="currentUploadLabel">General Base Data</strong></p>
                         <div id="uploadArea"
-                            class="flex items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md">
+                            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-50 p-2 border border-gray-300 rounded-md w-full md:w-auto">
                             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv"
-                                class="text-xs w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
+                                class="text-xs w-full sm:w-[200px] file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-medium file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer rounded">
                             <button onclick="handleExcelUpload()"
-                                class="px-4 py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors"><i
+                                class="px-4 py-2 sm:py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors w-full sm:w-auto"><i
                                     class="fas fa-upload mr-1"></i> Upload Data</button>
                         </div>
                     </div>
@@ -342,7 +350,7 @@
         <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full"
                 id="tabBarContainer">
-                <div id="dynamicTabsWrapper" class="flex gap-1 items-end"></div>
+                <div id="dynamicTabsWrapper" class="flex gap-1 items-end w-max"></div>
             </div>
 
             <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
@@ -357,21 +365,29 @@
                 <!-- ================= 1. NORMAL LIST CONTAINER (Order Management) ================= -->
                 <div id="normalListContainer" class="flex-1 flex flex-col min-h-0 w-full">
                     <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
-                        <div class="flex flex-wrap gap-2 justify-between items-center w-full">
-                            <div class="flex flex-wrap gap-2">
+                        <div
+                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3 sm:gap-2">
+                            <div class="flex flex-wrap w-full sm:w-auto gap-1 sm:gap-2">
                                 <div id="btnPending"
-                                    class="bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors"
+                                    class="bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
                                     onclick="activateMainTab('Pending')">Pending List</div>
                                 <div id="btnConfirm"
-                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
                                     onclick="activateMainTab('Confirm')">Confirm List</div>
                                 <div id="btnTentative"
-                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
                                     onclick="activateMainTab('Tentative')">Tentative List</div>
                                 <div id="btnAll"
-                                    class="bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors"
+                                    class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
                                     onclick="activateMainTab('All')">All List</div>
                             </div>
+
+                            <!-- EXCEL DOWNLOAD BUTTON FOR REPORT -->
+                            <button id="btnExportExcel"
+                                class="hidden w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-bold rounded shadow hover:bg-green-700 transition flex items-center justify-center text-xs"
+                                onclick="exportReportToExcel()">
+                                <i class="fas fa-file-excel mr-2 text-lg"></i> Download Excel
+                            </button>
                         </div>
                         <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
                             id="buyerFilterContainer"></div>
@@ -439,40 +455,43 @@
 
                 <!-- ================= 2. REPORT ACTION CONTAINER (Clean Card UI for Reports) ================= -->
                 <div id="reportActionContainer"
-                    class="hidden flex-1 flex-col items-center justify-center bg-white rounded-md shadow-sm border border-gray-200 w-full min-h-0 p-6 md:p-10">
-                    <h2 class="text-2xl font-bold text-[#313644] mb-10" id="reportPageHeader">Department Reports</h2>
+                    class="hidden flex-1 flex-col items-center justify-start sm:justify-center bg-white rounded-md shadow-sm border border-gray-200 w-full min-h-0 p-4 sm:p-6 md:p-10 overflow-y-auto">
+                    <h2 class="text-xl sm:text-2xl font-bold text-[#313644] mb-6 sm:mb-10 text-center"
+                        id="reportPageHeader">Department Reports</h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 max-w-4xl w-full">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10 max-w-4xl w-full">
                         <!-- Confirm List Card -->
                         <div
-                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#22c55e]">
+                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#22c55e]">
                             <div
-                                class="w-20 h-20 bg-[#dcfce7] text-[#16a34a] rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                                class="w-16 h-16 sm:w-20 sm:h-20 bg-[#dcfce7] text-[#16a34a] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Updated Confirm List</h3>
-                            <p class="text-gray-500 text-[13px] mb-8 leading-relaxed">Extract and download all confirmed
-                                planning data. The downloaded Excel file will have <strong
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Confirm List
+                            </h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and
+                                download all confirmed planning data. The downloaded Excel file will have <strong
                                     class="text-gray-700">separate sheets for each confirmed Buyer.</strong></p>
                             <button onclick="exportReportToExcel('Confirm')"
-                                class="mt-auto w-full max-w-[280px] py-3.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
+                                class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
                                 <i class="fas fa-file-excel text-lg"></i> Download Confirm Data
                             </button>
                         </div>
 
                         <!-- Tentative List Card -->
                         <div
-                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#eab308]">
+                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#eab308]">
                             <div
-                                class="w-20 h-20 bg-[#fef9c3] text-[#ca8a04] rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                                class="w-16 h-16 sm:w-20 sm:h-20 bg-[#fef9c3] text-[#ca8a04] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
                                 <i class="fas fa-clock"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Updated Tentative List</h3>
-                            <p class="text-gray-500 text-[13px] mb-8 leading-relaxed">Extract and download all tentative
-                                planning data. The downloaded Excel file will have <strong
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Tentative List
+                            </h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and
+                                download all tentative planning data. The downloaded Excel file will have <strong
                                     class="text-gray-700">separate sheets for each tentative Buyer.</strong></p>
                             <button onclick="exportReportToExcel('Tentative')"
-                                class="mt-auto w-full max-w-[280px] py-3.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
+                                class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
                                 <i class="fas fa-file-excel text-lg"></i> Download Tentative Data
                             </button>
                         </div>
@@ -485,29 +504,31 @@
         <!-- ================= DETAILED VIEW (Order Management Only) ================= -->
         <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div
-                class="bg-gray-100 border-b border-gray-200 flex items-center px-4 py-2 shrink-0 justify-between w-full">
-                <div class="flex items-center">
-                    <button onclick="closeDetailedView()" class="mr-4 text-gray-700 hover:text-blue-600 transition"
+                class="bg-gray-100 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center px-4 py-2 shrink-0 justify-between w-full gap-2">
+                <div class="flex items-center w-full sm:w-auto">
+                    <button onclick="closeDetailedView()" class="mr-3 text-gray-700 hover:text-blue-600 transition"
                         title="Back">
                         <i class="fas fa-arrow-left text-lg"></i>
                     </button>
-                    <h3 class="font-bold text-gray-800 text-sm" id="detailPageTitle">General Information & Planning</h3>
+                    <h3 class="font-bold text-gray-800 text-sm truncate" id="detailPageTitle">General Information &
+                        Planning</h3>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
                     <button onclick="closeDetailedView()"
-                        class="px-3 md:px-4 py-1.5 border border-gray-300 text-xs font-bold rounded hover:bg-gray-200 text-gray-700 transition">Back</button>
+                        class="flex-1 sm:flex-none px-3 md:px-4 py-1.5 border border-gray-300 text-xs font-bold rounded hover:bg-gray-200 text-gray-700 transition">Back</button>
                     <button id="saveDatesBtn" onclick="saveFabricPlanning()"
-                        class="px-4 md:px-6 py-1.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 shadow-sm transition"><i
+                        class="flex-1 sm:flex-none px-4 md:px-6 py-1.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 shadow-sm transition"><i
                             class="fas fa-save mr-1"></i> Save Data</button>
                 </div>
             </div>
 
+            <!-- CSS FIX FOR MOBILE: Added pb-24 to comfortably scroll down the bottom -->
             <div
-                class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-3 md:p-4 flex flex-col gap-4 w-full min-h-0">
+                class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-3 md:p-4 pb-24 md:pb-6 flex flex-col gap-4 w-full min-h-0">
 
                 <!-- General Info Panel -->
                 <div class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full">
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
                         <div class="flex flex-col gap-2">
                             <div class="flex items-center"><span class="info-label">EWO No.</span><input type="text"
                                     id="detEWO" class="info-input bg-gray-50" readonly></div>
@@ -567,7 +588,7 @@
 
                 <!-- Fabric Items Information Panel -->
                 <div
-                    class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col">
+                    class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col mb-4">
                     <div
                         class="bg-gray-100 p-2 font-bold text-gray-800 text-xs flex items-center border-b border-gray-200 shrink-0">
                         <i class="fas fa-layer-group text-blue-500 mr-2"></i> Department Fabric Items
@@ -786,8 +807,8 @@
             tabs.forEach(t => {
                 const btn = document.getElementById('btn' + t);
                 if (btn) {
-                    if (t === tabName) btn.className = "bg-[#313644] text-white px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors";
-                    else btn.className = "bg-white text-gray-800 border border-gray-300 px-6 py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors";
+                    if (t === tabName) btn.className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+                    else btn.className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
                 }
             });
             activeBuyer = '';
@@ -809,30 +830,28 @@
                 const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
                 const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
 
-                const getLatestFiles = (filesArray) => {
-                    const map = new Map();
-                    filesArray.forEach(f => {
-                        if (!map.has(f.originalName)) {
-                            map.set(f.originalName, f);
-                        }
-                    });
-                    return Array.from(map.values());
-                };
+                generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                deptFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-                const generalFiles = getLatestFiles(generalFilesRaw);
-                const deptFiles = getLatestFiles(deptFilesRaw);
+                const generalFiles = generalFilesRaw;
+                const deptFiles = deptFilesRaw;
 
                 const hasDeptFile = deptFiles.length > 0;
 
                 const readFiles = async (fileList) => {
                     let raw = [];
-                    for (let file of fileList) {
+                    for (let i = 0; i < fileList.length; i++) {
+                        let file = fileList[i];
                         try {
                             const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
                             if (!fRes.ok) continue;
                             const ab = await fRes.arrayBuffer();
                             const wb = XLSX.read(ab, { type: 'array' });
-                            raw = raw.concat(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+                            let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                            sheetData.forEach(row => {
+                                row._fileIndex = i;
+                                raw.push(row);
+                            });
                         } catch (e) { console.error("File read err:", e); }
                     }
                     return raw;
@@ -866,34 +885,51 @@
                     initGroup(bNo);
                     groupedData[bNo].buyers.add(buyer);
 
+                    let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
+                    if (dateVal) groupedData[bNo].bookingDate = formatExcelDate(dateVal);
+
+                    let teamVal = getColData(row, ['BuyerTeam', 'Team']);
+                    if (teamVal) groupedData[bNo].buyerTeam = String(teamVal);
+
+                    let statusVal = getColData(row, ['Status']);
+                    if (statusVal) groupedData[bNo].status = String(statusVal);
+
+                    let ewo = getColData(row, ['OrderNo', 'EWO']);
+                    let orderQty = getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']);
+                    let bUnit = getColData(row, ['BookingUnit']);
+                    let unit = getColData(row, ['Unit']);
+                    let finalConf = getColData(row, ['FinalConfirmation', 'Status']);
+                    let eventDay = getColData(row, ['EventDay']);
+                    let ship1 = formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1']));
+                    let shipLast = formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast']));
+                    let yarnDate = formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate']));
+                    let deliStart = formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart']));
+                    let deliEnd = formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd']));
+                    let knitStart = formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart']));
+                    let knitEnd = formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd']));
+                    let dyeStart = formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart']));
+                    let dyeEnd = formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd']));
+                    let fabNotes = getColData(row, ['FabricNotes', 'Notes']);
+
                     if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
-                        let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
-                        groupedData[bNo].bookingDate = formatExcelDate(dateVal);
-
-                        let teamVal = getColData(row, ['BuyerTeam', 'Team']);
-                        groupedData[bNo].buyerTeam = String(teamVal !== '' ? teamVal : 'N/A');
-
-                        let statusVal = getColData(row, ['Status']);
-                        groupedData[bNo].status = String(statusVal !== '' ? statusVal : 'Pending');
-
-                        groupedData[bNo].generalInfo = {
-                            EWO: getColData(row, ['OrderNo', 'EWO']),
-                            OrderQty: getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']),
-                            BookingUnit: getColData(row, ['BookingUnit']),
-                            Unit: getColData(row, ['Unit']),
-                            FinalConf: getColData(row, ['FinalConfirmation', 'Status']),
-                            EventDay: getColData(row, ['EventDay']),
-                            Ship1: formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1'])),
-                            ShipLast: formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast'])),
-                            YarnDate: formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate'])),
-                            DeliStart: formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart'])),
-                            DeliEnd: formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd'])),
-                            KnitStart: formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart'])),
-                            KnitEnd: formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd'])),
-                            DyeStart: formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart'])),
-                            DyeEnd: formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd'])),
-                            FabNotes: getColData(row, ['FabricNotes', 'Notes'])
-                        };
+                        groupedData[bNo].generalInfo = { EWO: ewo, OrderQty: orderQty, BookingUnit: bUnit, Unit: unit, FinalConf: finalConf, EventDay: eventDay, Ship1: ship1, ShipLast: shipLast, YarnDate: yarnDate, DeliStart: deliStart, DeliEnd: deliEnd, KnitStart: knitStart, KnitEnd: knitEnd, DyeStart: dyeStart, DyeEnd: dyeEnd, FabNotes: fabNotes };
+                    } else {
+                        if (ewo) groupedData[bNo].generalInfo.EWO = ewo;
+                        if (orderQty) groupedData[bNo].generalInfo.OrderQty = orderQty;
+                        if (bUnit) groupedData[bNo].generalInfo.BookingUnit = bUnit;
+                        if (unit) groupedData[bNo].generalInfo.Unit = unit;
+                        if (finalConf) groupedData[bNo].generalInfo.FinalConf = finalConf;
+                        if (eventDay) groupedData[bNo].generalInfo.EventDay = eventDay;
+                        if (ship1 !== 'N/A') groupedData[bNo].generalInfo.Ship1 = ship1;
+                        if (shipLast !== 'N/A') groupedData[bNo].generalInfo.ShipLast = shipLast;
+                        if (yarnDate !== 'N/A') groupedData[bNo].generalInfo.YarnDate = yarnDate;
+                        if (deliStart !== 'N/A') groupedData[bNo].generalInfo.DeliStart = deliStart;
+                        if (deliEnd !== 'N/A') groupedData[bNo].generalInfo.DeliEnd = deliEnd;
+                        if (knitStart !== 'N/A') groupedData[bNo].generalInfo.KnitStart = knitStart;
+                        if (knitEnd !== 'N/A') groupedData[bNo].generalInfo.KnitEnd = knitEnd;
+                        if (dyeStart !== 'N/A') groupedData[bNo].generalInfo.DyeStart = dyeStart;
+                        if (dyeEnd !== 'N/A') groupedData[bNo].generalInfo.DyeEnd = dyeEnd;
+                        if (fabNotes) groupedData[bNo].generalInfo.FabNotes = fabNotes;
                     }
                 });
 
@@ -959,7 +995,14 @@
                         });
 
                         let excelOccurrence = {};
+                        let currentFileIndex = -1;
+
                         group.excelItems.forEach(exItem => {
+                            if (exItem._fileIndex !== currentFileIndex) {
+                                excelOccurrence = {};
+                                currentFileIndex = exItem._fileIndex;
+                            }
+
                             let dynamicItemData = {};
                             if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
@@ -1046,7 +1089,6 @@
                             }
                         });
 
-                        // CORE STATUS LOGIC FIX
                         if (hasSelect) {
                             group.isPending = true;
                         } else if (hasTentative) {
@@ -1526,7 +1568,7 @@
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper'); let tabHtml = '';
             openTabs.forEach(t => {
-                tabHtml += `<div class="px-4 py-2 border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.dept}', '${t.title}', '${t.mode}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
+                tabHtml += `<div class="px-3 sm:px-4 py-2 text-[11px] sm:text-[13px] border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.dept}', '${t.title}', '${t.mode}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
             });
             container.innerHTML = tabHtml;
         }
