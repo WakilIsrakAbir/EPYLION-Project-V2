@@ -645,6 +645,7 @@
         let currentViewIndex = null;
         let toastTimeout;
 
+
         function initDashboard() {
             const token = localStorage.getItem('token');
             if (!token) { window.location.href = 'login.html'; return; }
@@ -791,24 +792,78 @@
 
         function renderDynamicHeaders() {
             document.querySelectorAll('.dynamic-th').forEach(e => e.remove());
-
             const currentDept = activeTabId.replace('_report', '');
-            let mainCols = [];
-            if (currentDept === 'knitting' || currentDept === 'delivery') {
-                mainCols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance %', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
+
+            if (currentDept === 'knitting') {
+                // 🟢 Knitting Plan: ১,২,৩ (বাম) এবং ৮,৯,১০,১১,১২,১৩,১৪ (ডান)
+                let leftCols = ['Color', 'FabricConstruction', 'GSM'];
+                let rightCols = ['Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Allowance %'];
+
                 document.getElementById('planningHeaderText').innerText = 'Knitting Planning';
                 document.getElementById('limitationHeaderText').innerText = 'Knitting Limitation';
-            } else {
-                mainCols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'Process Name', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'BP Qty', 'Dyeing Prod.', 'Dyeing Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
-                document.getElementById('planningHeaderText').innerText = 'Dyeing/Finishing Planning';
-                document.getElementById('limitationHeaderText').innerText = 'Dyeing/Finishing Limitation';
+
+                let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+                let rightHtml = rightCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+
+                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
+                document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightHtml);
+
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
+                document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
             }
+            else if (currentDept === 'dyeing') {
+                // 🟢 Dyeing Plan: ১,২,৩ (বাম), ৮,৯,১০,১১,১২ (ডান) এবং শেষে ১৩-১৬ (Knitting Info)
+                let leftCols = ['Color', 'Unit', 'Process Name'];
+                let rightColsHtml = `
+                    <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">BP Qty</th>
+                    <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Dyeing Prod.</th>
+                    <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Dyeing Bala.</th>
+                    <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Knit Prod.</th>
+                    <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Knit. Bala.</th>
+                    
+                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200 dynamic-th" colspan="2">Knitting Planning</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Plan Type</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Limitation</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Remarks (Knitting)</th>
+                `;
 
-            let mainHtml = mainCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
-            let subHtml = `<th class="border-r border-gray-300 dynamic-th" colspan="${mainCols.length}"></th>`;
+                document.getElementById('planningHeaderText').innerText = 'Dyeing Planning';
+                document.getElementById('limitationHeaderText').innerText = 'Dyeing Limitation';
 
-            document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', mainHtml);
-            document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', subHtml);
+                let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+
+                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
+                document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightColsHtml);
+
+                let rightSubHtml = `
+                    <th class="border-r border-gray-300 dynamic-th" colspan="5"></th>
+                    <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Start Date</th>
+                    <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
+                    <th class="border-r border-gray-300 dynamic-th" colspan="3"></th>
+                `;
+
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
+                document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', rightSubHtml);
+            }
+            else {
+                // 🟢 Finishing & Delivery (Old Design)
+                let mainCols = [];
+                if (currentDept === 'delivery') {
+                    mainCols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance %', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
+                    document.getElementById('planningHeaderText').innerText = 'Delivery Planning';
+                    document.getElementById('limitationHeaderText').innerText = 'Delivery Limitation';
+                } else {
+                    mainCols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'Process Name', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'BP Qty', 'Dyeing Prod.', 'Dyeing Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
+                    document.getElementById('planningHeaderText').innerText = 'Finishing Planning';
+                    document.getElementById('limitationHeaderText').innerText = 'Finishing Limitation';
+                }
+
+                let mainHtml = mainCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+                let subHtml = `<th class="border-r border-gray-300 dynamic-th" colspan="${mainCols.length}"></th>`;
+
+                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', mainHtml);
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', subHtml);
+            }
         }
 
         function generateItemId(itemData, tabId) {
@@ -1005,7 +1060,7 @@
                 Object.values(groupedData).forEach(group => {
                     const mergedItemsMap = new Map();
 
-                    if (hasDeptFile || group.dbData) {
+                    if (hasDeptFile) {
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
 
                         let dbOccurrence = {};
@@ -1100,9 +1155,7 @@
                     group.isTentative = false;
 
                     let totalItems = group.mergedItems.length;
-                    if (totalItems === 0) {
-                        group.isPending = true;
-                    } else {
+                    if (totalItems > 0) {
                         let hasSelect = false;
                         let hasTentative = false;
                         let confirmCount = 0;
@@ -1276,94 +1329,94 @@
         function filterByColumn(colIndex, val) { colFilters[colIndex] = String(val).toLowerCase().trim(); currentPage = 1; renderMainTable(); }
 
         function renderMainTable() {
-            const tbody = document.getElementById('mainTableBody');
-            const buyerFilterContainer = document.getElementById('buyerFilterContainer');
-            const emptyState = document.getElementById('emptyState');
-            const dataTableWrapper = document.getElementById('dataTableContentWrapper');
-            const paginationControls = document.getElementById('paginationControls');
+                const tbody = document.getElementById('mainTableBody');
+                const buyerFilterContainer = document.getElementById('buyerFilterContainer');
+                const emptyState = document.getElementById('emptyState');
+                const dataTableWrapper = document.getElementById('dataTableContentWrapper');
+                const paginationControls = document.getElementById('paginationControls');
 
-            let data = Object.values(groupedData).filter(g =>
-                Object.keys(g.generalInfo).length > 0 ||
-                g.excelItems.length > 0 ||
-                (g.dbData && g.dbData[activeTabId.replace('_report', '')] && g.dbData[activeTabId.replace('_report', '')].length > 0)
-            );
+                // 🟢 স্ট্রিক্ট ফিল্টার: শুধুমাত্র সেই অর্ডারগুলোই আসবে যাদের নিজস্ব ডিপার্টমেন্টের (Finishing/Dyeing) ডেটা আছে!
+                let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
 
-            if (data.length === 0) {
-                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No data uploaded yet.</p>`;
-                tbody.innerHTML = ''; return;
-            }
+                if (data.length === 0) {
+                    dataTableWrapper.classList.add('hidden');
+                    paginationControls.classList.add('hidden');
+                    buyerFilterContainer.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No department data uploaded yet.</p>`;
+                    tbody.innerHTML = '';
+                    return;
+                }
 
-            if (activeMainTab === 'All') {
-                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-tools text-4xl mb-3 text-gray-300"></i><p class="text-gray-600 font-medium">All List feature will be updated later.</p>`;
-                tbody.innerHTML = ''; return;
-            }
+                if (activeMainTab === 'All') {
+                    dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    emptyState.innerHTML = `<i class="fas fa-tools text-4xl mb-3 text-gray-300"></i><p class="text-gray-600 font-medium">All List feature will be updated later.</p>`;
+                    tbody.innerHTML = ''; return;
+                }
 
-            if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
-            else if (activeMainTab === 'Confirm') data = data.filter(d => d.isConfirm);
-            else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
+                if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
+                else if (activeMainTab === 'Confirm') data = data.filter(d => d.isConfirm);
+                else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
 
-            const buyersSet = new Set();
-            data.forEach(d => { d.buyers.forEach(b => { if (b && b !== 'N/A') buyersSet.add(b); }); });
+                const buyersSet = new Set();
+                data.forEach(d => { d.buyers.forEach(b => { if (b && b !== 'N/A') buyersSet.add(b); }); });
 
-            if (data.length === 0 || buyersSet.size === 0) {
-                dataTableWrapper.classList.add('hidden');
-                paginationControls.classList.add('hidden');
-                buyerFilterContainer.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No ${activeMainTab} data available.</p>`;
-                tbody.innerHTML = '';
-                return;
-            }
+                if (data.length === 0 || buyersSet.size === 0) {
+                    dataTableWrapper.classList.add('hidden');
+                    paginationControls.classList.add('hidden');
+                    buyerFilterContainer.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No ${activeMainTab} data available.</p>`;
+                    tbody.innerHTML = '';
+                    return;
+                }
 
-            renderBuyerTabs(Array.from(buyersSet));
-            buyerFilterContainer.classList.remove('hidden');
+                renderBuyerTabs(Array.from(buyersSet));
+                buyerFilterContainer.classList.remove('hidden');
 
-            if (activeBuyer === '') {
-                dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); emptyState.classList.remove('hidden');
-                emptyState.innerHTML = `<i class="fas fa-hand-pointer text-4xl mb-3 text-blue-300"></i><p class="text-gray-600 font-medium">Please select a buyer from the list above to view ${activeMainTab} data.</p>`;
-                tbody.innerHTML = ''; return;
-            }
+                if (activeBuyer === '') {
+                    dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); emptyState.classList.remove('hidden');
+                    emptyState.innerHTML = `<i class="fas fa-hand-pointer text-4xl mb-3 text-blue-300"></i><p class="text-gray-600 font-medium">Please select a buyer from the list above to view ${activeMainTab} data.</p>`;
+                    tbody.innerHTML = ''; return;
+                }
 
-            if (activeBuyer !== '') {
-                const searchB = activeBuyer.toLowerCase().trim();
-                data = data.filter(d => { const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim()); return bArr.includes(searchB); });
-            }
+                if (activeBuyer !== '') {
+                    const searchB = activeBuyer.toLowerCase().trim();
+                    data = data.filter(d => { const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim()); return bArr.includes(searchB); });
+                }
 
-            for (let col in colFilters) {
-                const searchVal = colFilters[col]; if (!searchVal) continue;
-                data = data.filter(d => {
+                for (let col in colFilters) {
+                    const searchVal = colFilters[col]; if (!searchVal) continue;
+                    data = data.filter(d => {
+                        const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
+                        if (col == 1) return String(d.bookingNo).toLowerCase().includes(searchVal);
+                        if (col == 2) return String(d.bookingDate).toLowerCase().includes(searchVal);
+                        if (col == 3) return String(displayBuyer).toLowerCase().includes(searchVal);
+                        if (col == 4) return String(d.status).toLowerCase().includes(searchVal);
+                        return true;
+                    });
+                }
+
+                dataTableWrapper.classList.remove('hidden'); emptyState.classList.add('hidden');
+                if (data.length === 0) {
+                    paginationControls.classList.add('hidden');
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 bg-white border-b border-gray-200"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found in ${activeMainTab} list.</td></tr>`;
+                    return;
+                }
+
+                paginationControls.classList.remove('hidden');
+                const totalPages = Math.ceil(data.length / rowsPerPage);
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                const start = (currentPage - 1) * rowsPerPage;
+                const pagedData = data.slice(start, start + rowsPerPage);
+
+                let htmlContent = '';
+                pagedData.forEach(d => {
                     const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
-                    if (col == 1) return String(d.bookingNo).toLowerCase().includes(searchVal);
-                    if (col == 2) return String(d.bookingDate).toLowerCase().includes(searchVal);
-                    if (col == 3) return String(displayBuyer).toLowerCase().includes(searchVal);
-                    if (col == 4) return String(d.status).toLowerCase().includes(searchVal);
-                    return true;
-                });
-            }
-
-            dataTableWrapper.classList.remove('hidden'); emptyState.classList.add('hidden');
-            if (data.length === 0) {
-                paginationControls.classList.add('hidden');
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 bg-white border-b border-gray-200"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found in ${activeMainTab} list.</td></tr>`;
-                return;
-            }
-
-            paginationControls.classList.remove('hidden');
-            const totalPages = Math.ceil(data.length / rowsPerPage);
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
-
-            const start = (currentPage - 1) * rowsPerPage;
-            const pagedData = data.slice(start, start + rowsPerPage);
-
-            let htmlContent = '';
-            pagedData.forEach(d => {
-                const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
-                htmlContent += `
+                    htmlContent += `
                     <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
                         <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
                         <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.bookingNo}</td>
@@ -1372,10 +1425,10 @@
                         <td class="p-2 border-r border-gray-200 text-gray-600 font-medium">${d.status}</td>
                     </tr>
                 `;
-            });
-            tbody.innerHTML = htmlContent;
-            updatePaginationUI(start, start + pagedData.length, data.length, totalPages);
-        }
+                });
+                tbody.innerHTML = htmlContent;
+                updatePaginationUI(start, start + pagedData.length, data.length, totalPages);
+            }
 
         function updatePaginationUI(start, end, total, totalPages) {
             document.getElementById('pageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1}-${end} of ${total}`;
@@ -1435,45 +1488,147 @@
 
             const itemBody = document.getElementById('detFabricItemsBody');
             let itemHtml = '';
-
-            let itemsToShow = data.mergedItems;
             const currentDept = activeTabId.replace('_report', '');
 
-            itemsToShow.forEach((item) => {
+            data.mergedItems.forEach((item) => {
                 let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row bg-white";
                 let encodedItemData = encodeURIComponent(JSON.stringify(item.itemData || {}));
 
                 itemHtml += `<tr class="${rowClass}" data-itemid="${item.itemId}" data-itemdata="${encodedItemData}">`;
 
-                if (currentDept === 'knitting' || currentDept === 'delivery') {
-                    const cols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance', 'YarnReq', 'AllocatedQty', 'YarnBala', 'GreyReq', 'KnitProd', 'KnitBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
-                    cols.forEach(c => {
+                if (currentDept === 'knitting') {
+                    // সিরিয়াল ১,২,৩
+                    const leftCols = ['Color', 'FabricConstruction', 'GSM'];
+                    leftCols.forEach(c => {
                         let val = item.itemData[c];
-                        let dispText = (val !== undefined && val !== null && val !== '') ? val : '';
-                        itemHtml += `<td class="p-2 border-r border-gray-200 text-center whitespace-normal min-w-[80px]">${dispText}</td>`;
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
                     });
-                } else {
-                    const cols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
-                    cols.forEach(c => {
+
+                    // সিরিয়াল ৪,৫,৬,৭ (মাঝখানে)
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
+                    `;
+
+                    // সিরিয়াল ৮ থেকে ১৪ (ডানদিকে)
+                    const rightCols = ['GreyReq', 'KnitProd', 'KnitBala', 'YarnReq', 'AllocatedQty', 'YarnBala', 'Allowance'];
+                    rightCols.forEach(c => {
                         let val = item.itemData[c];
-                        let dispText = (val !== undefined && val !== null && val !== '') ? val : '';
-                        itemHtml += `<td class="p-2 border-r border-gray-200 text-center whitespace-normal min-w-[80px]">${dispText}</td>`;
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
                     });
                 }
+                else if (currentDept === 'dyeing') {
+                    // সিরিয়াল ১ (কালার)
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
 
-                itemHtml += `
-                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate}"></td>
-                    <td class="p-2 border-r border-gray-200 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate}"></td>
-                    <td class="p-2 border-r border-gray-200 text-center">
-                        <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
-                            <option value="" ${item.planType === '' ? 'selected' : ''}>Select</option>
-                            <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
-                            <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                    // সিরিয়াল ২ (Unit Dropdown)
+                    let unitVal = item.itemData['Unit'] || '';
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[100px]">
+                        <select class="row-unit p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
+                            <option value="" ${!unitVal ? 'selected' : ''}>Select</option>
+                            <option value="EFL" ${unitVal === 'EFL' ? 'selected' : ''}>EFL</option>
+                            <option value="EKL" ${unitVal === 'EKL' ? 'selected' : ''}>EKL</option>
+                            <option value="Ext" ${unitVal === 'Ext' ? 'selected' : ''}>Ext</option>
+                            <option value="Outside" ${unitVal === 'Outside' ? 'selected' : ''}>Outside</option>
                         </select>
-                    </td>
-                    <td class="p-2 border-r border-gray-200"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation}"></td>
-                    <td class="p-2 border-r border-gray-200"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks}"></td>
-                </tr>`;
+                    </td>`;
+
+                    // সিরিয়াল ৩ (Process Name Dropdown)
+                    let processVal = item.itemData['ProcessName'] || item.itemData['Process Name'] || '';
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[110px]">
+                        <select class="row-process p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
+                            <option value="" ${!processVal ? 'selected' : ''}>Select</option>
+                            <option value="Solid" ${processVal === 'Solid' ? 'selected' : ''}>Solid</option>
+                            <option value="Dyeing Wash" ${processVal === 'Dyeing Wash' ? 'selected' : ''}>Dyeing Wash</option>
+                            <option value="HTR" ${processVal === 'HTR' ? 'selected' : ''}>HTR</option>
+                            <option value="Pluvia" ${processVal === 'Pluvia' ? 'selected' : ''}>Pluvia</option>
+                            <option value="SB" ${processVal === 'SB' ? 'selected' : ''}>SB</option>
+                            <option value="WH" ${processVal === 'WH' ? 'selected' : ''}>WH</option>
+                        </select>
+                    </td>`;
+
+                    // সিরিয়াল ৪,৫,৬,৭ (Dyeing Planning মাঝখানে)
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
+                    `;
+
+                    // সিরিয়াল ৮,৯,১০,১১,১২ (ডানদিকে)
+                    const numCols = ['BPQty', 'DyeingProd', 'DyeingBala', 'KnitProd', 'KnitBala'];
+                    numCols.forEach(c => {
+                        let val = item.itemData[c];
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
+                    });
+
+                    // 🟢 সিরিয়াল ১৩-১৬: Knitting Details (Read-only) একদম শেষে
+                    let knitPlan = { start: '', end: '', type: '', limit: '', remark: '' };
+                    if (data.dbData && data.dbData.knitting) {
+                        let myColor = String(item.itemData.Color || '').trim().toLowerCase();
+                        const kItem = data.dbData.knitting.find(k => k.itemData && String(k.itemData.Color || '').trim().toLowerCase() === myColor);
+                        if (kItem) {
+                            knitPlan.start = kItem.startDate || '';
+                            knitPlan.end = kItem.endDate || '';
+                            knitPlan.type = kItem.planType || '';
+                            knitPlan.limit = kItem.limitation || '';
+                            knitPlan.remark = kItem.remarks || '';
+                        }
+                    }
+
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.start}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.end}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold">${knitPlan.type}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.limit}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.remark}</td>
+                    `;
+                }
+                else {
+                    // Old Design for Finishing & Delivery
+                    let cols = [];
+                    if (currentDept === 'delivery') {
+                        cols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance', 'YarnReq', 'AllocatedQty', 'YarnBala', 'GreyReq', 'KnitProd', 'KnitBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
+                    } else {
+                        cols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
+                    }
+                    cols.forEach(c => {
+                        let val = item.itemData[c];
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
+                    });
+
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
+                    `;
+                }
+
+                itemHtml += `</tr>`;
             });
             itemBody.innerHTML = itemHtml;
         }
@@ -1510,6 +1665,15 @@
                 const newEndDate = row.querySelector('.row-end-date').value;
                 const newLimitation = row.querySelector('.row-limitation').value;
                 const newRemarks = row.querySelector('.row-remarks').value;
+
+                if (row.querySelector('.row-unit')) {
+                    itemData.Unit = row.querySelector('.row-unit').value;
+                }
+                if (row.querySelector('.row-process')) {
+                    let pVal = row.querySelector('.row-process').value;
+                    itemData.ProcessName = pVal;
+                    itemData['Process Name'] = pVal; // ফিক্স সেফটির জন্য
+                }
 
                 allItemsMap.set(id, {
                     itemId: id, itemData: itemData,
