@@ -456,40 +456,44 @@
                 <!-- ================= 2. REPORT ACTION CONTAINER (Clean Card UI for Reports) ================= -->
                 <div id="reportActionContainer"
                     class="hidden flex-1 flex-col items-center justify-start sm:justify-center bg-white rounded-md shadow-sm border border-gray-200 w-full min-h-0 p-4 sm:p-6 md:p-10 overflow-y-auto">
-                    <h2 class="text-xl sm:text-2xl font-bold text-[#313644] mb-6 sm:mb-10 text-center"
-                        id="reportPageHeader">Department Reports</h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10 max-w-4xl w-full">
-                        <!-- Confirm List Card -->
-                        <div
+                    <h2 class="text-xl sm:text-2xl font-bold text-[#313644] mb-6 sm:mb-10 text-center" id="reportPageHeader">Department
+                        Reports</h2>
+                
+                    <div id="reportEmptyState"
+                        class="hidden flex-col items-center text-center p-10 w-full max-w-lg bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
+                        <i class="fas fa-folder-open text-5xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-bold text-gray-700 mb-2">No Report Data Available</h3>
+                        <p class="text-gray-500 text-sm">There is no Confirmed or Tentative planning data available for this department
+                            yet.</p>
+                    </div>
+                
+                    <div id="reportCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10 max-w-4xl w-full">
+                        <div id="cardConfirmList"
                             class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#22c55e]">
                             <div
                                 class="w-16 h-16 sm:w-20 sm:h-20 bg-[#dcfce7] text-[#16a34a] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Confirm List
-                            </h3>
-                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and
-                                download all confirmed planning data. The downloaded Excel file will have <strong
-                                    class="text-gray-700">separate sheets for each confirmed Buyer.</strong></p>
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Confirm List</h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and download all
+                                confirmed planning data. The downloaded Excel file will have <strong class="text-gray-700">separate
+                                    sheets for each confirmed Buyer.</strong></p>
                             <button onclick="exportReportToExcel('Confirm')"
                                 class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
                                 <i class="fas fa-file-excel text-lg"></i> Download Confirm Data
                             </button>
                         </div>
-
-                        <!-- Tentative List Card -->
-                        <div
+                
+                        <div id="cardTentativeList"
                             class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#eab308]">
                             <div
                                 class="w-16 h-16 sm:w-20 sm:h-20 bg-[#fef9c3] text-[#ca8a04] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
                                 <i class="fas fa-clock"></i>
                             </div>
-                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Tentative List
-                            </h3>
-                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and
-                                download all tentative planning data. The downloaded Excel file will have <strong
-                                    class="text-gray-700">separate sheets for each tentative Buyer.</strong></p>
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Tentative List</h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and download all
+                                tentative planning data. The downloaded Excel file will have <strong class="text-gray-700">separate
+                                    sheets for each tentative Buyer.</strong></p>
                             <button onclick="exportReportToExcel('Tentative')"
                                 class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
                                 <i class="fas fa-file-excel text-lg"></i> Download Tentative Data
@@ -740,7 +744,7 @@
 
         async function loadMenuData(deptKey, menuName, mode = 'manage') {
             localStorage.setItem('activePage', JSON.stringify({ page: 'menu', dept: deptKey, title: menuName, mode: mode }));
-            
+
             const uniqueId = mode === 'report' ? `${deptKey}_report` : deptKey;
             activeTabId = uniqueId;
             isReportMode = (mode === 'report');
@@ -1130,6 +1134,41 @@
                         else globalBuyersList.add('General');
                     });
                 });
+
+                if (isReportMode) {
+                    let hasConfirmData = false;
+                    let hasTentativeData = false;
+
+                    // ডাটাবেস বা এক্সেল থেকে পাওয়া ডেটায় কোনো Confirm বা Tentative আছে কিনা চেক করা
+                    Object.values(groupedData).forEach(group => {
+                        if (group.isConfirm) hasConfirmData = true;
+                        if (group.isTentative) hasTentativeData = true;
+                    });
+
+                    const cardConfirm = document.getElementById('cardConfirmList');
+                    const cardTentative = document.getElementById('cardTentativeList');
+                    const reportEmpty = document.getElementById('reportEmptyState');
+                    const cardsGrid = document.getElementById('reportCardsGrid');
+
+                    // যে ডেটা নেই, সেই কার্ড হাইড করে দেওয়া হবে
+                    if (cardConfirm) cardConfirm.style.display = hasConfirmData ? 'flex' : 'none';
+                    if (cardTentative) cardTentative.style.display = hasTentativeData ? 'flex' : 'none';
+
+                    // যদি দুটোর কোনো ডেটাই না থাকে, তবে গ্রিড হাইড করে Empty Message দেখানো হবে
+                    if (!hasConfirmData && !hasTentativeData) {
+                        if (cardsGrid) cardsGrid.style.display = 'none';
+                        if (reportEmpty) {
+                            reportEmpty.classList.remove('hidden');
+                            reportEmpty.style.display = 'flex';
+                        }
+                    } else {
+                        if (cardsGrid) cardsGrid.style.display = 'grid';
+                        if (reportEmpty) {
+                            reportEmpty.classList.add('hidden');
+                            reportEmpty.style.display = 'none';
+                        }
+                    }
+                }
 
                 if (!isReportMode) {
                     renderBuyerTabs(Array.from(globalBuyersList));
