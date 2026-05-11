@@ -645,9 +645,25 @@
             const token = localStorage.getItem('token');
             if (!token) { window.location.href = 'login.html'; return; }
             document.getElementById('displayUsername').innerText = `${localStorage.getItem('username')} (${localStorage.getItem('role')})`;
-            showDashboardHome();
+            // showDashboardHome();
             applyPermissions(localStorage.getItem('role'));
             loadUploadedFiles();
+
+            const savedState = localStorage.getItem('activePage');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                if (state.page === 'dashboard') {
+                    showDashboardHome();
+                } else if (state.page === 'dataManagement') {
+                    showDataManagementView();
+                } else if (state.page === 'menu') {
+                    loadMenuData(state.dept, state.title, state.mode);
+                } else {
+                    showDashboardHome();
+                }
+            } else {
+                showDashboardHome();
+            }
         }
 
         // ================= HIGHLIGHT ACTIVE MENU FUNCTION =================
@@ -697,6 +713,8 @@
         }
 
         function showDashboardHome() {
+            localStorage.setItem('activePage', JSON.stringify({ page: 'dashboard' }));
+
             activeTabId = 'dashboard';
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
@@ -708,6 +726,8 @@
         }
 
         function showDataManagementView() {
+            localStorage.setItem('activePage', JSON.stringify({ page: 'dataManagement' }));
+
             activeTabId = 'dataManagement';
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
@@ -719,6 +739,8 @@
         }
 
         async function loadMenuData(deptKey, menuName, mode = 'manage') {
+            localStorage.setItem('activePage', JSON.stringify({ page: 'menu', dept: deptKey, title: menuName, mode: mode }));
+            
             const uniqueId = mode === 'report' ? `${deptKey}_report` : deptKey;
             activeTabId = uniqueId;
             isReportMode = (mode === 'report');
@@ -817,8 +839,10 @@
             renderMainTable();
         }
 
-        async function fetchAndProcessData() {
-            document.getElementById('loadingData').classList.remove('hidden');
+        async function fetchAndProcessData(isSilent = false) {
+            if (!isSilent) {
+                document.getElementById('loadingData').classList.remove('hidden');
+            }
 
             const currentDept = activeTabId.replace('_report', '');
 
@@ -1113,10 +1137,16 @@
                     renderMainTable();
                 }
 
+                if (!isSilent) {
+                    document.getElementById('loadingData').classList.add('hidden');
+                }
+
                 document.getElementById('loadingData').classList.add('hidden');
             } catch (e) {
                 console.error("Error processing data:", e);
-                document.getElementById('loadingData').classList.add('hidden');
+                if (!isSilent) {
+                    document.getElementById('loadingData').classList.add('hidden');
+                }
             }
         }
 
@@ -1435,24 +1465,74 @@
             document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
                 const id = row.dataset.itemid;
                 const itemData = JSON.parse(decodeURIComponent(row.dataset.itemdata));
+
+                const newPlanType = row.querySelector('.row-plan-type').value;
+                const newStartDate = row.querySelector('.row-start-date').value;
+                const newEndDate = row.querySelector('.row-end-date').value;
+                const newLimitation = row.querySelector('.row-limitation').value;
+                const newRemarks = row.querySelector('.row-remarks').value;
+
                 allItemsMap.set(id, {
                     itemId: id, itemData: itemData,
-                    startDate: row.querySelector('.row-start-date').value,
-                    endDate: row.querySelector('.row-end-date').value,
-                    planType: row.querySelector('.row-plan-type').value,
-                    limitation: row.querySelector('.row-limitation').value,
-                    remarks: row.querySelector('.row-remarks').value
+                    startDate: newStartDate,
+                    endDate: newEndDate,
+                    planType: newPlanType,
+                    limitation: newLimitation,
+                    remarks: newRemarks
                 });
+
+                let target = existingData.mergedItems.find(m => m.itemId === id);
+                if (target) {
+                    target.planType = newPlanType;
+                    target.startDate = newStartDate;
+                    target.endDate = newEndDate;
+                    target.limitation = newLimitation;
+                    target.remarks = newRemarks;
+                }
+
             });
 
             const fabricItemsArr = Array.from(allItemsMap.values());
             const currentDept = activeTabId.replace('_report', '');
             const payload = { orderNo: bookingNo, department: currentDept, fabricItems: fabricItemsArr };
 
-            const saveBtn = document.getElementById('saveDatesBtn');
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
-            saveBtn.disabled = true;
+            // const saveBtn = document.getElementById('saveDatesBtn');
+            // const originalText = saveBtn.innerHTML;
+            // saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
+            // saveBtn.disabled = true;
+
+            let hasSelect = false;
+            let hasTentative = false;
+            let confirmCount = 0;
+            let totalItems = existingData.mergedItems.length;
+
+            existingData.mergedItems.forEach(item => {
+                if (!item.planType || item.planType === '' || item.planType === 'Select') {
+                    hasSelect = true;
+                } else if (item.planType === 'Tentative') {
+                    hasTentative = true;
+                } else if (item.planType === 'Confirm') {
+                    confirmCount++;
+                }
+            });
+
+            existingData.isPending = false;
+            existingData.isConfirm = false;
+            existingData.isTentative = false;
+
+            if (hasSelect) {
+                existingData.isPending = true;
+            } else if (hasTentative) {
+                existingData.isTentative = true;
+            } else if (confirmCount === totalItems && totalItems > 0) {
+                existingData.isConfirm = true;
+            } else {
+                existingData.isPending = true;
+            }
+
+            renderMainTable();
+            closeDetailedView();
+            showToast(`Saving ${bookingNo} in background...`);
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
@@ -1460,12 +1540,13 @@
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
-                    showToast("Planning Data Saved Successfully!");
-                    await fetchAndProcessData();
-                    setTimeout(() => closeDetailedView(), 500);
+                    showToast(`${bookingNo} Saved Successfully!`);
+                    fetchAndProcessData(true);
+                    // setTimeout(() => closeDetailedView(), 500);
+                } else {
+                    showToast(`Failed to save ${bookingNo}!`);
                 }
-            } catch (e) { alert("Server Error while saving"); }
-            finally { saveBtn.innerHTML = originalText; saveBtn.disabled = false; }
+            } catch (e) { showToast(`Server Error while saving ${bookingNo}`) }
         }
 
         async function handleExcelUpload() {
