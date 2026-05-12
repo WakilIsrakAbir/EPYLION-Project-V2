@@ -795,7 +795,7 @@
             const currentDept = activeTabId.replace('_report', '');
 
             if (currentDept === 'knitting') {
-                // 🟢 Knitting Plan: ১,২,৩ (বাম) এবং ৮,৯,১০,১১,১২,১৩,১৪ (ডান)
+                
                 let leftCols = ['Color', 'FabricConstruction', 'GSM'];
                 let rightCols = ['Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Allowance %'];
 
@@ -812,7 +812,7 @@
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
             }
             else if (currentDept === 'dyeing') {
-                // 🟢 Dyeing Plan: ১,২,৩ (বাম), ৮,৯,১০,১১,১২ (ডান) এবং শেষে ১৩-১৬ (Knitting Info)
+                
                 let leftCols = ['Color', 'Unit', 'Process Name'];
                 let rightColsHtml = `
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">BP Qty</th>
@@ -846,7 +846,7 @@
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', rightSubHtml);
             }
             else {
-                // 🟢 Finishing & Delivery (Old Design)
+                
                 let mainCols = [];
                 if (currentDept === 'delivery') {
                     mainCols = ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'RequiredQtyKgs', 'Buyer', 'Allowance %', 'Yarn req.', 'Allocated Qty', 'Yarn bala.', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
@@ -1067,13 +1067,18 @@
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
                                 let baseId = generateItemId(dbItem.itemData, currentDept);
-                                dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
-                                let strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
+                                let strictId = baseId;
+
+                                if (currentDept === 'knitting' || currentDept === 'delivery') {
+                                    dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
+                                    strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
+                                } else {
+                                    if (dbOccurrence[baseId]) return; 
+                                    dbOccurrence[baseId] = 1;
+                                }
 
                                 dbItem.itemId = strictId;
                                 mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
-                            } else if (dbItem.itemId) {
-                                mergedItemsMap.set(dbItem.itemId, { ...dbItem, source: 'DB' });
                             }
                         });
 
@@ -1087,6 +1092,7 @@
                             }
 
                             let dynamicItemData = {};
+                            // --- (আপনার বিদ্যমান dynamicItemData লজিক এখানে থাকবে) ---
                             if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
                                     OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
@@ -1131,8 +1137,16 @@
                             }
 
                             let baseId = generateItemId(dynamicItemData, currentDept);
-                            excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
-                            let strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
+                            let strictId = baseId;
+
+                            
+                            if (currentDept === 'knitting' || currentDept === 'delivery') {
+                                excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
+                                strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
+                            } else {
+                                if (excelOccurrence[baseId]) return; // Skip subsequent items for the same color/order
+                                excelOccurrence[baseId] = 1;
+                            }
 
                             if (mergedItemsMap.has(strictId)) {
                                 const existing = mergedItemsMap.get(strictId);
@@ -1149,6 +1163,19 @@
                     }
 
                     group.mergedItems = Array.from(mergedItemsMap.values());
+
+                    if (currentDept === 'dyeing' || currentDept === 'finishing') {
+                        const uniqueItems = [];
+                        const seenColors = new Set();
+                        group.mergedItems.forEach(item => {
+                            let c = String(item.itemData.Color || '').trim().toLowerCase();
+                            if (!seenColors.has(c)) {
+                                seenColors.add(c);
+                                uniqueItems.push(item);
+                            }
+                        });
+                        group.mergedItems = uniqueItems; 
+                    }
 
                     group.isPending = false;
                     group.isConfirm = false;
@@ -1192,7 +1219,7 @@
                     let hasConfirmData = false;
                     let hasTentativeData = false;
 
-                    // ডাটাবেস বা এক্সেল থেকে পাওয়া ডেটায় কোনো Confirm বা Tentative আছে কিনা চেক করা
+                    
                     Object.values(groupedData).forEach(group => {
                         if (group.isConfirm) hasConfirmData = true;
                         if (group.isTentative) hasTentativeData = true;
@@ -1203,11 +1230,11 @@
                     const reportEmpty = document.getElementById('reportEmptyState');
                     const cardsGrid = document.getElementById('reportCardsGrid');
 
-                    // যে ডেটা নেই, সেই কার্ড হাইড করে দেওয়া হবে
+                    
                     if (cardConfirm) cardConfirm.style.display = hasConfirmData ? 'flex' : 'none';
                     if (cardTentative) cardTentative.style.display = hasTentativeData ? 'flex' : 'none';
 
-                    // যদি দুটোর কোনো ডেটাই না থাকে, তবে গ্রিড হাইড করে Empty Message দেখানো হবে
+                    
                     if (!hasConfirmData && !hasTentativeData) {
                         if (cardsGrid) cardsGrid.style.display = 'none';
                         if (reportEmpty) {
@@ -1335,7 +1362,7 @@
                 const dataTableWrapper = document.getElementById('dataTableContentWrapper');
                 const paginationControls = document.getElementById('paginationControls');
 
-                // 🟢 স্ট্রিক্ট ফিল্টার: শুধুমাত্র সেই অর্ডারগুলোই আসবে যাদের নিজস্ব ডিপার্টমেন্টের (Finishing/Dyeing) ডেটা আছে!
+                
                 let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
 
                 if (data.length === 0) {
@@ -1497,14 +1524,14 @@
                 itemHtml += `<tr class="${rowClass}" data-itemid="${item.itemId}" data-itemdata="${encodedItemData}">`;
 
                 if (currentDept === 'knitting') {
-                    // সিরিয়াল ১,২,৩
+                    
                     const leftCols = ['Color', 'FabricConstruction', 'GSM'];
                     leftCols.forEach(c => {
                         let val = item.itemData[c];
                         itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
                     });
 
-                    // সিরিয়াল ৪,৫,৬,৭ (মাঝখানে)
+                    
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
@@ -1519,7 +1546,7 @@
                         <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
                     `;
 
-                    // সিরিয়াল ৮ থেকে ১৪ (ডানদিকে)
+                    
                     const rightCols = ['GreyReq', 'KnitProd', 'KnitBala', 'YarnReq', 'AllocatedQty', 'YarnBala', 'Allowance'];
                     rightCols.forEach(c => {
                         let val = item.itemData[c];
@@ -1527,10 +1554,10 @@
                     });
                 }
                 else if (currentDept === 'dyeing') {
-                    // সিরিয়াল ১ (কালার)
+                    
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
 
-                    // সিরিয়াল ২ (Unit Dropdown)
+                    
                     let unitVal = item.itemData['Unit'] || '';
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[100px]">
                         <select class="row-unit p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
@@ -1542,7 +1569,7 @@
                         </select>
                     </td>`;
 
-                    // সিরিয়াল ৩ (Process Name Dropdown)
+                    
                     let processVal = item.itemData['ProcessName'] || item.itemData['Process Name'] || '';
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[110px]">
                         <select class="row-process p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
@@ -1556,7 +1583,7 @@
                         </select>
                     </td>`;
 
-                    // সিরিয়াল ৪,৫,৬,৭ (Dyeing Planning মাঝখানে)
+                    
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
@@ -1571,14 +1598,14 @@
                         <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
                     `;
 
-                    // সিরিয়াল ৮,৯,১০,১১,১২ (ডানদিকে)
+                    
                     const numCols = ['BPQty', 'DyeingProd', 'DyeingBala', 'KnitProd', 'KnitBala'];
                     numCols.forEach(c => {
                         let val = item.itemData[c];
                         itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
                     });
 
-                    // 🟢 সিরিয়াল ১৩-১৬: Knitting Details (Read-only) একদম শেষে
+                    
                     let knitPlan = { start: '', end: '', type: '', limit: '', remark: '' };
                     if (data.dbData && data.dbData.knitting) {
                         let myColor = String(item.itemData.Color || '').trim().toLowerCase();
@@ -1672,7 +1699,7 @@
                 if (row.querySelector('.row-process')) {
                     let pVal = row.querySelector('.row-process').value;
                     itemData.ProcessName = pVal;
-                    itemData['Process Name'] = pVal; // ফিক্স সেফটির জন্য
+                    itemData['Process Name'] = pVal;
                 }
 
                 allItemsMap.set(id, {
