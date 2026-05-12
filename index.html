@@ -1659,10 +1659,11 @@
             });
             itemBody.innerHTML = itemHtml;
 
-            // 🟢 AUTO-DATE SYNC: Fill Only Blanks Logic (শুধুমাত্র ডাইং এর জন্য)
-            if (currentDept === 'dyeing') {
+            
+            if (currentDept === 'knitting' || currentDept === 'dyeing' || currentDept === 'delivery') {
                 const startDateInputs = document.querySelectorAll('#detFabricItemsBody .row-start-date');
                 const endDateInputs = document.querySelectorAll('#detFabricItemsBody .row-end-date');
+                const planTypeInputs = document.querySelectorAll('#detFabricItemsBody .row-plan-type');
 
                 // Start Date Sync
                 startDateInputs.forEach(input => {
@@ -1670,7 +1671,6 @@
                         let selectedVal = this.value;
                         if (selectedVal) {
                             startDateInputs.forEach(otherInput => {
-                                // যদি অন্য ফিল্ডটা ফাঁকা থাকে, তবেই কপি করবে
                                 if (otherInput !== this && otherInput.value === '') {
                                     otherInput.value = selectedVal;
                                 }
@@ -1685,7 +1685,19 @@
                         let selectedVal = this.value;
                         if (selectedVal) {
                             endDateInputs.forEach(otherInput => {
-                                // যদি অন্য ফিল্ডটা ফাঁকা থাকে, তবেই কপি করবে
+                                if (otherInput !== this && otherInput.value === '') {
+                                    otherInput.value = selectedVal;
+                                }
+                            });
+                        }
+                    });
+                });
+                planTypeInputs.forEach(input => {
+                    input.addEventListener('change', function () {
+                        let selectedVal = this.value;
+                        if (selectedVal) { // 'Confirm' বা 'Tentative' সিলেক্ট করলে
+                            planTypeInputs.forEach(otherInput => {
+                                // যদি অন্য ফিল্ডে এখনো কিছু সিলেক্ট না করা থাকে (অর্থাৎ value === '' থাকে)
                                 if (otherInput !== this && otherInput.value === '') {
                                     otherInput.value = selectedVal;
                                 }
