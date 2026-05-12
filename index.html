@@ -1658,6 +1658,42 @@
                 itemHtml += `</tr>`;
             });
             itemBody.innerHTML = itemHtml;
+
+            // 🟢 AUTO-DATE SYNC: Fill Only Blanks Logic (শুধুমাত্র ডাইং এর জন্য)
+            if (currentDept === 'dyeing') {
+                const startDateInputs = document.querySelectorAll('#detFabricItemsBody .row-start-date');
+                const endDateInputs = document.querySelectorAll('#detFabricItemsBody .row-end-date');
+
+                // Start Date Sync
+                startDateInputs.forEach(input => {
+                    input.addEventListener('change', function () {
+                        let selectedVal = this.value;
+                        if (selectedVal) {
+                            startDateInputs.forEach(otherInput => {
+                                // যদি অন্য ফিল্ডটা ফাঁকা থাকে, তবেই কপি করবে
+                                if (otherInput !== this && otherInput.value === '') {
+                                    otherInput.value = selectedVal;
+                                }
+                            });
+                        }
+                    });
+                });
+
+                // End Date Sync
+                endDateInputs.forEach(input => {
+                    input.addEventListener('change', function () {
+                        let selectedVal = this.value;
+                        if (selectedVal) {
+                            endDateInputs.forEach(otherInput => {
+                                // যদি অন্য ফিল্ডটা ফাঁকা থাকে, তবেই কপি করবে
+                                if (otherInput !== this && otherInput.value === '') {
+                                    otherInput.value = selectedVal;
+                                }
+                            });
+                        }
+                    });
+                });
+            }
         }
 
         function closeDetailedView() {
