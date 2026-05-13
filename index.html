@@ -548,6 +548,7 @@
                             <div class="flex items-center"><span class="info-label">Final Confirmation</span><input
                                     type="text" id="detFinalConf" class="info-input font-bold bg-gray-50" readonly>
                             </div>
+                            
                         </div>
                         <div class="flex flex-col gap-2">
                             <div class="flex items-center"><span class="info-label">Buyer Name(s)</span><input
@@ -1692,19 +1693,7 @@
                         }
                     });
                 });
-                planTypeInputs.forEach(input => {
-                    input.addEventListener('change', function() {
-                        let selectedVal = this.value;
-                        if (selectedVal) { // 'Confirm' বা 'Tentative' সিলেক্ট করলে
-                            planTypeInputs.forEach(otherInput => {
-                                // যদি অন্য ফিল্ডে এখনো কিছু সিলেক্ট না করা থাকে (অর্থাৎ value === '' থাকে)
-                                if (otherInput !== this && otherInput.value === '') {
-                                    otherInput.value = selectedVal;
-                                }
-                            });
-                        }
-                    });
-                });
+                
             }
         }
 
