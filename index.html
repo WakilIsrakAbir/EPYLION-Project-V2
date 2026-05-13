@@ -379,7 +379,7 @@
                                     onclick="activateMainTab('Tentative')">Tentative List</div>
                                 <div id="btnAll"
                                     class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
-                                    onclick="activateMainTab('All')">All List</div>
+                                    onclick="activateMainTab('All')">Completed List</div>
                             </div>
 
                             <!-- EXCEL DOWNLOAD BUTTON FOR REPORT -->
@@ -547,6 +547,13 @@
                                     id="detUnit" class="info-input bg-gray-50" readonly></div>
                             <div class="flex items-center"><span class="info-label">Final Confirmation</span><input
                                     type="text" id="detFinalConf" class="info-input font-bold bg-gray-50" readonly>
+                            </div>
+                            <div class="flex items-center mt-1 border border-blue-200 rounded p-1 bg-blue-50">
+                                <span class="info-label text-blue-700">Order Status</span>
+                                <select id="detOrderStatus" class="info-input font-bold text-blue-700 bg-white border-blue-300 cursor-pointer">
+                                    <option value="On Process">On Process</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
                             </div>
                             
                         </div>
@@ -1035,7 +1042,12 @@
                     if (datesRes.ok) {
                         const savedPlans = await datesRes.json();
                         savedPlans.forEach(plan => {
-                            if (groupedData[plan.orderNo]) groupedData[plan.orderNo].dbData = plan;
+                            if (groupedData[plan.orderNo]) {
+                                groupedData[plan.orderNo].dbData = plan;
+                                // 🟢 NEW: ডাটাবেস থেকে স্ট্যাটাস আনছে
+                                groupedData[plan.orderNo].generalInfo.OrderStatus = plan.orderStatus || 'On Process';
+                                groupedData[plan.orderNo].generalInfo.CompletedDate = plan.completedDate || null;
+                            }
                             else {
                                 groupedData[plan.orderNo] = {
                                     bookingNo: plan.orderNo, bookingDate: 'N/A', buyers: new Set(), buyerTeam: 'N/A', status: 'N/A',
@@ -1362,25 +1374,107 @@
                 const emptyState = document.getElementById('emptyState');
                 const dataTableWrapper = document.getElementById('dataTableContentWrapper');
                 const paginationControls = document.getElementById('paginationControls');
+                const thead = document.querySelector('#dataTableContent thead');
 
-                
                 let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
 
-                if (data.length === 0) {
-                    dataTableWrapper.classList.add('hidden');
-                    paginationControls.classList.add('hidden');
+                // 🟢 Separate Completed orders from Active ones
+                data = data.filter(g => {
+                    const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
+                    if (activeMainTab === 'All') return status === 'Completed';
+                    return status !== 'Completed';
+                });
+
+                // 🟢 VIEW: Completed List View (Special UI)
+                if (activeMainTab === 'All') {
                     buyerFilterContainer.classList.add('hidden');
-                    emptyState.classList.remove('hidden');
-                    emptyState.innerHTML = `<i class="fas fa-folder-open text-4xl mb-3 text-gray-300"></i><p>No department data uploaded yet.</p>`;
-                    tbody.innerHTML = '';
+                    dataTableWrapper.classList.remove('hidden');
+                    emptyState.classList.add('hidden');
+
+                    // Oldest first sorting
+                    data.sort((a, b) => {
+                        let dateA = new Date((a.generalInfo && a.generalInfo.CompletedDate) ? a.generalInfo.CompletedDate : 0).getTime();
+                        let dateB = new Date((b.generalInfo && b.generalInfo.CompletedDate) ? b.generalInfo.CompletedDate : 0).getTime();
+                        return dateA - dateB;
+                    });
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No completed orders found.</td></tr>`;
+                        paginationControls.classList.add('hidden');
+                        return;
+                    }
+
+                    // 🟢 FIX: হেডার বারবার রিলোড হওয়া বন্ধ করা হলো
+                    if (thead.dataset.currentTab !== 'All') {
+                        thead.innerHTML = `
+                        <tr class="bg-gray-800 text-white text-[11px] font-bold border-b border-gray-700">
+                            <th class="p-2 border-r border-gray-700 text-center w-[120px]">
+                                <button onclick="downloadCompletedList()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded shadow text-[10px]"><i class="fas fa-file-excel mr-1"></i> EXCEL</button>
+                            </th>
+                            <th class="p-2 border-r border-gray-700">Order/Booking No.</th>
+                            <th class="p-2 border-r border-gray-700 text-center">Completed Date</th>
+                            <th class="p-2">Buyer</th>
+                        </tr>
+                    `;
+                        thead.dataset.currentTab = 'All';
+                    }
+
+                    paginationControls.classList.remove('hidden');
+                    const totalPages = Math.ceil(data.length / rowsPerPage);
+                    if (currentPage > totalPages) currentPage = totalPages;
+                    if (currentPage < 1) currentPage = 1;
+                    const start = (currentPage - 1) * rowsPerPage;
+                    const pagedData = data.slice(start, start + rowsPerPage);
+
+                    let htmlContent = '';
+                    pagedData.forEach(d => {
+                        const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
+                        const compDateStr = (d.generalInfo && d.generalInfo.CompletedDate) ? new Date(d.generalInfo.CompletedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+
+                        htmlContent += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-200 bg-white transition-colors">
+                        <td class="p-2 border-r border-gray-200 text-center">
+                            <button onclick="openDetailedView('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View/Edit"><i class="fas fa-eye"></i></button>
+                        </td>
+                        <td class="p-2 border-r border-gray-200 text-gray-800 font-bold">${d.bookingNo}</td>
+                        <td class="p-2 border-r border-gray-200 text-center text-gray-600 font-medium">${compDateStr}</td>
+                        <td class="p-2 border-r border-gray-200 font-medium text-gray-600">${displayBuyer}</td>
+                    </tr>`;
+                    });
+                    tbody.innerHTML = htmlContent;
+                    updatePaginationUI(start, start + pagedData.length, data.length, totalPages);
                     return;
                 }
 
-                if (activeMainTab === 'All') {
-                    dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); buyerFilterContainer.classList.add('hidden');
-                    emptyState.classList.remove('hidden');
-                    emptyState.innerHTML = `<i class="fas fa-tools text-4xl mb-3 text-gray-300"></i><p class="text-gray-600 font-medium">All List feature will be updated later.</p>`;
-                    tbody.innerHTML = ''; return;
+                // 🟢 VIEW: Normal Tabs (Pending, Confirm, Tentative - untouched UI)
+
+                // 🟢 FIX: হেডার বারবার রিলোড হওয়া বন্ধ করা হলো
+                if (thead.dataset.currentTab !== 'Active') {
+                    thead.innerHTML = `
+                    <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
+                        <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">Manage</th>
+                        <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+                        <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date</th>
+                        <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
+                        <th class="p-2 border-r border-gray-300 bg-tableHeader">Status</th>
+                    </tr>
+                    <tr class="bg-white border-b border-gray-300">
+                        <th class="p-1 border-r border-gray-300 bg-white"></th>
+                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(1, this.value)" placeholder="Search No..."></th>
+                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(2, this.value)" placeholder="Search Date..."></th>
+                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(3, this.value)" placeholder="Search Buyer..."></th>
+                        <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(4, this.value)" placeholder="Search Status..."></th>
+                    </tr>
+                `;
+                    thead.dataset.currentTab = 'Active';
+
+                    // 🟢 RESTORE SEARCH VALUES: ট্যাব সুইচ করলে আগের সার্চ ভ্যালু যেন বক্সে থাকে
+                    document.querySelectorAll('.header-search').forEach((input, index) => {
+                        const colIndex = index + 1;
+                        if (colFilters[colIndex]) {
+                            input.value = colFilters[colIndex];
+                        }
+                    });
                 }
 
                 if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
@@ -1403,10 +1497,9 @@
                 renderBuyerTabs(Array.from(buyersSet));
                 buyerFilterContainer.classList.remove('hidden');
 
-                if (activeBuyer === '') {
-                    dataTableWrapper.classList.add('hidden'); paginationControls.classList.add('hidden'); emptyState.classList.remove('hidden');
-                    emptyState.innerHTML = `<i class="fas fa-hand-pointer text-4xl mb-3 text-blue-300"></i><p class="text-gray-600 font-medium">Please select a buyer from the list above to view ${activeMainTab} data.</p>`;
-                    tbody.innerHTML = ''; return;
+                if (activeBuyer === '' && buyersSet.size > 0) {
+                    activeBuyer = Array.from(buyersSet)[0];
+                    renderBuyerTabs(Array.from(buyersSet));
                 }
 
                 if (activeBuyer !== '') {
@@ -1414,6 +1507,7 @@
                     data = data.filter(d => { const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim()); return bArr.includes(searchB); });
                 }
 
+                // 🟢 Search Logic Application
                 for (let col in colFilters) {
                     const searchVal = colFilters[col]; if (!searchVal) continue;
                     data = data.filter(d => {
@@ -1445,18 +1539,18 @@
                 pagedData.forEach(d => {
                     const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
                     htmlContent += `
-                    <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
-                        <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
-                        <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.bookingNo}</td>
-                        <td class="p-2 border-r border-gray-200 text-center">${d.bookingDate}</td>
-                        <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${displayBuyer}</td>
-                        <td class="p-2 border-r border-gray-200 text-gray-600 font-medium">${d.status}</td>
-                    </tr>
-                `;
+                <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                    <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
+                    <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.bookingNo}</td>
+                    <td class="p-2 border-r border-gray-200 text-center">${d.bookingDate}</td>
+                    <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${displayBuyer}</td>
+                    <td class="p-2 border-r border-gray-200 text-gray-600 font-medium">${d.status}</td>
+                </tr>
+            `;
                 });
                 tbody.innerHTML = htmlContent;
                 updatePaginationUI(start, start + pagedData.length, data.length, totalPages);
-            }
+        }
 
         function updatePaginationUI(start, end, total, totalPages) {
             document.getElementById('pageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1}-${end} of ${total}`;
@@ -1502,6 +1596,7 @@
             setSafeVal('detBookingUnit', data.generalInfo.BookingUnit);
             setSafeVal('detUnit', data.generalInfo.Unit);
             setSafeVal('detFinalConf', data.generalInfo.FinalConf);
+            setSafeVal('detOrderStatus', data.generalInfo.OrderStatus || 'On Process'); // 🟢 NEW
             setSafeVal('detEventDay', data.generalInfo.EventDay);
             setSafeVal('detShip1', data.generalInfo.Ship1);
             setSafeVal('detShipLast', data.generalInfo.ShipLast);
@@ -1704,117 +1799,108 @@
         }
 
         async function saveFabricPlanning() {
-            const bookingNo = currentViewIndex;
-            if (!bookingNo) return;
+                const bookingNo = currentViewIndex;
+                if (!bookingNo) return;
 
-            if (document.querySelectorAll('#detFabricItemsBody .fabric-row').length === 0) {
-                showToast("No fabric items to save! Please upload department data first.");
-                return;
-            }
-
-            const existingData = groupedData[bookingNo];
-            if (!existingData) return;
-
-            const allItemsMap = new Map();
-            if (existingData.mergedItems) {
-                existingData.mergedItems.forEach(item => allItemsMap.set(item.itemId, item));
-            }
-
-            document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
-                const id = row.dataset.itemid;
-                const itemData = JSON.parse(decodeURIComponent(row.dataset.itemdata));
-
-                const newPlanType = row.querySelector('.row-plan-type').value;
-                const newStartDate = row.querySelector('.row-start-date').value;
-                const newEndDate = row.querySelector('.row-end-date').value;
-                const newLimitation = row.querySelector('.row-limitation').value;
-                const newRemarks = row.querySelector('.row-remarks').value;
-
-                if (row.querySelector('.row-unit')) {
-                    itemData.Unit = row.querySelector('.row-unit').value;
-                }
-                if (row.querySelector('.row-process')) {
-                    let pVal = row.querySelector('.row-process').value;
-                    itemData.ProcessName = pVal;
-                    itemData['Process Name'] = pVal;
+                if (document.querySelectorAll('#detFabricItemsBody .fabric-row').length === 0) {
+                    showToast("No fabric items to save! Please upload department data first.");
+                    return;
                 }
 
-                allItemsMap.set(id, {
-                    itemId: id, itemData: itemData,
-                    startDate: newStartDate,
-                    endDate: newEndDate,
-                    planType: newPlanType,
-                    limitation: newLimitation,
-                    remarks: newRemarks
+                const existingData = groupedData[bookingNo];
+                if (!existingData) return;
+
+                // 🟢 NEW: Safety Mechanism (ভুলে কমপ্লিট ঠেকানোর ওয়ার্নিং)
+                const currentStatus = document.getElementById('detOrderStatus').value;
+                const prevStatus = existingData.generalInfo.OrderStatus || 'On Process';
+                if (currentStatus === 'Completed' && prevStatus !== 'Completed') {
+                    if (!confirm(`Are you sure you want to mark order '${bookingNo}' as Completed? It will be moved to the Completed List.`)) {
+                        document.getElementById('detOrderStatus').value = 'On Process'; // Revert dropdown visually
+                        return;
+                    }
+                }
+
+                const allItemsMap = new Map();
+                if (existingData.mergedItems) {
+                    existingData.mergedItems.forEach(item => allItemsMap.set(item.itemId, item));
+                }
+
+                document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
+                    const id = row.dataset.itemid;
+                    const itemData = JSON.parse(decodeURIComponent(row.dataset.itemdata));
+
+                    const newPlanType = row.querySelector('.row-plan-type').value;
+                    const newStartDate = row.querySelector('.row-start-date').value;
+                    const newEndDate = row.querySelector('.row-end-date').value;
+                    const newLimitation = row.querySelector('.row-limitation').value;
+                    const newRemarks = row.querySelector('.row-remarks').value;
+
+                    if (row.querySelector('.row-unit')) itemData.Unit = row.querySelector('.row-unit').value;
+                    if (row.querySelector('.row-process')) {
+                        let pVal = row.querySelector('.row-process').value;
+                        itemData.ProcessName = pVal;
+                        itemData['Process Name'] = pVal;
+                    }
+
+                    allItemsMap.set(id, {
+                        itemId: id, itemData: itemData,
+                        startDate: newStartDate, endDate: newEndDate,
+                        planType: newPlanType, limitation: newLimitation, remarks: newRemarks
+                    });
+
+                    let target = existingData.mergedItems.find(m => m.itemId === id);
+                    if (target) {
+                        target.planType = newPlanType; target.startDate = newStartDate; target.endDate = newEndDate;
+                        target.limitation = newLimitation; target.remarks = newRemarks;
+                    }
                 });
 
-                let target = existingData.mergedItems.find(m => m.itemId === id);
-                if (target) {
-                    target.planType = newPlanType;
-                    target.startDate = newStartDate;
-                    target.endDate = newEndDate;
-                    target.limitation = newLimitation;
-                    target.remarks = newRemarks;
+                const fabricItemsArr = Array.from(allItemsMap.values());
+                const currentDept = activeTabId.replace('_report', '');
+
+                // 🟢 Date Setup
+                const compDate = currentStatus === 'Completed' ? new Date().toISOString() : null;
+                if (existingData.generalInfo) {
+                    existingData.generalInfo.OrderStatus = currentStatus;
+                    existingData.generalInfo.CompletedDate = compDate;
                 }
 
-            });
+                const payload = {
+                    orderNo: bookingNo, department: currentDept, fabricItems: fabricItemsArr,
+                    orderStatus: currentStatus, completedDate: compDate
+                };
 
-            const fabricItemsArr = Array.from(allItemsMap.values());
-            const currentDept = activeTabId.replace('_report', '');
-            const payload = { orderNo: bookingNo, department: currentDept, fabricItems: fabricItemsArr };
+                let hasSelect = false, hasTentative = false, confirmCount = 0;
+                let totalItems = existingData.mergedItems.length;
 
-            // const saveBtn = document.getElementById('saveDatesBtn');
-            // const originalText = saveBtn.innerHTML;
-            // saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
-            // saveBtn.disabled = true;
-
-            let hasSelect = false;
-            let hasTentative = false;
-            let confirmCount = 0;
-            let totalItems = existingData.mergedItems.length;
-
-            existingData.mergedItems.forEach(item => {
-                if (!item.planType || item.planType === '' || item.planType === 'Select') {
-                    hasSelect = true;
-                } else if (item.planType === 'Tentative') {
-                    hasTentative = true;
-                } else if (item.planType === 'Confirm') {
-                    confirmCount++;
-                }
-            });
-
-            existingData.isPending = false;
-            existingData.isConfirm = false;
-            existingData.isTentative = false;
-
-            if (hasSelect) {
-                existingData.isPending = true;
-            } else if (hasTentative) {
-                existingData.isTentative = true;
-            } else if (confirmCount === totalItems && totalItems > 0) {
-                existingData.isConfirm = true;
-            } else {
-                existingData.isPending = true;
-            }
-
-            renderMainTable();
-            closeDetailedView();
-            showToast(`Saving ${bookingNo} in background...`);
-
-            try {
-                const res = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                existingData.mergedItems.forEach(item => {
+                    if (!item.planType || item.planType === '' || item.planType === 'Select') hasSelect = true;
+                    else if (item.planType === 'Tentative') hasTentative = true;
+                    else if (item.planType === 'Confirm') confirmCount++;
                 });
-                if (res.ok) {
-                    showToast(`${bookingNo} Saved Successfully!`);
-                    fetchAndProcessData(true);
-                    // setTimeout(() => closeDetailedView(), 500);
-                } else {
-                    showToast(`Failed to save ${bookingNo}!`);
-                }
-            } catch (e) { showToast(`Server Error while saving ${bookingNo}`) }
-        }
+
+                existingData.isPending = false; existingData.isConfirm = false; existingData.isTentative = false;
+
+                if (hasSelect) existingData.isPending = true;
+                else if (hasTentative) existingData.isTentative = true;
+                else if (confirmCount === totalItems && totalItems > 0) existingData.isConfirm = true;
+                else existingData.isPending = true;
+
+                renderMainTable();
+                closeDetailedView();
+                showToast(`Saving ${bookingNo}...`);
+
+                try {
+                    const res = await fetch('https://abir-backend-api.onrender.com/api/files/save-dates', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        showToast(`${bookingNo} Saved Successfully!`);
+                        fetchAndProcessData(true);
+                    } else showToast(`Failed to save ${bookingNo}!`);
+                } catch (e) { showToast(`Server Error!`) }
+            }
 
         async function handleExcelUpload() {
             const file = document.getElementById('excelFile').files[0];
@@ -1936,6 +2022,26 @@
         function closeSidebarMobile() {
             if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobileOverlay').classList.add('hidden'); }
         }
+
+        // 🟢 NEW: Download Completed List Function
+            function downloadCompletedList() {
+                let compData = Object.values(groupedData).filter(g => g.generalInfo && g.generalInfo.OrderStatus === 'Completed');
+                if (compData.length === 0) return showToast("No completed data to download");
+
+                compData.sort((a, b) => new Date(a.generalInfo.CompletedDate || 0) - new Date(b.generalInfo.CompletedDate || 0));
+
+                let exportArr = compData.map(d => ({
+                    "Order/Booking No": d.bookingNo,
+                    "Completed Date": d.generalInfo.CompletedDate ? new Date(d.generalInfo.CompletedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                    "Buyer": Array.from(d.buyers).join(', '),
+                    "Status": "Completed"
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(exportArr);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Completed List");
+                XLSX.writeFile(wb, `${activeTabId.replace('_report', '')}_Completed_List.xlsx`);
+            }
     </script>
 </body>
 
