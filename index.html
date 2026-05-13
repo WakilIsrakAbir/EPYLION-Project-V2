@@ -1788,6 +1788,21 @@
                         }
                     });
                 });
+
+                // 🟢 RESTORED: Plan Type Sync (যেটা Ctrl+Z এর কারণে মুছে গিয়েছিল)
+                planTypeInputs.forEach(input => {
+                    input.addEventListener('change', function () {
+                        let selectedVal = this.value;
+                        if (selectedVal) {
+                            planTypeInputs.forEach(otherInput => {
+                                // যদি অন্য ইনপুটটা ফাঁকা (Select) থাকে, তবেই অটো ফিল হবে
+                                if (otherInput !== this && otherInput.value === '') {
+                                    otherInput.value = selectedVal;
+                                }
+                            });
+                        }
+                    });
+                });
                 
             }
         }
