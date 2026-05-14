@@ -127,8 +127,10 @@
 
     <div class="auth-container">
         <div class="text-center mb-8">
-            <h2 class="text-3xl font-extrabold text-green-500 tracking-wide mb-2"><span
-                    class="text-green-500">Abir</span> LTD</h2>
+            <div class="mb-5">
+                <h2 class="text-3xl font-extrabold text-green-500 tracking-wide mb-2">Textile Planning Solution</h2>
+                <p class="text-gray-800 text-sm font-medium">Developed by Wakil Israk Abir</p>
+            </div>
             <p class="text-gray-500 text-sm font-medium" id="formSubtitle">Sign in to your account</p>
         </div>
 
@@ -151,29 +153,6 @@
             </div>
             <button type="submit" id="loginBtn" class="btn-primary mt-2"><i class="fas fa-sign-in-alt mr-2"></i>
                 Login</button>
-            <a class="toggle-link" onclick="toggleView('register')">Don't have an account? Sign Up</a>
-        </form>
-
-        <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
-            <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Username</label>
-                <input type="text" id="regUsername" class="input-field py-2" placeholder="Choose a username" required>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Password</label>
-                <input type="password" id="regPassword" class="input-field py-2" placeholder="Create a password"
-                    required minlength="6">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Confirm
-                    Password</label>
-                <input type="password" id="regConfirmPassword" class="input-field py-2"
-                    placeholder="Confirm your password" required minlength="6">
-            </div>
-            <button type="submit" id="registerBtn" class="btn-primary mt-2"><i class="fas fa-user-plus mr-2"></i> Create
-                Account</button>
-            <a class="toggle-link" onclick="toggleView('login')"><i class="fas fa-arrow-left mr-1"></i> Back to
-                Login</a>
         </form>
     </div>
 
@@ -193,23 +172,6 @@
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('toast-show');
             }, 3000);
-        }
-
-        // Login এবং Register ফর্মের মধ্যে সুইচ করার ফাংশন
-        function toggleView(view) {
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const subtitle = document.getElementById('formSubtitle');
-
-            if (view === 'register') {
-                loginForm.classList.add('hidden');
-                registerForm.classList.remove('hidden');
-                subtitle.textContent = "Create a new employee account";
-            } else {
-                registerForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                subtitle.textContent = "Sign in to your account";
-            }
         }
 
         // ================= LOGIN API CALL =================
@@ -248,52 +210,6 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Login';
-            }
-        }
-
-        // ================= REGISTER API CALL =================
-        async function handleRegister(e) {
-            e.preventDefault();
-            const u = document.getElementById('regUsername').value;
-            const p = document.getElementById('regPassword').value;
-            const cp = document.getElementById('regConfirmPassword').value;
-            const btn = document.getElementById('registerBtn');
-
-            // পাসওয়ার্ড ম্যাচ করেছে কিনা চেক করা
-            if (p !== cp) {
-                showToast("Passwords do not match!", true);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating Account...';
-
-            try {
-                // আপনার auth.js এর সাথে মিলিয়ে রিকোয়েস্ট পাঠানো হচ্ছে
-                const res = await fetch('https://abir-backend-api.onrender.com/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    showToast(data.message || "Account created successfully! Please log in.");
-                    document.getElementById('registerForm').reset();
-                    toggleView('login');
-
-                    // ইউজারের সুবিধার জন্য লগইন ফর্মে ইউজারনেম অটোমেটিক বসিয়ে দেওয়া
-                    document.getElementById('loginUsername').value = u;
-                    document.getElementById('loginPassword').focus();
-                } else {
-                    showToast(data.message || "Registration failed", true);
-                }
-            } catch (err) {
-                showToast("Server error. Please try again later.", true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Create Account';
             }
         }
     </script>

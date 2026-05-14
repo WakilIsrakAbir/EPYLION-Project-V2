@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Hii I am Starting to Replace Date and Plan Type Requerment -->
 
 <head>
     <meta charset="UTF-8">
@@ -837,19 +838,23 @@
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
             }
             else if (currentDept === 'dyeing') {
-                
                 let leftCols = ['Color', 'Unit', 'Process Name'];
+
+                // 🟢 Knitting Planning এর হেডারগুলো
+                let knitPlanningHtml = `
+                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200 dynamic-th" colspan="2">Knitting Planning</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Plan Type</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Limitation</th>
+                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Remarks (Knitting)</th>
+                `;
+
+                // 🟢 Dyeing এর ডানপাশের কলামগুলো
                 let rightColsHtml = `
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">BP Qty</th>
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Dyeing Prod.</th>
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Dyeing Bala.</th>
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Knit Prod.</th>
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Knit. Bala.</th>
-                    
-                    <th class="p-2 border-r border-gray-300 text-center bg-gray-200 dynamic-th" colspan="2">Knitting Planning</th>
-                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Plan Type</th>
-                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Limitation</th>
-                    <th class="p-2 border-r border-gray-300 text-center dynamic-th">Remarks (Knitting)</th>
                 `;
 
                 document.getElementById('planningHeaderText').innerText = 'Dyeing Planning';
@@ -857,17 +862,29 @@
 
                 let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
 
-                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
+                // 🟢 Insert: Left Cols + Knitting Planning -> BEFORE Dyeing Planning
+                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml + knitPlanningHtml);
                 document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightColsHtml);
 
-                let rightSubHtml = `
-                    <th class="border-r border-gray-300 dynamic-th" colspan="5"></th>
+                // 🟢 Subheaders
+                let knitSubHtml = `
                     <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Start Date</th>
                     <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
                     <th class="border-r border-gray-300 dynamic-th" colspan="3"></th>
                 `;
 
-                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
+                let dyeingSubHtml = `
+                    <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Start Date</th>
+                    <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
+                    <th class="border-r border-gray-300 dynamic-th" colspan="3"></th>
+                `;
+
+                let rightSubHtml = `
+                    <th class="border-r border-gray-300 dynamic-th" colspan="5"></th>
+                `;
+
+                // Subheader Insert
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>` + knitSubHtml);
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', rightSubHtml);
             }
             else {
@@ -1663,10 +1680,9 @@
                     });
                 }
                 else if (currentDept === 'dyeing') {
-                    
+                    // 1. 🟢 Left Cols
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
 
-                    
                     let unitVal = item.itemData['Unit'] || '';
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[100px]">
                         <select class="row-unit p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
@@ -1678,7 +1694,6 @@
                         </select>
                     </td>`;
 
-                    
                     let processVal = item.itemData['ProcessName'] || item.itemData['Process Name'] || '';
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[110px]">
                         <select class="row-process p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
@@ -1692,29 +1707,7 @@
                         </select>
                     </td>`;
 
-                    
-                    itemHtml += `
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
-                        <td class="p-2 border-r border-gray-300 text-center">
-                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
-                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
-                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
-                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
-                            </select>
-                        </td>
-                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
-                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
-                    `;
-
-                    
-                    const numCols = ['BPQty', 'DyeingProd', 'DyeingBala', 'KnitProd', 'KnitBala'];
-                    numCols.forEach(c => {
-                        let val = item.itemData[c];
-                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
-                    });
-
-                    
+                    // 2. 🟢 Knitting Data (Inserted BEFORE Dyeing Inputs)
                     let knitPlan = { start: '', end: '', type: '', limit: '', remark: '' };
                     if (data.dbData && data.dbData.knitting) {
                         let myColor = String(item.itemData.Color || '').trim().toLowerCase();
@@ -1729,12 +1722,34 @@
                     }
 
                     itemHtml += `
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.start}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.end}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold">${knitPlan.type}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-start" data-val="${knitPlan.start}">${knitPlan.start}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${knitPlan.end}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold knit-type" data-val="${knitPlan.type}">${knitPlan.type}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.limit}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.remark}</td>
                     `;
+
+                    // 3. 🟢 Dyeing Inputs (Matches headers)
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
+                    `;
+
+                    // 4. 🟢 Right side numeric data
+                    const numCols = ['BPQty', 'DyeingProd', 'DyeingBala', 'KnitProd', 'KnitBala'];
+                    numCols.forEach(c => {
+                        let val = item.itemData[c];
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
+                    });
                 }
                 else {
                     // Old Design for Finishing & Delivery
@@ -1774,47 +1789,142 @@
                 const endDateInputs = document.querySelectorAll('#detFabricItemsBody .row-end-date');
                 const planTypeInputs = document.querySelectorAll('#detFabricItemsBody .row-plan-type');
 
-                // Start Date Sync
-                startDateInputs.forEach(input => {
+                // 🟢 Helper 1: Start Date Check
+                const isValidStartDate = (row, newStart) => {
+                    const endVal = row.querySelector('.row-end-date').value;
+                    if (newStart && endVal && new Date(newStart) > new Date(endVal)) {
+                        showToast("Start Date cannot be greater than End Date!");
+                        return false;
+                    }
+                    if (currentDept === 'dyeing' && newStart) {
+                        const knitStart = row.querySelector('.knit-start').dataset.val;
+                        if (knitStart && new Date(newStart).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
+                            showToast("Dyeing Start Date cannot be less than Knitting Start Date!");
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+
+                // 🟢 Helper 2: End Date Check
+                const isValidEndDate = (row, newEnd) => {
+                    const startVal = row.querySelector('.row-start-date').value;
+                    if (startVal && newEnd && new Date(startVal) > new Date(newEnd)) {
+                        showToast("Start Date cannot be greater than End Date!");
+                        return false;
+                    }
+                    if (currentDept === 'dyeing' && newEnd) {
+                        const knitEnd = row.querySelector('.knit-end').dataset.val;
+                        if (knitEnd && new Date(newEnd).setHours(0, 0, 0, 0) < new Date(knitEnd).setHours(0, 0, 0, 0)) {
+                            showToast("Dyeing End Date cannot be less than Knitting End Date!");
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+
+                // 🟢 Helper 3: Plan Type Check
+                const isValidPlanType = (row, startVal, endVal, planTypeVal) => {
+                    if ((planTypeVal === 'Confirm' || planTypeVal === 'Tentative') && (!startVal || !endVal)) {
+                        showToast("Start and End dates are required to set Plan Type.");
+                        return false;
+                    }
+                    if (currentDept === 'dyeing' && planTypeVal === 'Confirm') {
+                        const knitType = row.querySelector('.knit-type').dataset.val;
+                        if (knitType === 'Tentative') {
+                            showToast("Cannot confirm Dyeing when Knitting is Tentative.");
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+
+                // 🟢 1. Start Date Event
+                startDateInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
-                        let selectedVal = this.value;
-                        if (selectedVal) {
-                            startDateInputs.forEach(otherInput => {
-                                if (otherInput !== this && otherInput.value === '') {
-                                    otherInput.value = selectedVal;
+                        const newVal = this.value;
+                        const row = this.closest('tr');
+                        const endVal = row.querySelector('.row-end-date').value;
+                        const planTypeInput = row.querySelector('.row-plan-type');
+
+                        if (!isValidStartDate(row, newVal)) { this.value = ""; return; }
+                        if (!isValidPlanType(row, newVal, endVal, planTypeInput.value)) planTypeInput.value = "";
+
+                        if (index === 0) {
+                            startDateInputs.forEach((otherInput, idx) => {
+                                if (idx !== 0) {
+                                    const otherRow = otherInput.closest('tr');
+                                    if (isValidStartDate(otherRow, newVal)) {
+                                        otherInput.value = newVal;
+                                        const otherPlan = otherRow.querySelector('.row-plan-type');
+                                        if (!isValidPlanType(otherRow, newVal, otherRow.querySelector('.row-end-date').value, otherPlan.value)) otherPlan.value = "";
+                                    } else {
+                                        otherInput.value = "";
+                                    }
                                 }
                             });
                         }
                     });
                 });
 
-                // End Date Sync
-                endDateInputs.forEach(input => {
+                // 🟢 2. End Date Event
+                endDateInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
-                        let selectedVal = this.value;
-                        if (selectedVal) {
-                            endDateInputs.forEach(otherInput => {
-                                if (otherInput !== this && otherInput.value === '') {
-                                    otherInput.value = selectedVal;
+                        const newVal = this.value;
+                        const row = this.closest('tr');
+                        const startVal = row.querySelector('.row-start-date').value;
+                        const planTypeInput = row.querySelector('.row-plan-type');
+
+                        if (!isValidEndDate(row, newVal)) { this.value = ""; return; }
+                        if (!isValidPlanType(row, startVal, newVal, planTypeInput.value)) planTypeInput.value = "";
+
+                        if (index === 0) {
+                            endDateInputs.forEach((otherInput, idx) => {
+                                if (idx !== 0) {
+                                    const otherRow = otherInput.closest('tr');
+                                    if (isValidEndDate(otherRow, newVal)) {
+                                        otherInput.value = newVal;
+                                        const otherPlan = otherRow.querySelector('.row-plan-type');
+                                        if (!isValidPlanType(otherRow, otherRow.querySelector('.row-start-date').value, newVal, otherPlan.value)) otherPlan.value = "";
+                                    } else {
+                                        otherInput.value = "";
+                                    }
                                 }
                             });
                         }
                     });
                 });
 
-                planTypeInputs.forEach(input => {
+                // 🟢 3. Plan Type Event
+                planTypeInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
-                        let selectedVal = this.value;
-                        if (selectedVal) {
-                            planTypeInputs.forEach(otherInput => {
-                                if (otherInput !== this && otherInput.value === '') {
-                                    otherInput.value = selectedVal;
+                        const newVal = this.value;
+                        const row = this.closest('tr');
+                        const startVal = row.querySelector('.row-start-date').value;
+                        const endVal = row.querySelector('.row-end-date').value;
+
+                        if (!isValidPlanType(row, startVal, endVal, newVal)) { this.value = ""; return; }
+
+                        if (index === 0) {
+                            planTypeInputs.forEach((otherInput, idx) => {
+                                if (idx !== 0) {
+                                    if (newVal === "") {
+                                        otherInput.value = "";
+                                    } else {
+                                        const otherRow = otherInput.closest('tr');
+                                        const otherStart = otherRow.querySelector('.row-start-date').value;
+                                        const otherEnd = otherRow.querySelector('.row-end-date').value;
+                                        if (isValidPlanType(otherRow, otherStart, otherEnd, newVal)) {
+                                            otherInput.value = newVal;
+                                        } else {
+                                            otherInput.value = "";
+                                        }
+                                    }
                                 }
                             });
                         }
                     });
                 });
-                
             }
         }
 
@@ -1833,15 +1943,72 @@
                     return;
                 }
 
+                // 🟢 বাগ ফিক্স: এটা একদম ওপরে নিয়ে আসা হয়েছে যাতে এরর না খায়
+                const currentDept = activeTabId.replace('_report', '');
+
+                // ===============================================
+                // 🟢 FINAL VALIDATION CHECKPOST BEFORE SAVING
+                // ===============================================
+                let validationFailed = false;
+
+                document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
+                    const newPlanType = row.querySelector('.row-plan-type').value;
+                    const newStartDate = row.querySelector('.row-start-date').value;
+                    const newEndDate = row.querySelector('.row-end-date').value;
+
+                    // রুল ১: Start Date > End Date চেক
+                    if (newStartDate && newEndDate) {
+                        if (new Date(newStartDate) > new Date(newEndDate)) {
+                            showToast("Save failed: A Start Date is greater than its End Date.");
+                            validationFailed = true;
+                        }
+                    }
+
+                    // রুল ২: ডেট ছাড়া Confirm/Tentative করা যাবে না
+                    if (newPlanType === 'Confirm' || newPlanType === 'Tentative') {
+                        if (!newStartDate || !newEndDate) {
+                            showToast("Save failed: Plan Type selected without Start and End dates.");
+                            validationFailed = true;
+                        }
+                    }
+
+                    // 🟢 ডাইং স্পেসিফিক রুলস
+                    if (currentDept === 'dyeing') {
+                        const knitStartElem = row.querySelector('.knit-start');
+                        const knitEndElem = row.querySelector('.knit-end');
+                        const knitTypeElem = row.querySelector('.knit-type');
+
+                        // ভ্যালু না থাকলে ফাঁকা স্ট্রিং ধরবে, এরর খাবে না
+                        const knitStart = knitStartElem && knitStartElem.dataset ? knitStartElem.dataset.val : "";
+                        const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
+                        const knitType = knitTypeElem && knitTypeElem.dataset ? knitTypeElem.dataset.val : "";
+
+                        if (knitStart && knitStart !== "" && newStartDate && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Dyeing Start Date cannot be less than Knitting Start Date.");
+                            validationFailed = true;
+                        }
+                        if (knitEnd && knitEnd !== "" && newEndDate && new Date(newEndDate).setHours(0, 0, 0, 0) < new Date(knitEnd).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Dyeing End Date cannot be less than Knitting End Date.");
+                            validationFailed = true;
+                        }
+                        if (newPlanType === 'Confirm' && knitType === 'Tentative') {
+                            showToast("Save failed: Cannot confirm Dyeing when Knitting is Tentative.");
+                            validationFailed = true;
+                        }
+                    }
+                });
+
+                if (validationFailed) return; // কোনো রুল ভাঙলে ফাংশন এখানেই স্টপ হয়ে যাবে!
+                // ===============================================
+
                 const existingData = groupedData[bookingNo];
                 if (!existingData) return;
 
-                
                 const currentStatus = document.getElementById('detOrderStatus').value;
                 const prevStatus = existingData.generalInfo.OrderStatus || 'On Process';
                 if (currentStatus === 'Completed' && prevStatus !== 'Completed') {
                     if (!confirm(`Are you sure you want to mark order '${bookingNo}' as Completed? It will be moved to the Completed List.`)) {
-                        document.getElementById('detOrderStatus').value = 'On Process'; // Revert dropdown visually
+                        document.getElementById('detOrderStatus').value = 'On Process';
                         return;
                     }
                 }
@@ -1882,9 +2049,7 @@
                 });
 
                 const fabricItemsArr = Array.from(allItemsMap.values());
-                const currentDept = activeTabId.replace('_report', '');
 
-                // 🟢 Date Setup
                 const compDate = currentStatus === 'Completed' ? new Date().toISOString() : null;
                 if (existingData.generalInfo) {
                     existingData.generalInfo.OrderStatus = currentStatus;
