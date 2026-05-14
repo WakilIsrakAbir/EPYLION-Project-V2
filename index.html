@@ -349,12 +349,13 @@
                     </h3>
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p class="text-[11px] text-red-600 leading-relaxed max-w-lg">
-                            This action will permanently delete <strong>ALL</strong> planning data, statuses, and dates from the
-                            database for all departments. This is irreversible and should only be used for a full system reset.
+                            This action will permanently delete <strong>ALL uploaded Excel files (Source Data)</strong> along with all
+                            saved planning data, statuses, and dates from the database. This is a complete system wipe and cannot be
+                            undone.
                         </p>
                         <button onclick="clearAllPlanningData()"
                             class="px-5 py-2.5 bg-red-600 text-white rounded shadow hover:bg-red-700 transition-all text-xs font-bold flex items-center gap-2 shrink-0">
-                            <i class="fas fa-trash-alt"></i> Wipe Database Records
+                            <i class="fas fa-trash-alt"></i> Wipe System & Files
                         </button>
                     </div>
                 </div>
