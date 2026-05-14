@@ -1045,13 +1045,11 @@
                             if (groupedData[plan.orderNo]) {
                                 groupedData[plan.orderNo].dbData = plan;
 
-                                //FIX: Department-wise Status Parsing
-                                let statusObj = plan.orderStatus || {};
-                                if (typeof statusObj === 'string') statusObj = {}; // For handling old data
+                                // Reading from new MongoDB fields
+                                let statusObj = plan.deptOrderStatus || {};
                                 groupedData[plan.orderNo].generalInfo.OrderStatus = statusObj[currentDept] || 'On Process';
 
-                                let dateObj = plan.completedDate || {};
-                                if (typeof dateObj === 'string') dateObj = {}; // For handling old data
+                                let dateObj = plan.deptCompletedDate || {};
                                 groupedData[plan.orderNo].generalInfo.CompletedDate = dateObj[currentDept] || null;
                             }
                             else {
