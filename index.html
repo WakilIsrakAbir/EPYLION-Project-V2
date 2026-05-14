@@ -1045,12 +1045,8 @@
                             if (groupedData[plan.orderNo]) {
                                 groupedData[plan.orderNo].dbData = plan;
 
-                                // Reading from new MongoDB fields
-                                let statusObj = plan.deptOrderStatus || {};
-                                groupedData[plan.orderNo].generalInfo.OrderStatus = statusObj[currentDept] || 'On Process';
-
-                                let dateObj = plan.deptCompletedDate || {};
-                                groupedData[plan.orderNo].generalInfo.CompletedDate = dateObj[currentDept] || null;
+                                groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
+                                groupedData[plan.orderNo].generalInfo.CompletedDate = plan[`${currentDept}CompletedDate`] || null;
                             }
                             else {
                                 groupedData[plan.orderNo] = {
