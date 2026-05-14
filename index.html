@@ -1044,9 +1044,15 @@
                         savedPlans.forEach(plan => {
                             if (groupedData[plan.orderNo]) {
                                 groupedData[plan.orderNo].dbData = plan;
-                                // 🟢 NEW: ডাটাবেস থেকে স্ট্যাটাস আনছে
-                                groupedData[plan.orderNo].generalInfo.OrderStatus = plan.orderStatus || 'On Process';
-                                groupedData[plan.orderNo].generalInfo.CompletedDate = plan.completedDate || null;
+
+                                //FIX: Department-wise Status Parsing
+                                let statusObj = plan.orderStatus || {};
+                                if (typeof statusObj === 'string') statusObj = {}; // For handling old data
+                                groupedData[plan.orderNo].generalInfo.OrderStatus = statusObj[currentDept] || 'On Process';
+
+                                let dateObj = plan.completedDate || {};
+                                if (typeof dateObj === 'string') dateObj = {}; // For handling old data
+                                groupedData[plan.orderNo].generalInfo.CompletedDate = dateObj[currentDept] || null;
                             }
                             else {
                                 groupedData[plan.orderNo] = {
@@ -1378,14 +1384,12 @@
 
                 let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
 
-                // 🟢 Separate Completed orders from Active ones
                 data = data.filter(g => {
                     const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
                     if (activeMainTab === 'All') return status === 'Completed';
                     return status !== 'Completed';
                 });
 
-                // 🟢 VIEW: Completed List View (Special UI)
                 if (activeMainTab === 'All') {
                     buyerFilterContainer.classList.add('hidden');
                     dataTableWrapper.classList.remove('hidden');
@@ -1404,7 +1408,6 @@
                         return;
                     }
 
-                    // 🟢 FIX: হেডার বারবার রিলোড হওয়া বন্ধ করা হলো
                     if (thead.dataset.currentTab !== 'All') {
                         thead.innerHTML = `
                         <tr class="bg-gray-800 text-white text-[11px] font-bold border-b border-gray-700">
@@ -1507,7 +1510,6 @@
                     data = data.filter(d => { const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim()); return bArr.includes(searchB); });
                 }
 
-                // 🟢 Search Logic Application
                 for (let col in colFilters) {
                     const searchVal = colFilters[col]; if (!searchVal) continue;
                     data = data.filter(d => {
@@ -1789,13 +1791,11 @@
                     });
                 });
 
-                // 🟢 RESTORED: Plan Type Sync (যেটা Ctrl+Z এর কারণে মুছে গিয়েছিল)
                 planTypeInputs.forEach(input => {
                     input.addEventListener('change', function () {
                         let selectedVal = this.value;
                         if (selectedVal) {
                             planTypeInputs.forEach(otherInput => {
-                                // যদি অন্য ইনপুটটা ফাঁকা (Select) থাকে, তবেই অটো ফিল হবে
                                 if (otherInput !== this && otherInput.value === '') {
                                     otherInput.value = selectedVal;
                                 }
@@ -1825,7 +1825,7 @@
                 const existingData = groupedData[bookingNo];
                 if (!existingData) return;
 
-                // 🟢 NEW: Safety Mechanism (ভুলে কমপ্লিট ঠেকানোর ওয়ার্নিং)
+                
                 const currentStatus = document.getElementById('detOrderStatus').value;
                 const prevStatus = existingData.generalInfo.OrderStatus || 'On Process';
                 if (currentStatus === 'Completed' && prevStatus !== 'Completed') {
@@ -2038,7 +2038,6 @@
             if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobileOverlay').classList.add('hidden'); }
         }
 
-        // 🟢 NEW: Download Completed List Function
             function downloadCompletedList() {
                 let compData = Object.values(groupedData).filter(g => g.generalInfo && g.generalInfo.OrderStatus === 'Completed');
                 if (compData.length === 0) return showToast("No completed data to download");
