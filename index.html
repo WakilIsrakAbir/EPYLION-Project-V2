@@ -840,7 +840,6 @@
             else if (currentDept === 'dyeing') {
                 let leftCols = ['Color', 'Unit', 'Process Name'];
 
-                // 🟢 Knitting Planning এর হেডারগুলো
                 let knitPlanningHtml = `
                     <th class="p-2 border-r border-gray-300 text-center bg-gray-200 dynamic-th" colspan="2">Knitting Planning</th>
                     <th class="p-2 border-r border-gray-300 text-center dynamic-th">Knitting Plan Type</th>
@@ -848,7 +847,6 @@
                     <th class="p-2 border-r border-gray-300 text-center dynamic-th">Remarks (Knitting)</th>
                 `;
 
-                // 🟢 Dyeing এর ডানপাশের কলামগুলো
                 let rightColsHtml = `
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">BP Qty</th>
                     <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">Dyeing Prod.</th>
@@ -862,11 +860,9 @@
 
                 let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
 
-                // 🟢 Insert: Left Cols + Knitting Planning -> BEFORE Dyeing Planning
                 document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml + knitPlanningHtml);
                 document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightColsHtml);
 
-                // 🟢 Subheaders
                 let knitSubHtml = `
                     <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Start Date</th>
                     <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
@@ -1477,9 +1473,6 @@
                     return;
                 }
 
-                // 🟢 VIEW: Normal Tabs (Pending, Confirm, Tentative - untouched UI)
-
-                // 🟢 FIX: হেডার বারবার রিলোড হওয়া বন্ধ করা হলো
                 if (thead.dataset.currentTab !== 'Active') {
                     thead.innerHTML = `
                     <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
@@ -1499,7 +1492,6 @@
                 `;
                     thead.dataset.currentTab = 'Active';
 
-                    // 🟢 RESTORE SEARCH VALUES: ট্যাব সুইচ করলে আগের সার্চ ভ্যালু যেন বক্সে থাকে
                     document.querySelectorAll('.header-search').forEach((input, index) => {
                         const colIndex = index + 1;
                         if (colFilters[colIndex]) {
@@ -1680,7 +1672,7 @@
                     });
                 }
                 else if (currentDept === 'dyeing') {
-                    // 1. 🟢 Left Cols
+                    
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
 
                     let unitVal = item.itemData['Unit'] || '';
@@ -1707,7 +1699,6 @@
                         </select>
                     </td>`;
 
-                    // 2. 🟢 Knitting Data (Inserted BEFORE Dyeing Inputs)
                     let knitPlan = { start: '', end: '', type: '', limit: '', remark: '' };
                     if (data.dbData && data.dbData.knitting) {
                         let myColor = String(item.itemData.Color || '').trim().toLowerCase();
@@ -1729,7 +1720,6 @@
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.remark}</td>
                     `;
 
-                    // 3. 🟢 Dyeing Inputs (Matches headers)
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
@@ -1744,7 +1734,6 @@
                         <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
                     `;
 
-                    // 4. 🟢 Right side numeric data
                     const numCols = ['BPQty', 'DyeingProd', 'DyeingBala', 'KnitProd', 'KnitBala'];
                     numCols.forEach(c => {
                         let val = item.itemData[c];
@@ -1789,7 +1778,6 @@
                 const endDateInputs = document.querySelectorAll('#detFabricItemsBody .row-end-date');
                 const planTypeInputs = document.querySelectorAll('#detFabricItemsBody .row-plan-type');
 
-                // 🟢 Helper 1: Start Date Check
                 const isValidStartDate = (row, newStart) => {
                     const endVal = row.querySelector('.row-end-date').value;
                     if (newStart && endVal && new Date(newStart) > new Date(endVal)) {
@@ -1806,7 +1794,6 @@
                     return true;
                 };
 
-                // 🟢 Helper 2: End Date Check
                 const isValidEndDate = (row, newEnd) => {
                     const startVal = row.querySelector('.row-start-date').value;
                     if (startVal && newEnd && new Date(startVal) > new Date(newEnd)) {
@@ -1823,7 +1810,6 @@
                     return true;
                 };
 
-                // 🟢 Helper 3: Plan Type Check
                 const isValidPlanType = (row, startVal, endVal, planTypeVal) => {
                     if ((planTypeVal === 'Confirm' || planTypeVal === 'Tentative') && (!startVal || !endVal)) {
                         showToast("Start and End dates are required to set Plan Type.");
@@ -1839,7 +1825,6 @@
                     return true;
                 };
 
-                // 🟢 1. Start Date Event
                 startDateInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
                         const newVal = this.value;
@@ -1867,7 +1852,6 @@
                     });
                 });
 
-                // 🟢 2. End Date Event
                 endDateInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
                         const newVal = this.value;
@@ -1895,7 +1879,6 @@
                     });
                 });
 
-                // 🟢 3. Plan Type Event
                 planTypeInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
                         const newVal = this.value;
@@ -1943,11 +1926,10 @@
                     return;
                 }
 
-                // 🟢 বাগ ফিক্স: এটা একদম ওপরে নিয়ে আসা হয়েছে যাতে এরর না খায়
                 const currentDept = activeTabId.replace('_report', '');
 
                 // ===============================================
-                // 🟢 FINAL VALIDATION CHECKPOST BEFORE SAVING
+                // FINAL VALIDATION CHECKPOST BEFORE SAVING
                 // ===============================================
                 let validationFailed = false;
 
@@ -1956,7 +1938,6 @@
                     const newStartDate = row.querySelector('.row-start-date').value;
                     const newEndDate = row.querySelector('.row-end-date').value;
 
-                    // রুল ১: Start Date > End Date চেক
                     if (newStartDate && newEndDate) {
                         if (new Date(newStartDate) > new Date(newEndDate)) {
                             showToast("Save failed: A Start Date is greater than its End Date.");
@@ -1964,7 +1945,6 @@
                         }
                     }
 
-                    // রুল ২: ডেট ছাড়া Confirm/Tentative করা যাবে না
                     if (newPlanType === 'Confirm' || newPlanType === 'Tentative') {
                         if (!newStartDate || !newEndDate) {
                             showToast("Save failed: Plan Type selected without Start and End dates.");
@@ -1972,13 +1952,11 @@
                         }
                     }
 
-                    // 🟢 ডাইং স্পেসিফিক রুলস
                     if (currentDept === 'dyeing') {
                         const knitStartElem = row.querySelector('.knit-start');
                         const knitEndElem = row.querySelector('.knit-end');
                         const knitTypeElem = row.querySelector('.knit-type');
 
-                        // ভ্যালু না থাকলে ফাঁকা স্ট্রিং ধরবে, এরর খাবে না
                         const knitStart = knitStartElem && knitStartElem.dataset ? knitStartElem.dataset.val : "";
                         const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
                         const knitType = knitTypeElem && knitTypeElem.dataset ? knitTypeElem.dataset.val : "";
@@ -1998,7 +1976,7 @@
                     }
                 });
 
-                if (validationFailed) return; // কোনো রুল ভাঙলে ফাংশন এখানেই স্টপ হয়ে যাবে!
+                if (validationFailed) return;
                 // ===============================================
 
                 const existingData = groupedData[bookingNo];
