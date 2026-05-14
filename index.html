@@ -320,9 +320,6 @@
                             <button onclick="handleExcelUpload()"
                                 class="px-4 py-2 sm:py-1.5 bg-activeBlue text-white rounded shadow-sm text-xs font-bold hover:bg-blue-600 transition-colors w-full sm:w-auto"><i
                                     class="fas fa-upload mr-1"></i> Upload Data</button>
-                            <button onclick="autoCleanDatabase()"
-                                class="px-4 py-2 sm:py-1.5 bg-red-500 text-white rounded shadow-sm text-xs font-bold hover:bg-red-600 transition-colors w-full sm:w-auto ml-2"><i
-                                    class="fas fa-broom mr-1"></i> Clean Extra DB Rows</button>
                         </div>
                     </div>
                 </div>
@@ -622,6 +619,7 @@
                                     <th class="p-2 border-r border-gray-300 text-center">Plan Type</th>
                                     <th class="p-2 border-r border-gray-300" id="limitationHeaderText">Limitation</th>
                                     <th class="p-2 border-r border-gray-300">Remarks</th>
+                                    
                                 </tr>
                                 <tr class="text-[9px] bg-gray-50 border-b border-gray-300" id="subHeaderRow">
                                     <!-- Dynamic Sub Headers injected here via JS -->
@@ -2053,35 +2051,7 @@
                 XLSX.utils.book_append_sheet(wb, ws, "Completed List");
                 XLSX.writeFile(wb, `${activeTabId.replace('_report', '')}_Completed_List.xlsx`);
             }
-            // 🟢 NEW: Auto Clean Database Function
-                async function autoCleanDatabase() {
-                    // ১. খুঁজে বের করা হচ্ছে কোন অর্ডারগুলো ডাটাবেসে আছে কিন্তু এক্সেলে নেই
-                    // (যেগুলোর bookingDate 'N/A' এবং excelItems খালি, সেগুলোই এক্সট্রা/ফাঁকা রো)
-                    const orphans = Object.values(groupedData).filter(g => g.dbData && g.excelItems.length === 0 && g.bookingDate === 'N/A').map(g => g.bookingNo);
-
-                    if (orphans.length === 0) {
-                        showToast("No extra rows found. Database matches Excel perfectly!");
-                        return;
-                    }
-
-                    // ২. ইউজারের পারমিশন নেওয়া
-                    if (confirm(`Found ${orphans.length} extra rows in the database that are NOT in your currently uploaded Excel files.\n\nDo you want to permanently delete them?`)) {
-                        showToast(`Cleaning ${orphans.length} extra rows... Please wait.`);
-
-                        let successCount = 0;
-
-                        // ৩. ব্যাকএন্ডে ডিলিট রিকোয়েস্ট পাঠানো
-                        for (let orderNo of orphans) {
-                            try {
-                                const res = await fetch(`https://abir-backend-api.onrender.com/api/files/delete-order/${orderNo}`, { method: 'DELETE' });
-                                if (res.ok) successCount++;
-                            } catch (e) { console.error(e); }
-                        }
-
-                        alert(`Successfully cleaned ${successCount} extra rows from the database!`);
-                        fetchAndProcessData(true); // পেজ রিলোড ছাড়াই টেবিল রিফ্রেশ
-                    }
-                }
+            
     </script>
 </body>
 
