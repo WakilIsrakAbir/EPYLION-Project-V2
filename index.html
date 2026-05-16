@@ -1786,6 +1786,14 @@
                     }
                     if (currentDept === 'dyeing' && newStart) {
                         const knitStart = row.querySelector('.knit-start').dataset.val;
+                        const knitEnd = row.querySelector('.knit-end').dataset.val;
+                        const knitType = row.querySelector('.knit-type').dataset.val;
+
+                        if (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === '')) {
+                            showToast("Cannot set Dyeing plan because Knitting plan is blank!");
+                            return false;
+                        }
+
                         if (knitStart && new Date(newStart).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
                             showToast("Dyeing Start Date cannot be less than Knitting Start Date!");
                             return false;
@@ -1801,7 +1809,15 @@
                         return false;
                     }
                     if (currentDept === 'dyeing' && newEnd) {
+                        const knitStart = row.querySelector('.knit-start').dataset.val;
                         const knitEnd = row.querySelector('.knit-end').dataset.val;
+                        const knitType = row.querySelector('.knit-type').dataset.val;
+
+                        if (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === '')) {
+                            showToast("Cannot set Dyeing plan because Knitting plan is blank!");
+                            return false;
+                        }
+
                         if (knitEnd && new Date(newEnd).setHours(0, 0, 0, 0) < new Date(knitEnd).setHours(0, 0, 0, 0)) {
                             showToast("Dyeing End Date cannot be less than Knitting End Date!");
                             return false;
@@ -1815,11 +1831,28 @@
                         showToast("Start and End dates are required to set Plan Type.");
                         return false;
                     }
-                    if (currentDept === 'dyeing' && planTypeVal === 'Confirm') {
+                    if (currentDept === 'dyeing' && planTypeVal) {
+                        const knitStart = row.querySelector('.knit-start').dataset.val;
+                        const knitEnd = row.querySelector('.knit-end').dataset.val;
                         const knitType = row.querySelector('.knit-type').dataset.val;
-                        if (knitType === 'Tentative') {
+
+                        if (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === '')) {
+                            showToast("Cannot set Dyeing plan because Knitting plan is blank!");
+                            return false;
+                        }
+
+                        if (planTypeVal === 'Confirm' && knitType === 'Tentative') {
                             showToast("Cannot confirm Dyeing when Knitting is Tentative.");
                             return false;
+                        }
+
+                        if (planTypeVal === 'Confirm') {
+                            const finalConf = document.getElementById('detFinalConf').value.trim().toLowerCase();
+
+                            if (finalConf === 'no') {
+                                showToast("Cannot confirm Dyeing because Final Confirmation is 'No'.");
+                                return false;
+                            }
                         }
                     }
                     return true;
@@ -1961,6 +1994,14 @@
                         const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
                         const knitType = knitTypeElem && knitTypeElem.dataset ? knitTypeElem.dataset.val : "";
 
+                        const isKnittingBlank = (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === ''));
+                        const isTryingToSaveDyeing = (newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select' && newPlanType !== ''));
+
+                        if (isKnittingBlank && isTryingToSaveDyeing) {
+                            showToast("Save failed: Cannot save Dyeing plan because Knitting plan is blank.");
+                            validationFailed = true;
+                        }
+
                         if (knitStart && knitStart !== "" && newStartDate && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
                             showToast("Save failed: Dyeing Start Date cannot be less than Knitting Start Date.");
                             validationFailed = true;
@@ -1972,6 +2013,15 @@
                         if (newPlanType === 'Confirm' && knitType === 'Tentative') {
                             showToast("Save failed: Cannot confirm Dyeing when Knitting is Tentative.");
                             validationFailed = true;
+                        }
+
+                        if (newPlanType === 'Confirm') {
+                            const finalConf = document.getElementById('detFinalConf').value.trim().toLowerCase();
+
+                            if (finalConf === 'no') {
+                                showToast("Save failed: Cannot confirm Dyeing because Final Confirmation is 'No'.");
+                                validationFailed = true;
+                            }
                         }
                     }
                 });
