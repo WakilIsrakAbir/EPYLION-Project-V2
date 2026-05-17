@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Excel Parser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -724,76 +726,64 @@
                                 class="fas fa-arrow-left text-xl"></i></button>
                         <h3 class="font-bold text-gray-800 text-lg">Detailed Plan Status</h3>
                     </div>
-                    <button onclick="closeOSDetails()"
-                        class="px-4 py-1.5 border border-gray-300 text-xs font-bold rounded shadow-sm hover:bg-gray-100 text-gray-700 transition"><i
-                            class="fas fa-list mr-1"></i> Back to List</button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadOSDetailedExcel()"
+                            class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 text-xs font-bold rounded shadow-sm hover:bg-green-100 transition"><i
+                                class="fas fa-file-excel mr-1"></i> Excel</button>
+                        <button onclick="downloadOSDetailedPDF()"
+                            class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 text-xs font-bold rounded shadow-sm hover:bg-red-100 transition"><i
+                                class="fas fa-file-pdf mr-1"></i> PDF</button>
+                        <button onclick="closeOSDetails()"
+                            class="px-3 py-1.5 border border-gray-300 text-xs font-bold rounded shadow-sm hover:bg-gray-100 text-gray-700 transition"><i
+                                class="fas fa-list mr-1"></i> Back</button>
+                    </div>
                 </div>
         
-                <div
+                <div id="osPrintableArea"
                     class="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 flex flex-col gap-6 w-full min-h-0 bg-[#f4f5f7] pb-10">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden w-full">
-                        <table class="w-full text-center text-xs md:text-sm border-collapse table-fixed">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-x-auto custom-scrollbar w-full">
+                        <table class="w-full text-center text-xs md:text-sm border-collapse min-w-[950px] whitespace-nowrap">
                             <tbody>
                                 <tr class="border-b border-gray-300">
-                                    <td
-                                        class="bg-blue-50 text-blue-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
+                                    <td class="bg-blue-50 text-blue-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
                                         Booking No.</td>
-                                    <td id="osRepBookingNo"
-                                        class="p-3 border-r border-gray-300 w-[13%] text-gray-900 font-bold"></td>
-                                    <td
-                                        class="bg-blue-50 text-blue-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
-                                        Buyer</td>
-                                    <td id="osRepBuyer" class="p-3 border-r border-gray-300 w-[13%] text-gray-900 font-bold">
+                                    <td id="osRepBookingNo" class="p-3 border-r border-gray-300 w-[13%] text-gray-900 font-bold"></td>
+                                    <td class="bg-blue-50 text-blue-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">Buyer
                                     </td>
-                                    <td
-                                        class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
+                                    <td id="osRepBuyer" class="p-3 border-r border-gray-300 w-[13%] text-gray-900 font-bold"></td>
+                                    <td class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
                                         Allocated Qty</td>
-                                    <td id="osRepAllocatedQty"
-                                        class="p-3 border-r border-gray-300 w-[13%] text-gray-800 font-semibold"></td>
-                                    <td
-                                        class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
+                                    <td id="osRepAllocatedQty" class="p-3 border-r border-gray-300 w-[13%] text-gray-800 font-semibold">
+                                    </td>
+                                    <td class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 w-[12%] text-left pl-4">
                                         Yarn bala.</td>
                                     <td id="osRepYarnBala" class="p-3 text-gray-800 font-semibold w-[13%]"></td>
                                 </tr>
                                 <tr class="border-b border-gray-300">
-                                    <td
-                                        class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        Knit Prod.</td>
-                                    <td id="osRepKnitProd" class="p-3 border-r border-gray-300 text-gray-800 font-semibold">
-                                    </td>
-                                    <td
-                                        class="bg-green-50 text-green-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        Dyeing Prod.</td>
-                                    <td id="osRepDyeingProd" class="p-3 border-r border-gray-300 text-gray-800 font-semibold">
-                                    </td>
-                                    <td
-                                        class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
+                                    <td class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 text-left pl-4">Knit
+                                        Prod.</td>
+                                    <td id="osRepKnitProd" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
+                                    <td class="bg-green-50 text-green-950 font-bold p-3 border-r border-gray-300 text-left pl-4">Dyeing
+                                        Prod.</td>
+                                    <td id="osRepDyeingProd" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
+                                    <td class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
                                         NetDeliveryQtyKgs</td>
-                                    <td id="osRepNetDeliveryQty"
-                                        class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
-                                    <td
-                                        class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
+                                    <td id="osRepNetDeliveryQty" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
+                                    <td class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
                                         Slowmoving</td>
                                     <td id="osRepSlowmoving" class="p-3 text-gray-800 font-semibold"></td>
                                 </tr>
                                 <tr class="border-b border-gray-200">
-                                    <td
-                                        class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        Knit. Bala.</td>
-                                    <td id="osRepKnitBala" class="p-3 border-r border-gray-300 text-gray-800 font-semibold">
-                                    </td>
-                                    <td
-                                        class="bg-green-50 text-green-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        Dyeing Bala.</td>
-                                    <td id="osRepDyeingBala" class="p-3 border-r border-gray-300 text-gray-800 font-semibold">
-                                    </td>
-                                    <td
-                                        class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        Deli. Bal.</td>
+                                    <td class="bg-yellow-50 text-yellow-950 font-bold p-3 border-r border-gray-300 text-left pl-4">Knit.
+                                        Bala.</td>
+                                    <td id="osRepKnitBala" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
+                                    <td class="bg-green-50 text-green-950 font-bold p-3 border-r border-gray-300 text-left pl-4">Dyeing
+                                        Bala.</td>
+                                    <td id="osRepDyeingBala" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
+                                    <td class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">Deli.
+                                        Bal.</td>
                                     <td id="osRepDeliBal" class="p-3 border-r border-gray-300 text-gray-800 font-semibold"></td>
-                                    <td
-                                        class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">
-                                        RFD</td>
+                                    <td class="bg-orange-50 text-orange-950 font-bold p-3 border-r border-gray-300 text-left pl-4">RFD</td>
                                     <td id="osRepRFD" class="p-3 text-gray-800 font-semibold"></td>
                                 </tr>
                             </tbody>
@@ -2849,6 +2839,67 @@
                 document.getElementById('osDetailedView').classList.add('hidden');
                 document.getElementById('osListView').classList.remove('hidden');
             }
+
+            // ==========================================
+                //  ORDER STATUS DOWNLOAD FUNCTIONS
+                // ==========================================
+
+                // 1. PDF Download Logic
+                function downloadOSDetailedPDF() {
+                    const element = document.getElementById('osPrintableArea');
+                    const bookingNo = document.getElementById('osRepBookingNo').innerText || 'Details';
+
+                    // PDF Config (Landscape mode for better table fit)
+                    const opt = {
+                        margin: 0.3,
+                        filename: `Order_Status_${bookingNo}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+                    };
+
+                    // Generate & Download
+                    html2pdf().set(opt).from(element).save();
+                }
+
+                // 2. Excel Download Logic
+                function downloadOSDetailedExcel() {
+                    const bookingNo = document.getElementById('osRepBookingNo').innerText || 'N_A';
+
+                    // Extracting all values from the UI
+                    const wsData = [
+                        ['Detailed Plan Status - Order Status'],
+                        [],
+                        ['Booking No.', bookingNo, 'Buyer', document.getElementById('osRepBuyer').innerText, 'Allocated Qty', document.getElementById('osRepAllocatedQty').innerText, 'Yarn bala.', document.getElementById('osRepYarnBala').innerText],
+                        ['Knit Prod.', document.getElementById('osRepKnitProd').innerText, 'Dyeing Prod.', document.getElementById('osRepDyeingProd').innerText, 'NetDeliveryQtyKgs', document.getElementById('osRepNetDeliveryQty').innerText, 'Slowmoving', document.getElementById('osRepSlowmoving').innerText],
+                        ['Knit. Bala.', document.getElementById('osRepKnitBala').innerText, 'Dyeing Bala.', document.getElementById('osRepDyeingBala').innerText, 'Deli. Bal.', document.getElementById('osRepDeliBal').innerText, 'RFD', document.getElementById('osRepRFD').innerText],
+                        [],
+                        ['Fabric Item Planning Breakdown Summary'],
+                        ['Knit Start', 'Knit End', 'Knit Type', 'Dye Start', 'Dye End', 'Dye Type', 'Deli Start', 'Deli End', 'Deli Type']
+                    ];
+
+                    // Extracting lower breakdown single-row table data
+                    const tbody = document.getElementById('osDetailedItemsBody');
+                    if (tbody) {
+                        const rows = tbody.getElementsByTagName('tr');
+                        for (let i = 0; i < rows.length; i++) {
+                            let rowData = [];
+                            const cells = rows[i].getElementsByTagName('td');
+                            for (let j = 0; j < cells.length; j++) {
+                                // If it's a "No data" full colspan row
+                                if (cells.length === 1) { rowData.push(cells[j].innerText); break; }
+                                rowData.push(cells[j].innerText);
+                            }
+                            wsData.push(rowData);
+                        }
+                    }
+
+                    // Convert array to sheet and download
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Detailed_Status");
+                    XLSX.writeFile(wb, `Order_Status_${bookingNo}.xlsx`);
+                }
             
     </script>
 </body>
