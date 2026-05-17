@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Hii I am Starting to Create a submenu for Report part. At that part we put all Order Status -->
+<!-- Hii I am Starting to modify Order Management Issue -->
 
 <head>
     <meta charset="UTF-8">
@@ -1277,6 +1277,7 @@
                     if (hasDeptFile) {
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
 
+                        const dbHistoryMap = new Map(); // NEW: ডাটাবেসের হিস্ট্রি শুধু চেক করার জন্য রাখা হচ্ছে, লিস্টে যোগ হচ্ছে না
                         let dbOccurrence = {};
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
@@ -1287,12 +1288,12 @@
                                     dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
                                     strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
                                 } else {
-                                    if (dbOccurrence[baseId]) return; 
+                                    if (dbOccurrence[baseId]) return;
                                     dbOccurrence[baseId] = 1;
                                 }
 
                                 dbItem.itemId = strictId;
-                                mergedItemsMap.set(strictId, { ...dbItem, source: 'DB' });
+                                dbHistoryMap.set(strictId, dbItem); // FIXED: শুধু হিস্ট্রি ম্যাপে রাখা হলো
                             }
                         });
 
@@ -1302,6 +1303,13 @@
                         group.excelItems.forEach(exItem => {
                             if (exItem._fileIndex !== currentFileIndex) {
                                 excelOccurrence = {};
+
+                                // FIXED: যদি একই অর্ডারের জন্য নতুন কোনো এক্সেল ফাইল পাওয়া যায়, 
+                                // তবে আগের এক্সেল ফাইলের পুরোনো ডেটা মুছে শুধু একদম নতুন ফ্রেশ ডেটা রাখা হবে!
+                                if (currentFileIndex !== -1) {
+                                    mergedItemsMap.clear();
+                                }
+
                                 currentFileIndex = exItem._fileIndex;
                             }
 
@@ -1362,12 +1370,31 @@
                                 excelOccurrence[baseId] = 1;
                             }
 
-                            if (mergedItemsMap.has(strictId)) {
-                                const existing = mergedItemsMap.get(strictId);
-                                existing.itemData = dynamicItemData;
-                                existing.source = 'Both';
-                                mergedItemsMap.set(strictId, existing);
+                            // FIXED: এক্সেলের ডেটাই আসল। এক্সেলের আইটেম ডাটাবেসে থাকলে পুরানো স্ট্যাটাস বসবে, না থাকলে নতুন (Pending) হিসেবে অ্যাড হবে।
+                            if (dbHistoryMap.has(strictId)) {
+                                const oldDbItem = dbHistoryMap.get(strictId);
+
+                                // পুরোনো ইউজারের সিলেক্ট করা ড্রপডাউনগুলো (Unit, Process) ঠিক রাখা হচ্ছে
+                                if (oldDbItem.itemData) {
+                                    if (oldDbItem.itemData.Unit) dynamicItemData.Unit = oldDbItem.itemData.Unit;
+                                    if (oldDbItem.itemData.ProcessName) {
+                                        dynamicItemData.ProcessName = oldDbItem.itemData.ProcessName;
+                                        dynamicItemData['Process Name'] = oldDbItem.itemData.ProcessName;
+                                    }
+                                }
+
+                                mergedItemsMap.set(strictId, {
+                                    itemId: strictId,
+                                    itemData: dynamicItemData, // এক্সেল থেকে আসা একদম ফ্রেশ সংখ্যা
+                                    startDate: oldDbItem.startDate || '',
+                                    endDate: oldDbItem.endDate || '',
+                                    planType: oldDbItem.planType || '',
+                                    limitation: oldDbItem.limitation || '',
+                                    remarks: oldDbItem.remarks || '',
+                                    source: 'Both'
+                                });
                             } else {
+                                // এক্সেলের একদম নতুন বা মডিফাই করা রো
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId, itemData: dynamicItemData,
                                     startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
