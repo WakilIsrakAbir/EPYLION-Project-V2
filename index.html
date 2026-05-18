@@ -1312,7 +1312,7 @@
                     if (hasDeptFile) {
                         const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
 
-                        const dbHistoryMap = new Map(); // NEW: ডাটাবেসের হিস্ট্রি শুধু চেক করার জন্য রাখা হচ্ছে, লিস্টে যোগ হচ্ছে না
+                        const dbHistoryMap = new Map();
                         let dbOccurrence = {};
                         dbDepartmentItems.forEach(dbItem => {
                             if (dbItem.itemData) {
@@ -1328,7 +1328,7 @@
                                 }
 
                                 dbItem.itemId = strictId;
-                                dbHistoryMap.set(strictId, dbItem); // FIXED: শুধু হিস্ট্রি ম্যাপে রাখা হলো
+                                dbHistoryMap.set(strictId, dbItem); 
                             }
                         });
 
@@ -1339,8 +1339,6 @@
                             if (exItem._fileIndex !== currentFileIndex) {
                                 excelOccurrence = {};
 
-                                // FIXED: যদি একই অর্ডারের জন্য নতুন কোনো এক্সেল ফাইল পাওয়া যায়, 
-                                // তবে আগের এক্সেল ফাইলের পুরোনো ডেটা মুছে শুধু একদম নতুন ফ্রেশ ডেটা রাখা হবে!
                                 if (currentFileIndex !== -1) {
                                     mergedItemsMap.clear();
                                 }
@@ -1349,7 +1347,6 @@
                             }
 
                             let dynamicItemData = {};
-                            // --- (আপনার বিদ্যমান dynamicItemData লজিক এখানে থাকবে) ---
                             if (currentDept === 'knitting' || currentDept === 'delivery') {
                                 dynamicItemData = {
                                     OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
@@ -1405,11 +1402,9 @@
                                 excelOccurrence[baseId] = 1;
                             }
 
-                            // FIXED: এক্সেলের ডেটাই আসল। এক্সেলের আইটেম ডাটাবেসে থাকলে পুরানো স্ট্যাটাস বসবে, না থাকলে নতুন (Pending) হিসেবে অ্যাড হবে।
                             if (dbHistoryMap.has(strictId)) {
                                 const oldDbItem = dbHistoryMap.get(strictId);
 
-                                // পুরোনো ইউজারের সিলেক্ট করা ড্রপডাউনগুলো (Unit, Process) ঠিক রাখা হচ্ছে
                                 if (oldDbItem.itemData) {
                                     if (oldDbItem.itemData.Unit) dynamicItemData.Unit = oldDbItem.itemData.Unit;
                                     if (oldDbItem.itemData.ProcessName) {
@@ -1429,7 +1424,6 @@
                                     source: 'Both'
                                 });
                             } else {
-                                // এক্সেলের একদম নতুন বা মডিফাই করা রো
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId, itemData: dynamicItemData,
                                     startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
@@ -1851,7 +1845,7 @@
             setSafeVal('detBookingUnit', data.generalInfo.BookingUnit);
             setSafeVal('detUnit', data.generalInfo.Unit);
             setSafeVal('detFinalConf', data.generalInfo.FinalConf);
-            setSafeVal('detOrderStatus', data.generalInfo.OrderStatus || 'On Process'); // 🟢 NEW
+            setSafeVal('detOrderStatus', data.generalInfo.OrderStatus || 'On Process');
             setSafeVal('detEventDay', data.generalInfo.EventDay);
             setSafeVal('detShip1', data.generalInfo.Ship1);
             setSafeVal('detShipLast', data.generalInfo.ShipLast);
@@ -1974,7 +1968,6 @@
                     });
                 }
                 else if (currentDept === 'delivery') {
-                    // 🟢 ডেলিভারি প্ল্যানের নতুন ডেটা এবং হিস্ট্রি
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['FabricConstruction'] || ''}</td>`;
                     itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['GSM'] || ''}</td>`;
@@ -2114,7 +2107,7 @@
                     if (currentDept === 'dyeing' && planTypeVal) {
                         const knitStart = row.querySelector('.knit-start').dataset.val;
                         const knitEnd = row.querySelector('.knit-end').dataset.val;
-                        const knitType = row.querySelector('.knit-type').dataset.val;
+                        const knitType = String(row.querySelector('.knit-type').dataset.val || "").trim();
 
                         if (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === '')) {
                             showToast("Cannot set Dyeing plan because Knitting plan is blank!");
@@ -2135,6 +2128,16 @@
                             }
                         }
                     }
+
+                    if (currentDept === 'delivery' && planTypeVal) {
+                        const dyeType = String(row.querySelector('.dye-type').dataset.val || "").trim();
+
+                        if (planTypeVal === 'Confirm' && (dyeType === 'Tentative' || dyeType === '-' || dyeType === '')) {
+                            showToast("Cannot confirm Delivery when Dyeing is Tentative or blank.");
+                            return false;
+                        }
+                    }
+
                     return true;
                 };
 
@@ -2199,13 +2202,18 @@
                         const startVal = row.querySelector('.row-start-date').value;
                         const endVal = row.querySelector('.row-end-date').value;
 
-                        if (!isValidPlanType(row, startVal, endVal, newVal)) { this.value = ""; return; }
+                        if (!isValidPlanType(row, startVal, endVal, newVal)) {
+                            this.value = "";
+                            this.selectedIndex = 0;
+                            return;
+                        }
 
                         if (index === 0) {
                             planTypeInputs.forEach((otherInput, idx) => {
                                 if (idx !== 0) {
                                     if (newVal === "") {
                                         otherInput.value = "";
+                                        otherInput.selectedIndex = 0;
                                     } else {
                                         const otherRow = otherInput.closest('tr');
                                         const otherStart = otherRow.querySelector('.row-start-date').value;
@@ -2214,6 +2222,7 @@
                                             otherInput.value = newVal;
                                         } else {
                                             otherInput.value = "";
+                                            otherInput.selectedIndex = 0;
                                         }
                                     }
                                 }
@@ -2272,7 +2281,7 @@
 
                         const knitStart = knitStartElem && knitStartElem.dataset ? knitStartElem.dataset.val : "";
                         const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
-                        const knitType = knitTypeElem && knitTypeElem.dataset ? knitTypeElem.dataset.val : "";
+                        const knitType = knitTypeElem && knitTypeElem.dataset ? String(knitTypeElem.dataset.val).trim() : "";
 
                         const isKnittingBlank = (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === ''));
                         const isTryingToSaveDyeing = (newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select' && newPlanType !== ''));
@@ -2595,7 +2604,7 @@
             let osCurrentPage = 1;
             let osRowsPerPage = 10;
             let osSearchQuery = '';
-            let osGroupedData = {}; // OS এর জন্য আলাদা ডাটাবেস, যেন অন্য পেজের সাথে ক্ল্যাশ না করে
+            let osGroupedData = {}; 
 
             async function showOrderStatus() {
                 localStorage.setItem('activePage', JSON.stringify({ page: 'orderStatus' }));
@@ -2617,14 +2626,11 @@
                 setActiveSidebarMenu('menu-order-status');
                 closeSidebarMobile();
 
-                // নতুন স্পিনার শো করা
                 const osLoader = document.getElementById('osLoadingSpinner');
                 if (osLoader) osLoader.classList.remove('hidden');
 
-                // ব্যাকএন্ড থেকে সবগুলো ফাইল একসাথে নিয়ে আসা
                 await fetchAllDataForOS();
 
-                // ডাটা লোড হওয়ার পর স্পিনার হাইড করা
                 if (osLoader) osLoader.classList.add('hidden');
 
                 renderOrderStatusTable();
@@ -2652,7 +2658,6 @@
                     await originalLoadMenu(dept, title, mode);
                 };
 
-            // নতুন ফাংশন: Order Status এর জন্য সব ডাটা ফেচ করা
             async function fetchAllDataForOS() {
                 try {
                     const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
