@@ -1160,8 +1160,15 @@
                 generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                 deptFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-                const generalFiles = generalFilesRaw;
-                const deptFiles = deptFilesRaw;
+                
+                const getLatestFiles = (files) => {
+                    const latestFilesMap = new Map();
+                    files.forEach(f => latestFilesMap.set(f.originalName, f));
+                    return Array.from(latestFilesMap.values());
+                };
+
+                const generalFiles = getLatestFiles(generalFilesRaw);
+                const deptFiles = getLatestFiles(deptFilesRaw);
 
                 const hasDeptFile = deptFiles.length > 0;
 
@@ -1415,7 +1422,7 @@
 
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId,
-                                    itemData: dynamicItemData, // এক্সেল থেকে আসা একদম ফ্রেশ সংখ্যা
+                                    itemData: dynamicItemData,
                                     startDate: oldDbItem.startDate || '',
                                     endDate: oldDbItem.endDate || '',
                                     planType: oldDbItem.planType || '',
