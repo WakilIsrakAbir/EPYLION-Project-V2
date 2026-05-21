@@ -1459,6 +1459,9 @@
                     group.isTentative = false;
 
                     let totalItems = group.mergedItems.length;
+
+                    group.buyers.clear();
+
                     if (totalItems > 0) {
                         let hasSelect = false;
                         let hasTentative = false;
@@ -1472,24 +1475,29 @@
                             } else if (item.planType === 'Confirm') {
                                 confirmCount++;
                             }
+
+                            let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim().toUpperCase().replace(/\s+/g, ' ') : 'GENERAL';
+                            if (b === 'UNDEFINED' || b === 'N/A' || b === '') b = 'GENERAL';
+                            group.buyers.add(b);
                         });
 
                         if (hasSelect) {
                             group.isPending = true;
                         } else if (hasTentative) {
                             group.isTentative = true;
-                        } else if (confirmCount === totalItems && totalItems > 0) {
+                        } else if (confirmCount === totalItems) {
                             group.isConfirm = true;
                         } else {
                             group.isPending = true;
                         }
                     }
 
-                    if (group.buyers.size === 0) group.buyers.add('General');
-                    group.buyers.forEach(b => {
-                        if (b && b.trim() !== '' && b !== 'N/A') globalBuyersList.add(b);
-                        else globalBuyersList.add('General');
-                    });
+                    if (totalItems > 0) {
+                        if (group.buyers.size === 0) group.buyers.add('GENERAL');
+                        group.buyers.forEach(b => {
+                            globalBuyersList.add(b);
+                        });
+                    }
                 });
 
                 if (isReportMode) {
