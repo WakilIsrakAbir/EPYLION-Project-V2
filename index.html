@@ -2835,13 +2835,14 @@
                 pagedData.forEach(d => {
                     const displayBuyer = d.buyers && d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'Unknown';
                     html += `
-        <tr class="hover:bg-blue-50 border-b border-gray-100 transition-colors">
-            <td class="p-3 border-r border-gray-200 text-center">
-                <button onclick="viewOSDetails('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded shadow-sm hover:bg-blue-600 hover:text-white transition"><i class="fas fa-eye"></i></button>
-            </td>
-            <td class="p-3 border-r border-gray-200 font-bold text-gray-800">${d.bookingNo}</td>
-            <td class="p-3 text-gray-600">${displayBuyer}</td>
-        </tr>`;
+                        <tr class="hover:bg-blue-50 border-b border-gray-100 transition-colors">
+                            <td class="p-3 border-r border-gray-200 text-center">
+                                <button onclick="viewOSDetails('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded shadow-sm hover:bg-blue-600 hover:text-white transition"><i class="fas fa-eye"></i></button>
+                            </td>
+                            <td class="p-3 border-r border-gray-200 font-bold text-gray-800">${d.bookingNo}</td>
+                            <td class="p-3 text-gray-600">${displayBuyer}</td>
+                        </tr>
+                    `;
                 });
                 tbody.innerHTML = html;
 
@@ -2940,7 +2941,6 @@
                     let dyeStarts = [], dyeEnds = [], dyeTypes = new Set();
                     let deliStarts = [], deliEnds = [], deliTypes = new Set();
 
-                    // সবগুলো আইটেমের ডেটা থেকে ডেটগুলো আলাদা অ্যারেতে পুশ করা হচ্ছে
                     orderData.mergedItems.forEach(item => {
                         const itemData = item.itemData || {};
 
@@ -2975,16 +2975,15 @@
                         }
                     });
 
-                    // Min-Max ক্যালকুলেশন ফাংশন
                     const getMinDate = (dates) => {
                         const valid = dates.filter(d => d && d !== '-');
                         if (!valid.length) return '-';
-                        valid.sort(); return valid[0]; // Sort করলে সবচেয়ে আগের ডেট প্রথমে আসবে
+                        valid.sort(); return valid[0];
                     };
                     const getMaxDate = (dates) => {
                         const valid = dates.filter(d => d && d !== '-');
                         if (!valid.length) return '-';
-                        valid.sort(); return valid[valid.length - 1]; // Sort করলে সবচেয়ে শেষের ডেট লাস্টে যাবে
+                        valid.sort(); return valid[valid.length - 1];
                     };
                     const getAggType = (types) => {
                         if (types.has('Tentative')) return 'Tentative';
@@ -2992,12 +2991,10 @@
                         return '-';
                     };
 
-                    // ডেটা প্রসেসিং
                     let kStart = getMinDate(knitStarts), kEnd = getMaxDate(knitEnds), kType = getAggType(knitTypes);
                     let dStart = getMinDate(dyeStarts), dEnd = getMaxDate(dyeEnds), dType = getAggType(dyeTypes);
                     let delStart = getMinDate(deliStarts), delEnd = getMaxDate(deliEnds), delType = getAggType(deliTypes);
 
-                    // শুধুমাত্র ১টি সিঙ্গেল রো (Row) প্রিন্ট করা হচ্ছে
                     itemsBody.innerHTML = `
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-2 py-2 border-r text-blue-700 font-medium">${kStart}</td>
