@@ -2060,6 +2060,32 @@
             });
             itemBody.innerHTML = itemHtml;
 
+            const userRole = localStorage.getItem('role');
+            const isAdmin = userRole ? userRole.toLowerCase() === 'admin' : false;
+
+            document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
+                const planSelect = row.querySelector('.row-plan-type');
+                const startInput = row.querySelector('.row-start-date');
+                const endInput = row.querySelector('.row-end-date');
+
+                const isConfirmed = planSelect && planSelect.value === 'Confirm';
+
+                if (isConfirmed && !isAdmin) {
+                    if (planSelect) planSelect.disabled = true;
+                    if (startInput) startInput.disabled = true;
+                    if (endInput) endInput.disabled = true;
+                }
+
+                if (currentDept === 'delivery') {
+                    const dyeStart = row.querySelector('.dye-start')?.dataset.val;
+                    if (!dyeStart || dyeStart === '-' || dyeStart === '') {
+                        if (planSelect) planSelect.disabled = true;
+                        if (startInput) startInput.disabled = true;
+                        if (endInput) endInput.disabled = true;
+                    }
+                }
+            });
+
             
             if (currentDept === 'knitting' || currentDept === 'dyeing' || currentDept === 'delivery') {
                 const startDateInputs = document.querySelectorAll('#detFabricItemsBody .row-start-date');
@@ -2265,15 +2291,58 @@
 
                 const currentDept = activeTabId.replace('_report', '');
 
+                // ডেটাবেসের পুরনো ডেটা চেক করার জন্য existingData ভেরিয়েবলটি একটু উপরে নিয়ে আসা হয়েছে
+                const existingData = groupedData[bookingNo];
+                if (!existingData) return;
+
                 // ===============================================
                 // FINAL VALIDATION CHECKPOST BEFORE SAVING
                 // ===============================================
                 let validationFailed = false;
 
+                // Admin রোল চেক করা হচ্ছে
+                const userRole = localStorage.getItem('role');
+                const isAdmin = userRole ? userRole.toLowerCase() === 'admin' : false;
+
+                // চেইন লক চেক করার ফাংশন (ডেলিভারি কনফার্ম থাকলে ডাইং লক, ডাইং কনফার্ম থাকলে নিটিং লক)
+                const checkDownstreamConfirm = (dept, itemId) => {
+                    if (!existingData.dbData) return false;
+                    const dbData = existingData.dbData;
+                    if (dept === 'dyeing' && dbData.delivery) {
+                        const del = dbData.delivery.find(d => d.itemId === itemId);
+                        return del && del.planType === 'Confirm';
+                    }
+                    if (dept === 'knitting' && dbData.dyeing) {
+                        const dye = dbData.dyeing.find(d => d.itemId === itemId);
+                        return dye && dye.planType === 'Confirm';
+                    }
+                    return false;
+                };
+
                 document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
+                    const itemId = row.dataset.itemid;
                     const newPlanType = row.querySelector('.row-plan-type').value;
                     const newStartDate = row.querySelector('.row-start-date').value;
                     const newEndDate = row.querySelector('.row-end-date').value;
+
+                    let existingItem = existingData.mergedItems ? existingData.mergedItems.find(m => m.itemId === itemId) : null;
+                    let wasConfirmed = existingItem && existingItem.planType === 'Confirm';
+
+                    if (wasConfirmed && !isAdmin && newPlanType !== 'Confirm') {
+                        showToast("Save failed: Only Admin can change a Confirmed plan!");
+                        validationFailed = true;
+                    }
+
+                    if (!isAdmin && checkDownstreamConfirm(currentDept, itemId)) {
+                        let wasStartDate = existingItem ? existingItem.startDate : '';
+                        let wasEndDate = existingItem ? existingItem.endDate : '';
+                        let wasPlanType = existingItem ? existingItem.planType : '';
+
+                        if (newStartDate !== wasStartDate || newEndDate !== wasEndDate || newPlanType !== wasPlanType) {
+                            showToast(`Save failed: Cannot change ${currentDept} because the next department is already Confirmed!`);
+                            validationFailed = true;
+                        }
+                    }
 
                     if (newStartDate && newEndDate) {
                         if (new Date(newStartDate) > new Date(newEndDate)) {
@@ -2289,72 +2358,34 @@
                         }
                     }
 
-                    if (currentDept === 'dyeing') {
-                        const knitStartElem = row.querySelector('.knit-start');
-                        const knitEndElem = row.querySelector('.knit-end');
-                        const knitTypeElem = row.querySelector('.knit-type');
+                    if (currentDept === 'delivery') {
+                        const dyeStartElem = row.querySelector('.dye-start');
+                        const dyeEndElem = row.querySelector('.dye-end');
 
-                        const knitStart = knitStartElem && knitStartElem.dataset ? knitStartElem.dataset.val : "";
-                        const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
-                        const knitType = knitTypeElem && knitTypeElem.dataset ? String(knitTypeElem.dataset.val).trim() : "";
+                        const dyeStart = dyeStartElem && dyeStartElem.dataset ? dyeStartElem.dataset.val : "";
+                        const dyeEnd = dyeEndElem && dyeEndElem.dataset ? dyeEndElem.dataset.val : "";
 
-                        const isKnittingBlank = (!knitStart && !knitEnd && (!knitType || knitType === 'Select' || knitType === ''));
-                        const isTryingToSaveDyeing = (newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select' && newPlanType !== ''));
+                        const hasInput = (newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select'));
+                        const isDyeingBlank = (!dyeStart || dyeStart === '-' || dyeStart === '');
 
-                        if (isKnittingBlank && isTryingToSaveDyeing) {
-                            showToast("Save failed: Cannot save Dyeing plan because Knitting plan is blank.");
+                        if (hasInput && isDyeingBlank) {
+                            showToast("Save failed: Cannot input Delivery. Dyeing plan is missing!");
                             validationFailed = true;
                         }
 
-                        if (knitStart && knitStart !== "" && newStartDate && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
-                            showToast("Save failed: Dyeing Start Date cannot be less than Knitting Start Date.");
+                        if (newStartDate && dyeStart && dyeStart !== '-' && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(dyeStart).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Delivery Start Date cannot be before Dyeing Start Date!");
                             validationFailed = true;
                         }
-                        if (knitEnd && knitEnd !== "" && newEndDate && new Date(newEndDate).setHours(0, 0, 0, 0) < new Date(knitEnd).setHours(0, 0, 0, 0)) {
-                            showToast("Save failed: Dyeing End Date cannot be less than Knitting End Date.");
+                        if (newEndDate && dyeEnd && dyeEnd !== '-' && new Date(newEndDate).setHours(0, 0, 0, 0) < new Date(dyeEnd).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Delivery End Date cannot be before Dyeing End Date!");
                             validationFailed = true;
-                        }
-                        if (newPlanType === 'Confirm' && knitType === 'Tentative') {
-                            showToast("Save failed: Cannot confirm Dyeing when Knitting is Tentative.");
-                            validationFailed = true;
-                        }
-
-                        // ডেলিভারি প্ল্যানিংয়ের লজিক
-                        if (currentDept === 'delivery') {
-                            const dyeStartElem = row.querySelector('.dye-start');
-                            const dyeEndElem = row.querySelector('.dye-end');
-                            const dyeTypeElem = row.querySelector('.dye-type');
-
-                            const dyeStart = dyeStartElem && dyeStartElem.dataset ? dyeStartElem.dataset.val : "";
-                            const dyeEnd = dyeEndElem && dyeEndElem.dataset ? dyeEndElem.dataset.val : "";
-                            const dyeType = dyeTypeElem && dyeTypeElem.dataset ? dyeTypeElem.dataset.val : "";
-
-                            // কন্ডিশন: Dyeing Plan Tentative বা ফাঁকা থাকলে Delivery Confirm করা যাবে না
-                            if (newPlanType === 'Confirm' && (dyeType === 'Tentative' || dyeType === '-' || dyeType === '')) {
-                                showToast("Save failed: Cannot Confirm Delivery. Dyeing plan is Tentative or missing!");
-                                validationFailed = true;
-                            }
-
-                            // ডেট কন্ডিশন ১: Delivery Start Date, Dyeing Start Date এর আগে হতে পারবে না
-                            if (newStartDate && dyeStart && dyeStart !== '-' && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(dyeStart).setHours(0, 0, 0, 0)) {
-                                showToast("Save failed: Delivery Start Date cannot be before Dyeing Start Date!");
-                                validationFailed = true;
-                            }
-
-                            // ডেট কন্ডিশন ২: Delivery End Date, Dyeing End Date এর আগে হতে পারবে না
-                            if (newEndDate && dyeEnd && dyeEnd !== '-' && new Date(newEndDate).setHours(0, 0, 0, 0) < new Date(dyeEnd).setHours(0, 0, 0, 0)) {
-                                showToast("Save failed: Delivery End Date cannot be before Dyeing End Date!");
-                                validationFailed = true;
-                            }
                         }
                     }
                 });
 
                 if (validationFailed) return;
                 // ===============================================
-
-                const existingData = groupedData[bookingNo];
-                if (!existingData) return;
 
                 const currentStatus = document.getElementById('detOrderStatus').value;
                 const prevStatus = existingData.generalInfo.OrderStatus || 'On Process';
