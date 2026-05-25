@@ -2068,6 +2068,33 @@
                 }
             });
 
+            if (currentDept === 'dyeing') {
+                const unitInputs = document.querySelectorAll('#detFabricItemsBody .row-unit');
+                const processInputs = document.querySelectorAll('#detFabricItemsBody .row-process');
+
+                unitInputs.forEach((input, index) => {
+                    input.addEventListener('change', function () {
+                        const newVal = this.value;
+                        if (index === 0) {
+                            unitInputs.forEach((otherInput, idx) => {
+                                if (idx !== 0) otherInput.value = newVal;
+                            });
+                        }
+                    });
+                });
+
+                processInputs.forEach((input, index) => {
+                    input.addEventListener('change', function () {
+                        const newVal = this.value;
+                        if (index === 0) {
+                            processInputs.forEach((otherInput, idx) => {
+                                if (idx !== 0) otherInput.value = newVal;
+                            });
+                        }
+                    });
+                });
+            }
+
             
             if (currentDept === 'knitting' || currentDept === 'dyeing' || currentDept === 'delivery') {
                 const startDateInputs = document.querySelectorAll('#detFabricItemsBody .row-start-date');
