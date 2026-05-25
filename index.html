@@ -1553,8 +1553,8 @@
                     group.mergedItems.forEach(item => {
                         let rowData = { ...item.itemData };
 
-                        rowData['Plan Start Date'] = item.startDate || '';
-                        rowData['Plan End Date'] = item.endDate || '';
+                        rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
+                        rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
                         rowData['Plan Type'] = item.planType || 'Pending';
                         rowData['Limitation'] = item.limitation || '';
                         rowData['Remarks'] = item.remarks || '';
@@ -1679,7 +1679,7 @@
                     let htmlContent = '';
                     pagedData.forEach(d => {
                         const displayBuyer = d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'N/A';
-                        const compDateStr = (d.generalInfo && d.generalInfo.CompletedDate) ? new Date(d.generalInfo.CompletedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                        const compDateStr = (d.generalInfo && d.generalInfo.CompletedDate) ? formatDateDisplay(d.generalInfo.CompletedDate) : 'N/A';
 
                         htmlContent += `
                     <tr class="hover:bg-gray-50 border-b border-gray-200 bg-white transition-colors">
@@ -1937,8 +1937,8 @@
                     }
 
                     itemHtml += `
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-start" data-val="${knitPlan.start}">${knitPlan.start}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${knitPlan.end}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-start" data-val="${knitPlan.start}">${formatDateDisplay(knitPlan.start)}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${formatDateDisplay(knitPlan.end)}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold knit-type" data-val="${knitPlan.type}">${knitPlan.type}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.limit}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.remark}</td>
@@ -1987,10 +1987,10 @@
                     }
 
                     itemHtml += `
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.start}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.end}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-start" data-val="${dyePlan.start}">${dyePlan.start}</td>
-                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-end" data-val="${dyePlan.end}">${dyePlan.end}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${formatDateDisplay(knitPlan.start)}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${formatDateDisplay(knitPlan.end)}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-start" data-val="${dyePlan.start}">${formatDateDisplay(dyePlan.start)}</td>
+                        <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-end" data-val="${dyePlan.end}">${formatDateDisplay(dyePlan.end)}</td>
                         <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold dye-type" data-val="${dyePlan.type}">${dyePlan.type}</td>
                     `;
 
@@ -2550,11 +2550,29 @@
             }
             return '';
         }
-        function formatExcelDate(val) {
-            if (!val || val === 'N/A') return 'N/A';
-            if (typeof val === 'number') return new Date(Math.round((val - 25569) * 86400 * 1000)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            return val;
-        }
+        function formatDateDisplay(dateStr) {
+                if (!dateStr || dateStr === '-' || dateStr === 'N/A') return dateStr;
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = months[d.getMonth()];
+                const year = d.getFullYear();
+                return `${day}-${month}-${year}`;
+            }
+
+            function formatExcelDate(val) {
+                if (!val || val === 'N/A') return 'N/A';
+                if (typeof val === 'number') {
+                    const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+                    return formatDateDisplay(d);
+                }
+                if (typeof val === 'string') {
+                    const parsed = new Date(val);
+                    if (!isNaN(parsed.getTime())) return formatDateDisplay(val);
+                }
+                return val;
+            }
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper'); let tabHtml = '';
             openTabs.forEach(t => {
@@ -2587,7 +2605,7 @@
 
                 let exportArr = compData.map(d => ({
                     "Order/Booking No": d.bookingNo,
-                    "Completed Date": d.generalInfo.CompletedDate ? new Date(d.generalInfo.CompletedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+                    "Completed Date": d.generalInfo.CompletedDate ? formatDateDisplay(d.generalInfo.CompletedDate) : 'N/A',
                     "Buyer": Array.from(d.buyers).join(', '),
                     "Status": "Completed"
                 }));
@@ -2979,14 +2997,14 @@
 
                     itemsBody.innerHTML = `
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="px-2 py-2 border-r text-blue-700 font-medium">${kStart}</td>
-                            <td class="px-2 py-2 border-r text-blue-700 font-medium">${kEnd}</td>
+                            <td class="px-2 py-2 border-r text-blue-700 font-medium">${formatDateDisplay(kStart)}</td>
+                            <td class="px-2 py-2 border-r text-blue-700 font-medium">${formatDateDisplay(kEnd)}</td>
                             <td class="px-2 py-2 border-r text-blue-900 font-bold bg-blue-50/30">${kType}</td>
-                            <td class="px-2 py-2 border-r text-green-700 font-medium">${dStart}</td>
-                            <td class="px-2 py-2 border-r text-green-700 font-medium">${dEnd}</td>
+                            <td class="px-2 py-2 border-r text-green-700 font-medium">${formatDateDisplay(dStart)}</td>
+                            <td class="px-2 py-2 border-r text-green-700 font-medium">${formatDateDisplay(dEnd)}</td>
                             <td class="px-2 py-2 border-r text-green-900 font-bold bg-green-50/30">${dType}</td>
-                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${delStart}</td>
-                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${delEnd}</td>
+                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delStart)}</td>
+                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delEnd)}</td>
                             <td class="px-2 py-2 text-orange-900 font-bold bg-orange-50/30">${delType}</td>
                         </tr>`;
                 } else {
