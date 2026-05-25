@@ -1315,7 +1315,9 @@
                         const dbHistoryMap = new Map();
                         let dbOccurrence = {};
                         dbDepartmentItems.forEach(dbItem => {
-                            if (dbItem.itemData) {
+                            if (dbItem.itemId) {
+                                dbHistoryMap.set(dbItem.itemId, dbItem);
+                            } else if (dbItem.itemData) {
                                 let baseId = generateItemId(dbItem.itemData, currentDept);
                                 let strictId = baseId;
 
@@ -1328,7 +1330,7 @@
                                 }
 
                                 dbItem.itemId = strictId;
-                                dbHistoryMap.set(strictId, dbItem); 
+                                dbHistoryMap.set(strictId, dbItem);
                             }
                         });
 
@@ -1415,7 +1417,7 @@
 
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId,
-                                    itemData: dynamicItemData, // এক্সেল থেকে আসা একদম ফ্রেশ সংখ্যা
+                                    itemData: dynamicItemData,
                                     startDate: oldDbItem.startDate || '',
                                     endDate: oldDbItem.endDate || '',
                                     planType: oldDbItem.planType || '',
