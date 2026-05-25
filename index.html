@@ -1400,16 +1400,8 @@
                             }
 
                             let baseId = generateItemId(dynamicItemData, currentDept);
-                            let strictId = baseId;
-
-                            
-                            if (currentDept === 'knitting' || currentDept === 'delivery') {
-                                excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
-                                strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
-                            } else {
-                                if (excelOccurrence[baseId]) return; // Skip subsequent items for the same color/order
-                                excelOccurrence[baseId] = 1;
-                            }
+                            excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
+                            let strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
 
                             if (dbHistoryMap.has(strictId)) {
                                 const oldDbItem = dbHistoryMap.get(strictId);
@@ -1442,19 +1434,6 @@
                     }
 
                     group.mergedItems = Array.from(mergedItemsMap.values());
-
-                    if (currentDept === 'dyeing' || currentDept === 'finishing') {
-                        const uniqueItems = [];
-                        const seenColors = new Set();
-                        group.mergedItems.forEach(item => {
-                            let c = String(item.itemData.Color || '').trim().toLowerCase();
-                            if (!seenColors.has(c)) {
-                                seenColors.add(c);
-                                uniqueItems.push(item);
-                            }
-                        });
-                        group.mergedItems = uniqueItems; 
-                    }
 
                     group.isPending = false;
                     group.isConfirm = false;
