@@ -2737,6 +2737,11 @@
                     if (!res.ok) return;
                     const allFiles = await res.json();
 
+                    allFiles.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    const latestFilesMap = new Map();
+                    allFiles.forEach(f => latestFilesMap.set(f.originalName, f));
+                    const latestFiles = Array.from(latestFilesMap.values());
+
                     const readFiles = async (fileList) => {
                         let raw = [];
                         for (let i = 0; i < fileList.length; i++) {
@@ -2753,7 +2758,7 @@
                         return raw;
                     };
 
-                    const allRawData = await readFiles(allFiles);
+                    const allRawData = await readFiles(latestFiles);
                     osGroupedData = {};
 
                     const initGroup = (bNo) => {
@@ -2790,7 +2795,23 @@
                                 return eColor === color && eConstr === constr;
                             });
                             if (!existingItem) {
-                                osGroupedData[bNo].mergedItems.push({ itemData: row });
+                                osGroupedData[bNo].mergedItems.push({ itemData: { ...row } });
+                            }
+                            else {
+                                // ---Merge data across multiple department files to prevent overriding ---
+                                Object.keys(row).forEach(k => {
+                                    if (row[k] !== undefined && row[k] !== '' && row[k] !== null) {
+                                        if (!existingItem.itemData[k] || existingItem.itemData[k] === '') {
+                                            existingItem.itemData[k] = row[k];
+                                        } else {
+                                            let existingNum = parseFloat(String(existingItem.itemData[k]).replace(/,/g, ''));
+                                            let newNum = parseFloat(String(row[k]).replace(/,/g, ''));
+                                            if (!isNaN(existingNum) && !isNaN(newNum)) {
+                                                existingItem.itemData[k] = Math.max(existingNum, newNum); // Keep the highest value found across files
+                                            }
+                                        }
+                                    }
+                                });
                             }
                         }
                     });
@@ -2911,7 +2932,7 @@
                     return isNaN(num) ? 0 : num;
                 };
 
-                const targetItems = orderData.excelItems || [];
+                const targetItems = orderData.mergedItems ? orderData.mergedItems.map(m => m.itemData) : [];
 
                 targetItems.forEach(item => {
                     if (item['Allocated Qty '] !== undefined) allocatedQty += parseNumValue(item['Allocated Qty ']);
