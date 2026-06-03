@@ -2108,12 +2108,44 @@
                 const unitInputs = document.querySelectorAll('#detFabricItemsBody .row-unit');
                 const processInputs = document.querySelectorAll('#detFabricItemsBody .row-process');
 
+                const checkAndToggleRow = (row) => {
+                    const unitVal = row.querySelector('.row-unit').value;
+                    const processVal = row.querySelector('.row-process').value;
+
+                    const isReady = unitVal !== '' && unitVal !== 'Select' && processVal !== '' && processVal !== 'Select';
+
+                    const inputsToToggle = row.querySelectorAll('.row-start-date, .row-end-date, .row-plan-type, .row-limitation, .row-remarks');
+
+                    inputsToToggle.forEach(inp => {
+                        if (!isReady) {
+                            inp.disabled = true;
+                            inp.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        } else {
+                            const planSelect = row.querySelector('.row-plan-type');
+                            const isConfirmed = planSelect && planSelect.value === 'Confirm';
+
+                            if (isConfirmed && !isAdmin && (inp.classList.contains('row-start-date') || inp.classList.contains('row-end-date') || inp.classList.contains('row-plan-type'))) {
+                                inp.disabled = true;
+                            } else {
+                                inp.disabled = false;
+                                inp.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                            }
+                        }
+                    });
+                };
+
+                document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => checkAndToggleRow(row));
+
                 unitInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
                         const newVal = this.value;
+                        checkAndToggleRow(this.closest('tr'));
                         if (index === 0) {
                             unitInputs.forEach((otherInput, idx) => {
-                                if (idx !== 0) otherInput.value = newVal;
+                                if (idx !== 0) {
+                                    otherInput.value = newVal;
+                                    checkAndToggleRow(otherInput.closest('tr'));
+                                }
                             });
                         }
                     });
@@ -2122,9 +2154,13 @@
                 processInputs.forEach((input, index) => {
                     input.addEventListener('change', function () {
                         const newVal = this.value;
+                        checkAndToggleRow(this.closest('tr'));
                         if (index === 0) {
                             processInputs.forEach((otherInput, idx) => {
-                                if (idx !== 0) otherInput.value = newVal;
+                                if (idx !== 0) {
+                                    otherInput.value = newVal;
+                                    checkAndToggleRow(otherInput.closest('tr'));
+                                }
                             });
                         }
                     });
