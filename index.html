@@ -2552,7 +2552,10 @@
                     });
                     if (res.ok) {
                         showToast(`${bookingNo} Saved Successfully!`);
-                        fetchAndProcessData(true);
+                        if (!existingData.dbData) existingData.dbData = {};
+                        existingData.dbData[currentDept] = fabricItemsArr;
+                        existingData.dbData[`${currentDept}Status`] = currentStatus;
+                        existingData.dbData[`${currentDept}CompletedDate`] = compDate;
                     } else showToast(`Failed to save ${bookingNo}!`);
                 } catch (e) { showToast(`Server Error!`) }
             }
