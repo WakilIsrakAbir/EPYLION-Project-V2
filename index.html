@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Hii I am Starting to modify Delivery Plan -->
+<!-- Hii I am Starting to fix loading time -->
 
 <head>
     <meta charset="UTF-8">
@@ -1425,10 +1425,38 @@
                                     source: 'Both'
                                 });
                             } else {
-                                mergedItemsMap.set(strictId, {
-                                    itemId: strictId, itemData: dynamicItemData,
-                                    startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
-                                });
+                                // --- 🟢 BLOCK 1: Recover All Dyeing Plan Fields ---
+                                let recoveredDbItem = null;
+                                if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
+                                    const myColor = String(dynamicItemData.Color || '').trim().toLowerCase();
+                                    recoveredDbItem = group.dbData.dyeing.find(d => d.itemData && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
+                                }
+
+                                if (recoveredDbItem) {
+                                    if (recoveredDbItem.itemData) {
+                                        if (recoveredDbItem.itemData.Unit) dynamicItemData.Unit = recoveredDbItem.itemData.Unit;
+                                        if (recoveredDbItem.itemData.ProcessName) {
+                                            dynamicItemData.ProcessName = recoveredDbItem.itemData.ProcessName;
+                                            dynamicItemData['Process Name'] = recoveredDbItem.itemData.ProcessName;
+                                        }
+                                    }
+                                    mergedItemsMap.set(strictId, {
+                                        itemId: strictId,
+                                        itemData: dynamicItemData,
+                                        startDate: recoveredDbItem.startDate || '',
+                                        endDate: recoveredDbItem.endDate || '',
+                                        planType: recoveredDbItem.planType || '',
+                                        limitation: recoveredDbItem.limitation || '',
+                                        remarks: recoveredDbItem.remarks || '',
+                                        source: 'Recovered'
+                                    });
+                                } else {
+                                    mergedItemsMap.set(strictId, {
+                                        itemId: strictId, itemData: dynamicItemData,
+                                        startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
+                                    });
+                                }
+                                // ----------------------------------------------------
                             }
                         });
                     }
