@@ -529,6 +529,21 @@
                                 <i class="fas fa-file-excel text-lg"></i> Download Tentative Data
                             </button>
                         </div>
+
+                        <!-- YD Specific Report Card -->
+                        <div id="cardYdReport"
+                            class="hidden bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#3b82f6]">
+                            <div
+                                class="w-16 h-16 sm:w-20 sm:h-20 bg-[#dbeafe] text-[#2563eb] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated YD Report</h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract all YD data (both Confirm & Tentative). All buyers will be combined into a <strong class="text-gray-700">single sheet.</strong></p>
+                            <button onclick="exportYdReportToExcel()"
+                                class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
+                                <i class="fas fa-file-excel text-lg"></i> Download YD Data
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1585,14 +1600,28 @@
 
                     const cardConfirm = document.getElementById('cardConfirmList');
                     const cardTentative = document.getElementById('cardTentativeList');
+                    const cardYdReport = document.getElementById('cardYdReport');
                     const reportEmpty = document.getElementById('reportEmptyState');
                     const cardsGrid = document.getElementById('reportCardsGrid');
 
-                    
-                    if (cardConfirm) cardConfirm.style.display = hasConfirmData ? 'flex' : 'none';
-                    if (cardTentative) cardTentative.style.display = hasTentativeData ? 'flex' : 'none';
+                    if (currentDept === 'yd') {
+                        if (cardConfirm) cardConfirm.style.display = 'none';
+                        if (cardTentative) cardTentative.style.display = 'none';
+                        if (cardYdReport) cardYdReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
+                        if (cardsGrid) cardsGrid.classList.remove('md:grid-cols-2');
+                        if (cardsGrid) cardsGrid.classList.add('md:grid-cols-1');
+                        if (cardsGrid) cardsGrid.style.maxWidth = '500px';
+                        if (cardsGrid) cardsGrid.style.margin = '0 auto';
+                    } else {
+                        if (cardConfirm) cardConfirm.style.display = hasConfirmData ? 'flex' : 'none';
+                        if (cardTentative) cardTentative.style.display = hasTentativeData ? 'flex' : 'none';
+                        if (cardYdReport) cardYdReport.style.display = 'none';
+                        if (cardsGrid) cardsGrid.classList.add('md:grid-cols-2');
+                        if (cardsGrid) cardsGrid.classList.remove('md:grid-cols-1');
+                        if (cardsGrid) cardsGrid.style.maxWidth = 'max-w-4xl';
+                        if (cardsGrid) cardsGrid.style.margin = '';
+                    }
 
-                    
                     if (!hasConfirmData && !hasTentativeData) {
                         if (cardsGrid) cardsGrid.style.display = 'none';
                         if (reportEmpty) {
@@ -1687,6 +1716,49 @@
             const dateStr = new Date().toISOString().split('T')[0];
             const currentDept = activeTabId.replace('_report', '');
             const filename = `${currentDept.toUpperCase()}_${targetPlanType}_Report_${dateStr}.xlsx`;
+
+            XLSX.writeFile(wb, filename);
+        }
+
+        function exportYdReportToExcel() {
+            if (!groupedData || Object.keys(groupedData).length === 0) {
+                showToast("No data available to export!");
+                return;
+            }
+
+            let allRows = [];
+
+            Object.values(groupedData).forEach(group => {
+                if (group.mergedItems) {
+                    group.mergedItems.forEach(item => {
+                        if (item.planType === 'Confirm' || item.planType === 'Tentative') {
+                            let rowData = { ...item.itemData };
+
+                            rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
+                            rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
+                            rowData['Plan Type'] = item.planType || '';
+                            rowData['Limitation'] = item.limitation || '';
+                            rowData['Remarks'] = item.remarks || '';
+
+                            allRows.push(rowData);
+                        }
+                    });
+                }
+            });
+
+            if (allRows.length === 0) {
+                showToast("No YD Confirm or Tentative data found to export!");
+                return;
+            }
+
+            showToast("Generating Excel file for Updated YD Report...");
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(allRows);
+            XLSX.utils.book_append_sheet(wb, ws, "YD_Report");
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `YD_Updated_Report_${dateStr}.xlsx`;
 
             XLSX.writeFile(wb, filename);
         }
