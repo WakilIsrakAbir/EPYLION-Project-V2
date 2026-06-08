@@ -202,6 +202,9 @@
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="orderMenu">
+                        <li><a href="#" id="menu-yd-manage"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('yd', 'YD Plan', 'manage')">YD Plan</a></li>
                         <li><a href="#" id="menu-knitting-manage"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('knitting', 'Knitting Plan', 'manage')">Knitting Plan</a></li>
@@ -226,6 +229,9 @@
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="reportMenu">
+                        <li><a href="#" id="menu-yd-report"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="loadMenuData('yd', 'YD Report', 'report')">Updated YD Report</a></li>
                         <li><a href="#" id="menu-knitting-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Updated Knitting Report</a></li>
@@ -306,7 +312,8 @@
 
                     <div class="flex gap-2 border-b border-gray-200 mb-4 overflow-x-auto custom-scrollbar">
                         <div class="upload-tab active" id="tabGeneral" onclick="setUploadCategory('General')">General
-                            Base Data</div>
+                            Data</div>
+                        <div class="upload-tab" id="tabYD" onclick="setUploadCategory('YD')">YD Plan Data</div>
                         <div class="upload-tab" id="tabKnitting" onclick="setUploadCategory('Knitting')">Knitting Plan
                             Data</div>
                         <div class="upload-tab" id="tabDyeing" onclick="setUploadCategory('Dyeing')">Dyeing Plan Data
@@ -1054,6 +1061,25 @@
                 document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>` + knitSubHtml);
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', rightSubHtml);
             }
+            else if (currentDept === 'yd') {
+                let leftCols = ['Booking Type', 'YDB', 'YD Booking Date'];
+                let rightCols = ['YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE', 'Barrier Qty.', 'Workable Qty.'];
+
+                document.getElementById('planningHeaderText').innerText = 'YD Planning';
+                document.getElementById('limitationHeaderText').innerText = 'YD Remarks';
+
+                let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+                let rightHtml = rightCols.map(c => {
+                    let className = c === 'YD DELIVERY BALANCE' ? 'text-red-600 font-bold' : '';
+                    return `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th ${className}">${c}</th>`;
+                }).join('');
+
+                document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
+                document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightHtml);
+
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
+                document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
+            }
             else {
                 
                 let mainCols = [];
@@ -1120,6 +1146,10 @@
                 let fabConst = String(itemData.FabricConstruction !== undefined && itemData.FabricConstruction !== null ? itemData.FabricConstruction : 'N/A').trim();
                 let gsm = String(itemData.GSM !== undefined && itemData.GSM !== null ? itemData.GSM : 'N/A').trim();
                 return `${bNo}_${color}_${fabConst}_${gsm}`.toLowerCase().replace(/\s+/g, '');
+            } else if (currentDept === 'yd') {
+                let type = String(itemData['Booking Type'] !== undefined && itemData['Booking Type'] !== null ? itemData['Booking Type'] : 'N/A').trim();
+                let ydb = String(itemData.YDB !== undefined && itemData.YDB !== null ? itemData.YDB : 'N/A').trim();
+                return `${bNo}_${type}_${ydb}`.toLowerCase().replace(/\s+/g, '');
             } else {
                 let procName = String(itemData.ProcessName !== undefined && itemData.ProcessName !== null ? itemData.ProcessName : 'N/A').trim();
                 return `${bNo}_${color}_${procName}`.toLowerCase().replace(/\s+/g, '');
@@ -1153,7 +1183,7 @@
                 const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
                 const allFiles = await res.json();
 
-                const targetCategory = currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
+                const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
                 const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
                 const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
 
@@ -1298,7 +1328,7 @@
                                 };
                             }
 
-                            ['knitting', 'dyeing', 'finishing', 'delivery'].forEach(dept => {
+                            ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
                                 if (plan[dept] && Array.isArray(plan[dept])) {
                                     plan[dept].forEach(item => {
                                         let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim() : 'General';
@@ -1328,7 +1358,7 @@
                                 let baseId = generateItemId(dbItem.itemData, currentDept);
                                 let strictId = baseId;
 
-                                if (currentDept === 'knitting' || currentDept === 'delivery') {
+                                if (currentDept === 'knitting' || currentDept === 'delivery' || currentDept === 'yd') {
                                     dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
                                     strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
                                 } else {
@@ -1376,6 +1406,40 @@
                                     RFD: getColData(exItem, ['RFD']),
                                     Slowmoving: getColData(exItem, ['Slowmoving']),
                                     FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                                };
+                            } else if (currentDept === 'yd') {
+                                // Find all keys that normalize to 'ydbalance'
+                                let ydBalanceKeys = [];
+                                let typeKeys = [];
+                                let dateKeys = [];
+                                
+                                for (let rk in exItem) {
+                                    let norm = rk.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    if (norm === 'ydbalance' || norm === 'yddeliverybalance') ydBalanceKeys.push(rk);
+                                    if (norm === 'type' || norm === 'ydtype' || norm === 'yarntype' || norm === 'bookingtype') typeKeys.push(rk);
+                                    if (norm === 'date' || norm === 'ydbookingdate' || norm === 'bookingdate') dateKeys.push(rk);
+                                }
+
+                                let redBalanceVal = '';
+                                let normalBalanceVal = '';
+                                ydBalanceKeys.forEach(k => {
+                                    if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === 'yddeliverybalance') redBalanceVal = exItem[k];
+                                    else if (normalBalanceVal === '') normalBalanceVal = exItem[k];
+                                    else redBalanceVal = exItem[k]; // fallback if two 'ydbalance' exist
+                                });
+
+                                dynamicItemData = {
+                                    OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                                    'Booking Type': typeKeys.length > 0 ? exItem[typeKeys[0]] : '',
+                                    YDB: getColData(exItem, ['YDB', 'YD B']),
+                                    'YD Booking Date': dateKeys.length > 0 ? exItem[dateKeys[0]] : '',
+                                    'YD REQ.': getColData(exItem, ['YD REQ.', 'YD REQ', 'YD Req', 'Requirement']),
+                                    DYED: getColData(exItem, ['DYED', 'Dyed', 'Dye']),
+                                    'YD BALANCE': normalBalanceVal,
+                                    'YD Delivered': getColData(exItem, ['YD Delivered', 'Delivered', 'Delivery']),
+                                    'YD DELIVERY BALANCE': redBalanceVal !== '' ? redBalanceVal : getColData(exItem, ['YD Balance_1', 'YD Balance 2', 'Balance 2', 'YD Balance(Red)']),
+                                    'Barrier Qty.': getColData(exItem, ['Barrier Qty.', 'Barrier Qty', 'Barrier']),
+                                    'Workable Qty.': getColData(exItem, ['Workable Qty.', 'Workable Qty', 'Workable'])
                                 };
                             } else {
                                 dynamicItemData = {
@@ -2078,6 +2142,34 @@
                         itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
                     });
                 }
+                else if (currentDept === 'yd') {
+                    const leftCols = ['Booking Type', 'YDB', 'YD Booking Date'];
+                    leftCols.forEach(c => {
+                        let val = item.itemData[c];
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
+                    });
+
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
+                        <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Remarks" value="${item.remarks || ''}"></td>
+                    `;
+
+                    const rightCols = ['YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE', 'Barrier Qty.', 'Workable Qty.'];
+                    rightCols.forEach(c => {
+                        let val = item.itemData[c];
+                        let className = c === 'YD DELIVERY BALANCE' ? 'text-red-600 font-bold' : '';
+                        itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] ${className}">${val !== undefined && val !== null ? val : ''}</td>`;
+                    });
+                }
                 else {
                     // Finishing Plan (আগের মতোই থাকবে)
                     let cols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
@@ -2515,10 +2607,10 @@
                     const itemData = JSON.parse(decodeURIComponent(row.dataset.itemdata));
 
                     const newPlanType = row.querySelector('.row-plan-type').value;
-                    const newStartDate = row.querySelector('.row-start-date').value;
-                    const newEndDate = row.querySelector('.row-end-date').value;
-                    const newLimitation = row.querySelector('.row-limitation').value;
-                    const newRemarks = row.querySelector('.row-remarks').value;
+                    const newStartDate = row.querySelector('.row-start-date') ? row.querySelector('.row-start-date').value : '';
+                    const newEndDate = row.querySelector('.row-end-date') ? row.querySelector('.row-end-date').value : '';
+                    const newLimitation = row.querySelector('.row-limitation') ? row.querySelector('.row-limitation').value : '';
+                    const newRemarks = row.querySelector('.row-remarks') ? row.querySelector('.row-remarks').value : '';
 
                     if (row.querySelector('.row-unit')) itemData.Unit = row.querySelector('.row-unit').value;
                     if (row.querySelector('.row-process')) {
