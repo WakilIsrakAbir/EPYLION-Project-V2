@@ -497,51 +497,19 @@
                             yet.</p>
                     </div>
                 
-                    <div id="reportCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10 max-w-4xl w-full">
-                        <div id="cardConfirmList"
-                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#22c55e]">
-                            <div
-                                class="w-16 h-16 sm:w-20 sm:h-20 bg-[#dcfce7] text-[#16a34a] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Confirm List</h3>
-                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and download all
-                                confirmed planning data. The downloaded Excel file will have <strong class="text-gray-700">separate
-                                    sheets for each confirmed Buyer.</strong></p>
-                            <button onclick="exportReportToExcel('Confirm')"
-                                class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
-                                <i class="fas fa-file-excel text-lg"></i> Download Confirm Data
-                            </button>
-                        </div>
-                
-                        <div id="cardTentativeList"
-                            class="bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#eab308]">
-                            <div
-                                class="w-16 h-16 sm:w-20 sm:h-20 bg-[#fef9c3] text-[#ca8a04] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated Tentative List</h3>
-                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract and download all
-                                tentative planning data. The downloaded Excel file will have <strong class="text-gray-700">separate
-                                    sheets for each tentative Buyer.</strong></p>
-                            <button onclick="exportReportToExcel('Tentative')"
-                                class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
-                                <i class="fas fa-file-excel text-lg"></i> Download Tentative Data
-                            </button>
-                        </div>
-
-                        <!-- YD Specific Report Card -->
-                        <div id="cardYdReport"
+                    <div id="reportCardsGrid" class="grid grid-cols-1 gap-4 sm:gap-6 md:gap-10 max-w-[500px] w-full mx-auto">
+                        <!-- Combined Report Card for all departments -->
+                        <div id="cardCombinedReport"
                             class="hidden bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#3b82f6]">
                             <div
                                 class="w-16 h-16 sm:w-20 sm:h-20 bg-[#dbeafe] text-[#2563eb] rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4 sm:mb-6 shadow-inner">
                                 <i class="fas fa-layer-group"></i>
                             </div>
-                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Updated YD Report</h3>
-                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract all YD data (both Confirm & Tentative). All buyers will be combined into a <strong class="text-gray-700">single sheet.</strong></p>
-                            <button onclick="exportYdReportToExcel()"
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4" id="combinedReportTitle">Updated Report</h3>
+                            <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract all data (both Confirm & Tentative). All buyers will be combined into a <strong class="text-gray-700">single sheet.</strong></p>
+                            <button onclick="exportCombinedReportToExcel()"
                                 class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
-                                <i class="fas fa-file-excel text-lg"></i> Download YD Data
+                                <i class="fas fa-file-excel text-lg"></i> <span id="combinedReportBtnText">Download Data</span>
                             </button>
                         </div>
                     </div>
@@ -1598,28 +1566,18 @@
                         if (group.isTentative) hasTentativeData = true;
                     });
 
-                    const cardConfirm = document.getElementById('cardConfirmList');
-                    const cardTentative = document.getElementById('cardTentativeList');
-                    const cardYdReport = document.getElementById('cardYdReport');
+                    const cardCombinedReport = document.getElementById('cardCombinedReport');
                     const reportEmpty = document.getElementById('reportEmptyState');
                     const cardsGrid = document.getElementById('reportCardsGrid');
 
-                    if (currentDept === 'yd') {
-                        if (cardConfirm) cardConfirm.style.display = 'none';
-                        if (cardTentative) cardTentative.style.display = 'none';
-                        if (cardYdReport) cardYdReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
-                        if (cardsGrid) cardsGrid.classList.remove('md:grid-cols-2');
-                        if (cardsGrid) cardsGrid.classList.add('md:grid-cols-1');
-                        if (cardsGrid) cardsGrid.style.maxWidth = '500px';
-                        if (cardsGrid) cardsGrid.style.margin = '0 auto';
-                    } else {
-                        if (cardConfirm) cardConfirm.style.display = hasConfirmData ? 'flex' : 'none';
-                        if (cardTentative) cardTentative.style.display = hasTentativeData ? 'flex' : 'none';
-                        if (cardYdReport) cardYdReport.style.display = 'none';
-                        if (cardsGrid) cardsGrid.classList.add('md:grid-cols-2');
-                        if (cardsGrid) cardsGrid.classList.remove('md:grid-cols-1');
-                        if (cardsGrid) cardsGrid.style.maxWidth = 'max-w-4xl';
-                        if (cardsGrid) cardsGrid.style.margin = '';
+                    const titleEl = document.getElementById('combinedReportTitle');
+                    const btnTextEl = document.getElementById('combinedReportBtnText');
+                    
+                    if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
+                    if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
+
+                    if (cardCombinedReport) {
+                        cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
                     }
 
                     if (!hasConfirmData && !hasTentativeData) {
@@ -1657,70 +1615,7 @@
         }
 
         // ================= EXCEL EXPORT LOGIC FOR REPORTS =================
-        function exportReportToExcel(targetPlanType) {
-            if (!groupedData || Object.keys(groupedData).length === 0) {
-                showToast("No data available to export!");
-                return;
-            }
-
-            let buyerDataMap = {};
-
-            Object.values(groupedData).forEach(group => {
-                let isGroupMatching = false;
-                if (targetPlanType === 'Confirm' && group.isConfirm) isGroupMatching = true;
-                if (targetPlanType === 'Tentative' && group.isTentative) isGroupMatching = true;
-
-                if (isGroupMatching && group.mergedItems) {
-                    group.mergedItems.forEach(item => {
-                        let rowData = { ...item.itemData };
-
-                        rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
-                        rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
-                        rowData['Plan Type'] = item.planType || 'Pending';
-                        rowData['Limitation'] = item.limitation || '';
-                        rowData['Remarks'] = item.remarks || '';
-
-                        let buyer = rowData.Buyer || rowData.BuyerName || 'General';
-                        buyer = String(buyer).trim();
-                        if (buyer === '' || buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a') {
-                            buyer = 'General';
-                        }
-
-                        // Sanitize Buyer name
-                        buyer = buyer.replace(/[\[\]\/\*\\\?\:]/g, '_').substring(0, 31);
-
-                        if (!buyerDataMap[buyer]) {
-                            buyerDataMap[buyer] = [];
-                        }
-                        buyerDataMap[buyer].push(rowData);
-                    });
-                }
-            });
-
-            const buyers = Object.keys(buyerDataMap);
-
-            if (buyers.length === 0) {
-                showToast(`No ${targetPlanType} data found to export!`);
-                return;
-            }
-
-            showToast(`Generating Excel file for ${targetPlanType} List...`);
-
-            const wb = XLSX.utils.book_new();
-
-            buyers.forEach(buyer => {
-                const ws = XLSX.utils.json_to_sheet(buyerDataMap[buyer]);
-                XLSX.utils.book_append_sheet(wb, ws, buyer);
-            });
-
-            const dateStr = new Date().toISOString().split('T')[0];
-            const currentDept = activeTabId.replace('_report', '');
-            const filename = `${currentDept.toUpperCase()}_${targetPlanType}_Report_${dateStr}.xlsx`;
-
-            XLSX.writeFile(wb, filename);
-        }
-
-        function exportYdReportToExcel() {
+        function exportCombinedReportToExcel() {
             if (!groupedData || Object.keys(groupedData).length === 0) {
                 showToast("No data available to export!");
                 return;
@@ -1746,19 +1641,21 @@
                 }
             });
 
+            const currentDept = activeTabId.replace('_report', '').toUpperCase();
+
             if (allRows.length === 0) {
-                showToast("No YD Confirm or Tentative data found to export!");
+                showToast(`No Confirm or Tentative data found to export for ${currentDept}!`);
                 return;
             }
 
-            showToast("Generating Excel file for Updated YD Report...");
+            showToast(`Generating Excel file for Updated ${currentDept} Report...`);
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(allRows);
-            XLSX.utils.book_append_sheet(wb, ws, "YD_Report");
+            XLSX.utils.book_append_sheet(wb, ws, `${currentDept}_Report`);
 
             const dateStr = new Date().toISOString().split('T')[0];
-            const filename = `YD_Updated_Report_${dateStr}.xlsx`;
+            const filename = `${currentDept}_Updated_Report_${dateStr}.xlsx`;
 
             XLSX.writeFile(wb, filename);
         }
