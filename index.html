@@ -32,14 +32,12 @@
         }
     </script>
     <style>
-        /* CSS Fix for Mobile Browsers */
         @supports (-webkit-touch-callout: none) {
             body {
                 height: -webkit-fill-available;
             }
         }
 
-        /* Custom Smooth Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -125,7 +123,6 @@
             color: white;
         }
 
-        /* Upload Tabs Styling */
         .upload-tab {
             cursor: pointer;
             padding: 8px 16px;
@@ -151,14 +148,12 @@
 
 <body class="flex h-screen bg-[#f4f5f7] text-gray-800 overflow-hidden text-[13px] font-sans" onload="initDashboard()">
 
-    <!-- Toast Notification -->
     <div id="toast"
         class="fixed top-5 right-5 bg-gray-800 text-white px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3">
         <i class="fas fa-info-circle text-blue-400"></i>
         <span id="toastMessage">Action triggered</span>
     </div>
 
-    <!-- Sidebar -->
     <div id="sidebar"
         class="shrink-0 fixed md:relative z-50 h-full bg-sidebar transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
         <div class="w-[280px] h-full flex flex-col overflow-y-auto custom-scrollbar text-textMuted relative">
@@ -170,7 +165,6 @@
                 <span class="text-epylionGreen tracking-wider">Textile Planning Solution</span>
             </div>
 
-            <!-- Dashboard Menu -->
             <div id="menu-dashboard"
                 class="sidebar-menu-item py-4 pr-4 pl-3 border-l-4 border-transparent flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
                 onclick="showDashboardHome()">
@@ -184,7 +178,6 @@
             </div>
 
             <ul class="py-2 w-full">
-                <!-- Data Management Menu -->
                 <li id="sidebarDataManagement">
                     <div id="menu-data-mgmt"
                         class="sidebar-menu-item py-3 pr-4 pl-3 border-l-4 border-transparent flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
@@ -193,7 +186,6 @@
                     </div>
                 </li>
 
-                <!-- Order Management Menus -->
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'orderMenu')">
@@ -220,7 +212,6 @@
                     </ul>
                 </li>
 
-                <!-- REPORT MENU -->
                 <li>
                     <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'reportMenu')">
@@ -262,20 +253,16 @@
         </div>
     </div>
 
-    <!-- Mobile Overlay -->
     <div id="mobileOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity"
         onclick="closeSidebarMobile()"></div>
 
-    <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
 
-        <!-- Top Header -->
         <div class="bg-white border-b border-gray-200 flex items-center justify-between px-4 h-[40px] shrink-0">
             <i class="fas fa-bars text-gray-500 cursor-pointer hover:text-activeBlue text-lg transition-transform hover:scale-110"
                 onclick="toggleSidebar()"></i>
         </div>
 
-        <!-- ================= DASHBOARD HOME VIEW ================= -->
         <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto custom-scrollbar">
@@ -296,7 +283,6 @@
             </div>
         </div>
 
-        <!-- ================= DATA MANAGEMENT VIEW ================= -->
         <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0">
                 <div
@@ -376,7 +362,6 @@
             </div>
         </div>
 
-        <!-- ================= MAIN TABLE AND REPORT CONTAINER ================= -->
         <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full"
                 id="tabBarContainer">
@@ -385,14 +370,12 @@
 
             <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
 
-                <!-- Shared Loading Spinner -->
                 <div id="loadingData"
                     class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white/80 z-30">
                     <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
                     <p>Processing Department Data...</p>
                 </div>
 
-                <!-- ================= 1. NORMAL LIST CONTAINER (Order Management) ================= -->
                 <div id="normalListContainer" class="flex-1 flex flex-col min-h-0 w-full">
                     <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
                         <div
@@ -412,7 +395,6 @@
                                     onclick="activateMainTab('All')">Completed List</div>
                             </div>
 
-                            <!-- EXCEL DOWNLOAD BUTTON FOR REPORT -->
                             <button id="btnExportExcel"
                                 class="hidden w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-bold rounded shadow hover:bg-green-700 transition flex items-center justify-center text-xs"
                                 onclick="exportReportToExcel()">
@@ -483,7 +465,6 @@
                     </div>
                 </div>
 
-                <!-- ================= 2. REPORT ACTION CONTAINER (Clean Card UI for Reports) ================= -->
                 <div id="reportActionContainer"
                     class="hidden flex-1 flex-col items-center justify-start sm:justify-center bg-white rounded-md shadow-sm border border-gray-200 w-full min-h-0 p-4 sm:p-6 md:p-10 overflow-y-auto">
                     <h2 class="text-xl sm:text-2xl font-bold text-[#313644] mb-6 sm:mb-10 text-center" id="reportPageHeader">Department
@@ -498,7 +479,6 @@
                     </div>
                 
                     <div id="reportCardsGrid" class="grid grid-cols-1 gap-4 sm:gap-6 md:gap-10 max-w-[500px] w-full mx-auto">
-                        <!-- Combined Report Card for all departments -->
                         <div id="cardCombinedReport"
                             class="hidden bg-white rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-8 flex flex-col items-center text-center transition-transform hover:-translate-y-1 border-t-[5px] border-t-[#3b82f6]">
                             <div
@@ -518,7 +498,6 @@
             </div>
         </div>
 
-        <!-- ================= DETAILED VIEW (Order Management Only) ================= -->
         <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center px-4 py-2 shrink-0 justify-between w-full gap-2">
@@ -539,11 +518,9 @@
                 </div>
             </div>
 
-            <!-- CSS FIX FOR MOBILE: Added pb-24 to comfortably scroll down the bottom -->
             <div
                 class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-3 md:p-4 pb-24 md:pb-6 flex flex-col gap-4 w-full min-h-0">
 
-                <!-- General Info Panel -->
                 <div class="bg-white border border-gray-200 p-3 md:p-4 rounded-sm shadow-sm shrink-0 w-full max-w-full">
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
                         <div class="flex flex-col gap-2">
@@ -611,7 +588,6 @@
                     </div>
                 </div>
 
-                <!-- Fabric Items Information Panel -->
                 <div
                     class="bg-white border border-gray-200 rounded-sm shadow-sm shrink-0 w-full max-w-full overflow-hidden flex flex-col mb-4">
                     <div
@@ -624,9 +600,7 @@
                             <thead class="bg-white shadow-sm">
                                 <tr class="text-[10px] font-bold text-gray-700 bg-gray-100 border-b border-gray-300"
                                     id="mainHeaderRow">
-                                    <!-- Dynamic Left Headers injected here via JS -->
 
-                                    <!-- Fixed Hardcoded Right Headers -->
                                     <th class="p-2 border-r border-gray-300 text-center bg-gray-200" colspan="2"
                                         id="planningHeaderText">Planning</th>
                                     <th class="p-2 border-r border-gray-300 text-center">Plan Type</th>
@@ -635,7 +609,6 @@
                                     
                                 </tr>
                                 <tr class="text-[9px] bg-gray-50 border-b border-gray-300" id="subHeaderRow">
-                                    <!-- Dynamic Sub Headers injected here via JS -->
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">Start Date</th>
                                     <th class="p-1 border-r border-gray-300 text-center text-gray-600">End Date</th>
                                     <th class="border-r border-gray-300" colspan="3"></th>
@@ -834,7 +807,6 @@
             const token = localStorage.getItem('token');
             if (!token) { window.location.href = 'login.html'; return; }
             document.getElementById('displayUsername').innerText = `${localStorage.getItem('username')} (${localStorage.getItem('role')})`;
-            // showDashboardHome();
             applyPermissions(localStorage.getItem('role'));
             loadUploadedFiles();
 
@@ -858,7 +830,6 @@
             }
         }
 
-        // ================= HIGHLIGHT ACTIVE MENU FUNCTION =================
         function setActiveSidebarMenu(activeId) {
             document.querySelectorAll('.sidebar-menu-item').forEach(el => {
                 el.classList.remove('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
@@ -1040,7 +1011,6 @@
                     <th class="border-r border-gray-300 dynamic-th" colspan="5"></th>
                 `;
 
-                // Subheader Insert
                 document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>` + knitSubHtml);
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', rightSubHtml);
             }
@@ -1067,7 +1037,6 @@
                 
                 let mainCols = [];
                 if (currentDept === 'delivery') {
-                    // ডেলিভারি প্ল্যানের নতুন কলামগুলো
                     document.getElementById('planningHeaderText').innerText = 'Delivery Planning';
                     document.getElementById('limitationHeaderText').innerText = 'Delivery Limitation';
 
@@ -1392,7 +1361,6 @@
                                     FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
                                 };
                             } else if (currentDept === 'yd') {
-                                // Find all keys that normalize to 'ydbalance'
                                 let ydBalanceKeys = [];
                                 let typeKeys = [];
                                 let dateKeys = [];
@@ -1409,7 +1377,7 @@
                                 ydBalanceKeys.forEach(k => {
                                     if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === 'yddeliverybalance') redBalanceVal = exItem[k];
                                     else if (normalBalanceVal === '') normalBalanceVal = exItem[k];
-                                    else redBalanceVal = exItem[k]; // fallback if two 'ydbalance' exist
+                                    else redBalanceVal = exItem[k]; 
                                 });
 
                                 dynamicItemData = {
@@ -1473,7 +1441,6 @@
                                     source: 'Both'
                                 });
                             } else {
-                                // --- 🟢 BLOCK 1: Recover All Dyeing Plan Fields ---
                                 let recoveredDbItem = null;
                                 if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
                                     const myColor = String(dynamicItemData.Color || '').trim().toLowerCase();
@@ -1504,7 +1471,6 @@
                                         startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
                                     });
                                 }
-                                // ----------------------------------------------------
                             }
                         });
                     }
@@ -1615,7 +1581,6 @@
             }
         }
 
-        // ================= EXCEL EXPORT LOGIC FOR REPORTS =================
         function exportCombinedReportToExcel() {
             if (!groupedData || Object.keys(groupedData).length === 0) {
                 showToast("No data available to export!");
@@ -1704,7 +1669,6 @@
                     dataTableWrapper.classList.remove('hidden');
                     emptyState.classList.add('hidden');
 
-                    // Oldest first sorting
                     data.sort((a, b) => {
                         let dateA = new Date((a.generalInfo && a.generalInfo.CompletedDate) ? a.generalInfo.CompletedDate : 0).getTime();
                         let dateB = new Date((b.generalInfo && b.generalInfo.CompletedDate) ? b.generalInfo.CompletedDate : 0).getTime();
@@ -1717,7 +1681,6 @@
                         return;
                     }
 
-                    // --- Add Search Filters to Completed List Header ---
                     if (thead.dataset.currentTab !== 'All') {
                         thead.innerHTML = `
                         <tr class="bg-gray-800 text-white text-[11px] font-bold border-b border-gray-700">
@@ -1737,15 +1700,12 @@
                     `;
                         thead.dataset.currentTab = 'All';
 
-                        // Restore input values if they exist when switching back to the tab
                         const searchInputs = document.querySelectorAll('#dataTableContent thead .header-search');
                         if (searchInputs[0] && colFilters[1]) searchInputs[0].value = colFilters[1];
                         if (searchInputs[1] && colFilters['compDate']) searchInputs[1].value = colFilters['compDate'];
                         if (searchInputs[2] && colFilters[3]) searchInputs[2].value = colFilters[3];
                     }
-                    // -----------------------------------------------------------
 
-                    // --- Apply the filter logic to the Completed Data ---
                     for (let col in colFilters) {
                         const searchVal = colFilters[col];
                         if (!searchVal) continue;
@@ -2141,7 +2101,6 @@
                     });
                 }
                 else {
-                    // Finishing Plan (আগের মতোই থাকবে)
                     let cols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
 
                     cols.forEach(c => {
@@ -2462,20 +2421,14 @@
 
                 const currentDept = activeTabId.replace('_report', '');
 
-                // ডেটাবেসের পুরনো ডেটা চেক করার জন্য existingData ভেরিয়েবলটি একটু উপরে নিয়ে আসা হয়েছে
                 const existingData = groupedData[bookingNo];
                 if (!existingData) return;
 
-                // ===============================================
-                // FINAL VALIDATION CHECKPOST BEFORE SAVING
-                // ===============================================
                 let validationFailed = false;
 
-                // Admin রোল চেক করা হচ্ছে
                 const userRole = localStorage.getItem('role');
                 const isAdmin = userRole ? userRole.toLowerCase() === 'admin' : false;
 
-                // চেইন লক চেক করার ফাংশন (ডেলিভারি কনফার্ম থাকলে ডাইং লক, ডাইং কনফার্ম থাকলে নিটিং লক)
                 const checkDownstreamConfirm = (dept, itemId) => {
                     if (!existingData.dbData) return false;
                     const dbData = existingData.dbData;
@@ -2556,7 +2509,6 @@
                 });
 
                 if (validationFailed) return;
-                // ===============================================
 
                 const currentStatus = document.getElementById('detOrderStatus').value;
                 const prevStatus = existingData.generalInfo.OrderStatus || 'On Process';
@@ -2808,7 +2760,6 @@
                 XLSX.writeFile(wb, `${activeTabId.replace('_report', '')}_Completed_List.xlsx`);
             }
 
-            //  NEW Maintenance Function: Clear All Database Records & Files
                 async function clearAllPlanningData() {
                     if (confirm("⚠️ WARNING: Are you sure you want to delete ALL saved planning, statuses, AND all uploaded Excel files? This action will completely reset the system.")) {
                         const password = prompt("Please type 'DELETE' to confirm full system wipe:");
@@ -2834,10 +2785,6 @@
                         }
                     }
                 }
-
-        // =========================================================================
-            //  SMART ORDER STATUS LOGIC (Pagination + Search + Fresh View)
-            // =========================================================================
 
             let osCurrentPage = 1;
             let osRowsPerPage = 10;
@@ -2874,7 +2821,6 @@
                 renderOrderStatusTable();
             }
 
-            // Auto-hide patch for existing view triggers (FIXED: Hiding immediately before loading)
                 const originalDashboard = showDashboardHome;
                 showDashboardHome = function () {
                     const os = document.getElementById('orderStatusSection');
@@ -2918,7 +2864,7 @@
                                 const wb = XLSX.read(ab, { type: 'array' });
                                 let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                                 sheetData.forEach(row => {
-                                    row._fileIndex = i; // Track which file the row belongs to
+                                    row._fileIndex = i; 
                                     raw.push(row);
                                 });
                             } catch (e) { console.error("File read err:", e); }
@@ -2968,7 +2914,6 @@
                                 osGroupedData[bNo].mergedItems.push({ itemData: { ...row } });
                             }
                             else {
-                                // ---Merge data across multiple department files to prevent overriding ---
                                 Object.keys(row).forEach(k => {
                                     if (row[k] !== undefined && row[k] !== '' && row[k] !== null) {
                                         if (!existingItem.itemData[k] || existingItem.itemData[k] === '') {
@@ -2977,7 +2922,7 @@
                                             let existingNum = parseFloat(String(existingItem.itemData[k]).replace(/,/g, ''));
                                             let newNum = parseFloat(String(row[k]).replace(/,/g, ''));
                                             if (!isNaN(existingNum) && !isNaN(newNum)) {
-                                                existingItem.itemData[k] = Math.max(existingNum, newNum); // Keep the highest value found across files
+                                                existingItem.itemData[k] = Math.max(existingNum, newNum); 
                                             }
                                         }
                                     }
@@ -3090,7 +3035,6 @@
                 document.getElementById('osListView').classList.add('hidden');
                 document.getElementById('osDetailedView').classList.remove('hidden');
 
-                // Safe numerical accumulator 
                 let allocatedQty = 0, yarnBala = 0, knitProd = 0, knitBala = 0;
                 let dyeingProd = 0, dyeingBala = 0;
                 let netDeliveryQty = 0, slowMoving = 0, deliBal = 0, rfd = 0;
@@ -3102,7 +3046,6 @@
                     return isNaN(num) ? 0 : num;
                 };
 
-                // --- Calculate Max Totals Per File to Prevent Cross-File Double Counting ---
                 let totalsPerFile = {};
                 const rawItems = orderData.excelItems || [];
 
@@ -3154,7 +3097,6 @@
                     deliBal = Math.max(deliBal, t.deliBal);
                     rfd = Math.max(rfd, t.rfd);
                 });
-                // -------------------------------------------------------------------------------------
 
                 const displayBuyer = orderData.buyers && orderData.buyers.size > 0 ? Array.from(orderData.buyers).join(', ') : 'Unknown';
                 const formatDisplay = (num) => num === 0 ? '0' : num.toLocaleString();
@@ -3257,16 +3199,11 @@
                 document.getElementById('osListView').classList.remove('hidden');
             }
 
-            // ==========================================
-                //  ORDER STATUS DOWNLOAD FUNCTIONS
-                // ==========================================
 
-                // 1. PDF Download Logic
                 function downloadOSDetailedPDF() {
                     const element = document.getElementById('osPrintableArea');
                     const bookingNo = document.getElementById('osRepBookingNo').innerText || 'Details';
 
-                    // PDF Config (Landscape mode for better table fit)
                     const opt = {
                         margin: 0.3,
                         filename: `Order_Status_${bookingNo}.pdf`,
@@ -3275,15 +3212,12 @@
                         jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
                     };
 
-                    // Generate & Download
                     html2pdf().set(opt).from(element).save();
                 }
 
-                // 2. Excel Download Logic
                 function downloadOSDetailedExcel() {
                     const bookingNo = document.getElementById('osRepBookingNo').innerText || 'N_A';
 
-                    // Extracting all values from the UI
                     const wsData = [
                         ['Detailed Plan Status - Order Status'],
                         [],
@@ -3295,7 +3229,6 @@
                         ['Knit Start', 'Knit End', 'Knit Type', 'Dye Start', 'Dye End', 'Dye Type', 'Deli Start', 'Deli End', 'Deli Type']
                     ];
 
-                    // Extracting lower breakdown single-row table data
                     const tbody = document.getElementById('osDetailedItemsBody');
                     if (tbody) {
                         const rows = tbody.getElementsByTagName('tr');
@@ -3303,7 +3236,6 @@
                             let rowData = [];
                             const cells = rows[i].getElementsByTagName('td');
                             for (let j = 0; j < cells.length; j++) {
-                                // If it's a "No data" full colspan row
                                 if (cells.length === 1) { rowData.push(cells[j].innerText); break; }
                                 rowData.push(cells[j].innerText);
                             }
@@ -3311,7 +3243,6 @@
                         }
                     }
 
-                    // Convert array to sheet and download
                     const ws = XLSX.utils.aoa_to_sheet(wsData);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Detailed_Status");

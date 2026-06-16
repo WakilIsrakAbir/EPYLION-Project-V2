@@ -139,7 +139,6 @@
             toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
         }
 
-        // Check if Admin
         function checkAdminAndLoadUsers() {
             const token = localStorage.getItem('token');
             const role = localStorage.getItem('role');
@@ -156,21 +155,18 @@
             loadUsers();
         }
 
-        // Fetch Users from API
         async function loadUsers() {
             try {
                 const response = await fetch('https://abir-backend-api.onrender.com/api/auth/users');
                 const users = await response.json();
 
-                // Group users by role
                 const admins = users.filter(u => u.role === 'Admin');
                 const planners = users.filter(u => u.role === 'Planner');
                 const viewers = users.filter(u => u.role === 'Viewer');
 
                 const container = document.getElementById('userDirectoryContainer');
-                container.innerHTML = ''; // Clear loading
+                container.innerHTML = '';
 
-                // Render Sections
                 if (admins.length > 0) container.innerHTML += renderUserSection('Admin Management Team', admins, 'text-red-600', 'bg-red-50', 'border-red-200', 'fa-user-shield');
                 if (planners.length > 0) container.innerHTML += renderUserSection('Planning & Operation Team', planners, 'text-blue-600', 'bg-blue-50', 'border-blue-200', 'fa-user-edit');
                 if (viewers.length > 0) container.innerHTML += renderUserSection('Viewers & Observers', viewers, 'text-gray-600', 'bg-gray-100', 'border-gray-200', 'fa-eye');
@@ -185,7 +181,6 @@
             }
         }
 
-        // Helper function to render a section
         function renderUserSection(title, usersList, textColorClass, bgColorClass, borderColorClass, iconClass) {
             let html = `
             <div class="mb-8">
@@ -200,7 +195,6 @@
 
             usersList.forEach(user => {
                 const date = new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                // If API sends password, show it. Otherwise show placeholder text.
                 const displayPass = user.password || user.plainPassword || "Hidden (Hashed)";
                 const isHidden = displayPass === "Hidden (Hashed)";
 
@@ -242,7 +236,6 @@
             return html;
         }
 
-        // Copy Password to Clipboard
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast("Password copied to clipboard!");
@@ -251,7 +244,6 @@
             });
         }
 
-        // Create New User
         async function handleCreateUser(event) {
             event.preventDefault();
             const username = document.getElementById('newUsername').value;
@@ -286,7 +278,6 @@
             }
         }
 
-        // Delete User
         async function deleteUser(userId, username) {
             if (confirm(`Are you absolutely sure you want to delete '${username}'? This action cannot be undone.`)) {
                 try {
@@ -307,7 +298,6 @@
             }
         }
 
-        // Logout
         function logout() {
             localStorage.clear();
             window.location.href = 'login.html';

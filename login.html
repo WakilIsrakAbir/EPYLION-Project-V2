@@ -157,7 +157,6 @@
     </div>
 
     <script>
-        // যদি ইউজার আগে থেকেই লগইন করা থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দেবে
         if (localStorage.getItem('token')) {
             window.location.href = 'index.html';
         }
@@ -174,7 +173,6 @@
             }, 3000);
         }
 
-        // ================= LOGIN API CALL =================
         async function handleLogin(e) {
             e.preventDefault();
             const u = document.getElementById('loginUsername').value;
@@ -193,7 +191,6 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    // টোকেন এবং ইউজারের ইনফো সেভ করা
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.user.username || u);
                     localStorage.setItem('role', data.user.role);
