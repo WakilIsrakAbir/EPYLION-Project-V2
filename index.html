@@ -3544,6 +3544,15 @@
             const tableWrapper = document.getElementById('actualTableWrapper');
             const paginationControls = document.getElementById('actualPaginationControls');
 
+            if (actualTrackingData.length === 0) {
+                tableWrapper.classList.add('hidden');
+                paginationControls.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.style.display = 'flex';
+                tbody.innerHTML = '';
+                return;
+            }
+
             let data = [...actualTrackingData];
 
             // Apply column filters
@@ -3557,18 +3566,16 @@
                 });
             }
 
-            if (data.length === 0) {
-                tableWrapper.classList.add('hidden');
-                paginationControls.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                emptyState.style.display = 'flex';
-                tbody.innerHTML = '';
-                return;
-            }
-
             tableWrapper.classList.remove('hidden');
             emptyState.classList.add('hidden');
             emptyState.style.display = 'none';
+
+            if (data.length === 0) {
+                paginationControls.classList.add('hidden');
+                tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500 bg-white"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found.</td></tr>`;
+                return;
+            }
+
             paginationControls.classList.remove('hidden');
 
             const totalPages = Math.ceil(data.length / actualRowsPerPage);
