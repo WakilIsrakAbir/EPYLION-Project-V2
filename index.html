@@ -1592,6 +1592,44 @@
                         });
                     }
 
+                    // FALLBACK: If mergedItemsMap is still empty but DB has items for this dept,
+                    // populate from DB directly (handles case where Excel files are unavailable/404)
+                    if (mergedItemsMap.size === 0 && group.dbData && group.dbData[currentDept] && Array.isArray(group.dbData[currentDept]) && group.dbData[currentDept].length > 0) {
+                        const dbDepartmentItems = group.dbData[currentDept];
+                        let dbOnlyOccurrence = {};
+                        dbDepartmentItems.forEach(dbItem => {
+                            if (dbItem.itemData) {
+                                let baseId = dbItem.itemId || generateItemId(dbItem.itemData, currentDept);
+                                let strictId = baseId;
+
+                                if (!dbItem.itemId) {
+                                    if (currentDept === 'knitting' || currentDept === 'delivery' || currentDept === 'yd') {
+                                        dbOnlyOccurrence[baseId] = (dbOnlyOccurrence[baseId] || 0) + 1;
+                                        strictId = dbOnlyOccurrence[baseId] > 1 ? `${baseId}_${dbOnlyOccurrence[baseId]}` : baseId;
+                                    } else {
+                                        if (dbOnlyOccurrence[baseId]) return;
+                                        dbOnlyOccurrence[baseId] = 1;
+                                    }
+                                }
+
+                                let b = dbItem.itemData.Buyer ? String(dbItem.itemData.Buyer).trim() : 'General';
+                                if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
+                                group.buyers.add(b.toUpperCase().replace(/\s+/g, ' '));
+
+                                mergedItemsMap.set(strictId, {
+                                    itemId: strictId,
+                                    itemData: dbItem.itemData,
+                                    startDate: dbItem.startDate || '',
+                                    endDate: dbItem.endDate || '',
+                                    planType: dbItem.planType || '',
+                                    limitation: dbItem.limitation || '',
+                                    remarks: dbItem.remarks || '',
+                                    source: 'DB_Only'
+                                });
+                            }
+                        });
+                    }
+
                     group.mergedItems = Array.from(mergedItemsMap.values());
 
                     group.isPending = false;
