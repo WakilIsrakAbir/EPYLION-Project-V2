@@ -828,12 +828,31 @@
                     <p class="text-sm text-gray-500 mt-1">Fetching confirmed plan data</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
                     <h2 class="font-bold text-xl text-gray-700"><i class="fas fa-clipboard-check text-blue-500 mr-2"></i><span id="actualDeptTitle">Department</span> — Plan vs Actual</h2>
                     <button id="btnSaveActual" onclick="saveActualData()"
                         class="px-5 py-2 bg-blue-600 text-white font-bold rounded shadow-sm hover:bg-blue-700 transition-colors text-xs flex items-center gap-2">
                         <i class="fas fa-save"></i> Save Data
                     </button>
+                </div>
+
+                <!-- Pending / Complete Tabs -->
+                <div class="flex flex-wrap gap-1 sm:gap-2 mb-2 shrink-0">
+                    <div id="btnActualPending" onclick="switchActualTab('Pending')" class="bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Pending Actual Data</div>
+                    <div id="btnActualComplete" onclick="switchActualTab('Complete')" class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Complete Actual Data</div>
+                </div>
+
+                <!-- Buyer Filter Bar -->
+                <div class="flex flex-nowrap gap-2 mb-2 overflow-x-auto custom-scrollbar pb-1 w-full shrink-0" id="actualBuyerFilterContainer"></div>
+
+                <!-- Date Range Filter -->
+                <div class="flex flex-wrap items-center gap-2 mb-3 shrink-0">
+                    <span class="text-[11px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">Start/End</span>
+                    <input type="date" id="actualFilterStartDate" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none">
+                    <span class="text-gray-400 font-bold">—</span>
+                    <input type="date" id="actualFilterEndDate" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none">
+                    <button onclick="applyActualDateFilter()" class="px-3 py-1 bg-green-600 text-white font-bold rounded text-[11px] hover:bg-green-700 transition-colors">Apply Filter</button>
+                    <button onclick="clearActualDateFilter()" class="px-3 py-1 bg-gray-200 text-gray-600 font-bold rounded text-[11px] hover:bg-gray-300 transition-colors">Clear</button>
                 </div>
 
                 <div
@@ -846,20 +865,20 @@
                     </div>
 
                     <div class="flex-1 overflow-auto custom-scrollbar w-full" id="actualTableWrapper">
-                        <table class="w-full text-left whitespace-nowrap min-w-[1100px]" id="actualDataTable">
+                        <table class="w-full text-left whitespace-nowrap min-w-[1200px]" id="actualDataTable">
                             <thead class="sticky top-0 z-20 bg-tableHeader shadow-sm">
                                 <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
                                     <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">SL</th>
                                     <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
                                     <th class="p-2 border-r border-gray-300 bg-tableHeader">Buyer</th>
-                                    <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-blue-50 text-blue-800">Plan Start</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-blue-50 text-blue-800">Plan End</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-green-50 text-green-800">Actual Start</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-green-50 text-green-800">Actual End</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-orange-50 text-orange-800">Start Result</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-orange-50 text-orange-800">End Result</th>
-                                    <th class="p-2 bg-tableHeader">Remarks</th>
+                                    <th class="p-2 border-r border-gray-300 bg-red-50 text-red-800">Fail Reason</th>
+                                    <th class="p-2 bg-red-50 text-red-800">Related Dept.</th>
                                 </tr>
                                 <tr class="bg-white border-b border-gray-300">
                                     <th class="p-1 border-r border-gray-300 bg-white"></th>
@@ -916,6 +935,10 @@
         let actualRowsPerPage = 10;
         let actualColFilters = {};
         let actualTrackingData = [];
+        let actualActiveTab = 'Pending'; // 'Pending' or 'Complete'
+        let actualActiveBuyer = ''; // '' means all buyers
+        let actualFilterStart = ''; // date range filter start
+        let actualFilterEnd = ''; // date range filter end
 
 
         function initDashboard() {
@@ -3431,7 +3454,17 @@
 
             actualCurrentPage = 1;
             actualColFilters = {};
+            actualActiveTab = 'Pending';
+            actualActiveBuyer = '';
+            actualFilterStart = '';
+            actualFilterEnd = '';
             document.querySelectorAll('#actualDataTable .header-search').forEach(inp => inp.value = '');
+            document.getElementById('actualFilterStartDate').value = '';
+            document.getElementById('actualFilterEndDate').value = '';
+
+            // Reset tab buttons UI
+            document.getElementById('btnActualPending').className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
+            document.getElementById('btnActualComplete').className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
 
             setActiveSidebarMenu('menu-' + deptKey + '-actual');
             closeSidebarMobile();
@@ -3442,6 +3475,7 @@
             await fetchActualTrackingData();
 
             if (loader) loader.classList.add('hidden');
+            renderActualBuyerFilter();
             renderActualTable();
         }
 
@@ -3520,11 +3554,13 @@
                     const actualKey = actualDeptKey + 'Actual';
                     let actualStart = '';
                     let actualEnd = '';
-                    let actualRemarks = '';
+                    let failReason = '';
+                    let relatedDept = '';
                     if (plan[actualKey]) {
                         actualStart = plan[actualKey].actualStart || '';
                         actualEnd = plan[actualKey].actualEnd || '';
-                        actualRemarks = plan[actualKey].remarks || '';
+                        failReason = plan[actualKey].failReason || plan[actualKey].remarks || ''; // backward compat
+                        relatedDept = plan[actualKey].relatedDept || '';
                     }
 
                     // Get buyer and booking date from general data
@@ -3556,7 +3592,8 @@
                         planEnd: planEnd,
                         actualStart: actualStart,
                         actualEnd: actualEnd,
-                        remarks: actualRemarks
+                        failReason: failReason,
+                        relatedDept: relatedDept
                     });
                 });
 
@@ -3567,6 +3604,62 @@
 
         function filterActualByColumn(colIndex, val) {
             actualColFilters[colIndex] = String(val).toLowerCase().trim();
+            actualCurrentPage = 1;
+            renderActualTable();
+        }
+
+        function switchActualTab(tab) {
+            actualActiveTab = tab;
+            actualCurrentPage = 1;
+            const btnP = document.getElementById('btnActualPending');
+            const btnC = document.getElementById('btnActualComplete');
+            const activeClass = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
+            const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
+            btnP.className = tab === 'Pending' ? activeClass : inactiveClass;
+            btnC.className = tab === 'Complete' ? activeClass : inactiveClass;
+            renderActualTable();
+        }
+
+        function renderActualBuyerFilter() {
+            const container = document.getElementById('actualBuyerFilterContainer');
+            const buyerSet = new Set();
+            actualTrackingData.forEach(d => {
+                if (d.buyer && d.buyer !== 'N/A') {
+                    d.buyer.split(',').forEach(b => buyerSet.add(b.trim()));
+                }
+            });
+            const buyers = Array.from(buyerSet).sort();
+            if (buyers.length === 0) { container.innerHTML = ''; return; }
+
+            let html = '';
+            const allActive = actualActiveBuyer === '';
+            html += `<div onclick="setActualBuyerFilter('')" class="${allActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} px-3 py-1 rounded cursor-pointer font-bold text-[10px] sm:text-[11px] whitespace-nowrap transition-colors shrink-0">ALL</div>`;
+            buyers.forEach(b => {
+                const isActive = actualActiveBuyer === b;
+                html += `<div onclick="setActualBuyerFilter('${b.replace(/'/g, "\\'")}')" class="${isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} px-3 py-1 rounded cursor-pointer font-bold text-[10px] sm:text-[11px] whitespace-nowrap transition-colors shrink-0">${b}</div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function setActualBuyerFilter(buyer) {
+            actualActiveBuyer = buyer;
+            actualCurrentPage = 1;
+            renderActualBuyerFilter();
+            renderActualTable();
+        }
+
+        function applyActualDateFilter() {
+            actualFilterStart = document.getElementById('actualFilterStartDate').value;
+            actualFilterEnd = document.getElementById('actualFilterEndDate').value;
+            actualCurrentPage = 1;
+            renderActualTable();
+        }
+
+        function clearActualDateFilter() {
+            actualFilterStart = '';
+            actualFilterEnd = '';
+            document.getElementById('actualFilterStartDate').value = '';
+            document.getElementById('actualFilterEndDate').value = '';
             actualCurrentPage = 1;
             renderActualTable();
         }
@@ -3587,6 +3680,34 @@
             }
 
             let data = [...actualTrackingData];
+
+            // Filter by tab: Pending = no actualEnd, Complete = has actualEnd
+            if (actualActiveTab === 'Pending') {
+                data = data.filter(d => !d.actualEnd || d.actualEnd === '');
+            } else {
+                data = data.filter(d => d.actualEnd && d.actualEnd !== '');
+            }
+
+            // Filter by buyer
+            if (actualActiveBuyer) {
+                data = data.filter(d => d.buyer && d.buyer.includes(actualActiveBuyer));
+            }
+
+            // Filter by date range (plan start/end)
+            if (actualFilterStart) {
+                const fs = new Date(actualFilterStart).setHours(0, 0, 0, 0);
+                data = data.filter(d => {
+                    if (!d.planStart) return false;
+                    return new Date(d.planStart).setHours(0, 0, 0, 0) >= fs;
+                });
+            }
+            if (actualFilterEnd) {
+                const fe = new Date(actualFilterEnd).setHours(0, 0, 0, 0);
+                data = data.filter(d => {
+                    if (!d.planEnd) return false;
+                    return new Date(d.planEnd).setHours(0, 0, 0, 0) <= fe;
+                });
+            }
 
             // Apply column filters
             for (let col in actualColFilters) {
@@ -3622,32 +3743,26 @@
                 const sl = start + idx + 1;
                 const encodedOrderNo = encodeURIComponent(d.orderNo);
 
-                // Compute Pass/Fail for Start
-                let startResult = '';
-                let startResultHtml = '<span class="text-gray-400 text-[10px]">—</span>';
+                // Compute Pass/Fail for Start: actual <= plan = Pass (started on time or early)
+                let startResultHtml = '<span class="text-gray-400 text-[10px]">\u2014</span>';
                 if (d.actualStart && d.planStart) {
                     const actualS = new Date(d.actualStart).setHours(0, 0, 0, 0);
                     const planS = new Date(d.planStart).setHours(0, 0, 0, 0);
-                    if (actualS >= planS) {
-                        startResult = 'Pass';
+                    if (actualS <= planS) {
                         startResultHtml = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
                     } else {
-                        startResult = 'Fail';
                         startResultHtml = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
                     }
                 }
 
-                // Compute Pass/Fail for End
-                let endResult = '';
-                let endResultHtml = '<span class="text-gray-400 text-[10px]">—</span>';
+                // Compute Pass/Fail for End: actual <= plan = Pass (ended on time or early)
+                let endResultHtml = '<span class="text-gray-400 text-[10px]">\u2014</span>';
                 if (d.actualEnd && d.planEnd) {
                     const actualE = new Date(d.actualEnd).setHours(0, 0, 0, 0);
                     const planE = new Date(d.planEnd).setHours(0, 0, 0, 0);
-                    if (actualE >= planE) {
-                        endResult = 'Pass';
+                    if (actualE <= planE) {
                         endResultHtml = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
                     } else {
-                        endResult = 'Fail';
                         endResultHtml = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
                     }
                 }
@@ -3657,7 +3772,6 @@
                     <td class="p-2 border-r border-gray-200 text-center font-bold text-gray-500">${sl}</td>
                     <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.orderNo}</td>
                     <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${d.buyer}</td>
-                    <td class="p-2 border-r border-gray-200 text-center text-gray-600">${d.bookingDate}</td>
                     <td class="p-2 border-r border-gray-200 text-center font-medium text-blue-700 bg-blue-50/30">${formatDateDisplay(d.planStart)}</td>
                     <td class="p-2 border-r border-gray-200 text-center font-medium text-blue-700 bg-blue-50/30">${formatDateDisplay(d.planEnd)}</td>
                     <td class="p-2 border-r border-gray-200 text-center">
@@ -3668,8 +3782,11 @@
                     </td>
                     <td class="p-2 border-r border-gray-200 text-center actual-start-result">${startResultHtml}</td>
                     <td class="p-2 border-r border-gray-200 text-center actual-end-result">${endResultHtml}</td>
+                    <td class="p-2 border-r border-gray-200">
+                        <input type="text" class="actual-fail-reason w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Fail Reason..." value="${d.failReason || ''}">
+                    </td>
                     <td class="p-2">
-                        <input type="text" class="actual-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Remarks..." value="${d.remarks || ''}">
+                        <input type="text" class="actual-related-dept w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Related Dept..." value="${d.relatedDept || ''}">
                     </td>
                 </tr>`;
             });
@@ -3691,30 +3808,50 @@
             const actualStart = startInput.value;
             const actualEnd = endInput.value;
 
-            // Compute Start Result
+            // Validation: Actual End can't be selected without Actual Start
+            if (actualEnd && !actualStart) {
+                showToast("Please select Actual Start date first!");
+                endInput.value = '';
+                endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
+                return;
+            }
+
+            // Validation: Actual End can't be less than Actual Start
+            if (actualStart && actualEnd) {
+                const aS = new Date(actualStart).setHours(0, 0, 0, 0);
+                const aE = new Date(actualEnd).setHours(0, 0, 0, 0);
+                if (aE < aS) {
+                    showToast("Actual End date cannot be before Actual Start date!");
+                    endInput.value = '';
+                    endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
+                    return;
+                }
+            }
+
+            // Compute Start Result: actual <= plan = Pass
             if (actualStart && planStart) {
                 const aS = new Date(actualStart).setHours(0, 0, 0, 0);
                 const pS = new Date(planStart).setHours(0, 0, 0, 0);
-                if (aS >= pS) {
+                if (aS <= pS) {
                     startResultCell.innerHTML = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
                 } else {
                     startResultCell.innerHTML = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
                 }
             } else {
-                startResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">—</span>';
+                startResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
             }
 
-            // Compute End Result
+            // Compute End Result: actual <= plan = Pass
             if (actualEnd && planEnd) {
                 const aE = new Date(actualEnd).setHours(0, 0, 0, 0);
                 const pE = new Date(planEnd).setHours(0, 0, 0, 0);
-                if (aE >= pE) {
+                if (aE <= pE) {
                     endResultCell.innerHTML = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
                 } else {
                     endResultCell.innerHTML = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
                 }
             } else {
-                endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">—</span>';
+                endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
             }
         }
 
@@ -3758,18 +3895,57 @@
 
             const actualKey = actualDeptKey + 'Actual';
             let savePayloads = [];
+            let validationFailed = false;
 
             rows.forEach(row => {
+                if (validationFailed) return;
                 const orderNo = decodeURIComponent(row.dataset.orderno);
                 const actualStart = row.querySelector('.actual-start-date').value;
                 const actualEnd = row.querySelector('.actual-end-date').value;
-                const remarks = row.querySelector('.actual-remarks').value;
+                const failReason = row.querySelector('.actual-fail-reason').value;
+                const relatedDept = row.querySelector('.actual-related-dept').value;
+
+                // Compute results to check if Fail
+                let startIsFail = false;
+                let endIsFail = false;
+                const planStart = row.querySelector('.actual-start-date').dataset.planStart;
+                const planEnd = row.querySelector('.actual-end-date').dataset.planEnd;
+
+                if (actualStart && planStart) {
+                    const aS = new Date(actualStart).setHours(0, 0, 0, 0);
+                    const pS = new Date(planStart).setHours(0, 0, 0, 0);
+                    if (aS > pS) startIsFail = true;
+                }
+                if (actualEnd && planEnd) {
+                    const aE = new Date(actualEnd).setHours(0, 0, 0, 0);
+                    const pE = new Date(planEnd).setHours(0, 0, 0, 0);
+                    if (aE > pE) endIsFail = true;
+                }
+
+                // Validation: If any result is Fail, Fail Reason and Related Dept are mandatory
+                if ((startIsFail || endIsFail) && (!failReason.trim() || !relatedDept.trim())) {
+                    showToast(`Save failed for ${orderNo}: "Fail Reason" and "Related Dept." are mandatory when result is Fail!`);
+                    if (!failReason.trim()) row.querySelector('.actual-fail-reason').style.borderColor = 'red';
+                    if (!relatedDept.trim()) row.querySelector('.actual-related-dept').style.borderColor = 'red';
+                    validationFailed = true;
+                    return;
+                }
+
+                // Validation: actualEnd < actualStart
+                if (actualStart && actualEnd) {
+                    if (new Date(actualEnd).setHours(0,0,0,0) < new Date(actualStart).setHours(0,0,0,0)) {
+                        showToast(`Save failed for ${orderNo}: Actual End cannot be before Actual Start!`);
+                        validationFailed = true;
+                        return;
+                    }
+                }
 
                 savePayloads.push({
                     orderNo: orderNo,
                     actualStart: actualStart,
                     actualEnd: actualEnd,
-                    remarks: remarks
+                    failReason: failReason,
+                    relatedDept: relatedDept
                 });
 
                 // Update local data too
@@ -3777,9 +3953,12 @@
                 if (localItem) {
                     localItem.actualStart = actualStart;
                     localItem.actualEnd = actualEnd;
-                    localItem.remarks = remarks;
+                    localItem.failReason = failReason;
+                    localItem.relatedDept = relatedDept;
                 }
             });
+
+            if (validationFailed) return;
 
             showToast('Saving actual tracking data...');
 
@@ -3798,7 +3977,8 @@
                             actualData: {
                                 actualStart: payload.actualStart,
                                 actualEnd: payload.actualEnd,
-                                remarks: payload.remarks
+                                failReason: payload.failReason,
+                                relatedDept: payload.relatedDept
                             }
                         })
                     });
@@ -3815,6 +3995,9 @@
             } else {
                 showToast(`Saved ${successCount}, Failed ${failCount} order(s).`);
             }
+
+            // Re-render to move items between tabs if actualEnd was added/removed
+            renderActualTable();
         }
 
     </script>
