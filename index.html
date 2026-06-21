@@ -1370,14 +1370,15 @@
                 deptRawData.forEach((row, index) => {
                     let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
-                    initGroup(bNo);
+                    
+                    if (groupedData[bNo]) {
+                        let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                        let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
+                        if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
+                        groupedData[bNo].buyers.add(buyer);
 
-                    let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
-                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
-                    groupedData[bNo].buyers.add(buyer);
-
-                    groupedData[bNo].excelItems.push(row);
+                        groupedData[bNo].excelItems.push(row);
+                    }
                 });
 
                 try {
@@ -1390,23 +1391,17 @@
 
                                 groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
                                 groupedData[plan.orderNo].generalInfo.CompletedDate = plan[`${currentDept}CompletedDate`] || null;
+                                
+                                ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
+                                    if (plan[dept] && Array.isArray(plan[dept])) {
+                                        plan[dept].forEach(item => {
+                                            let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim() : 'General';
+                                            if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
+                                            groupedData[plan.orderNo].buyers.add(b);
+                                        });
+                                    }
+                                });
                             }
-                            else {
-                                groupedData[plan.orderNo] = {
-                                    bookingNo: plan.orderNo, bookingDate: 'N/A', buyers: new Set(), buyerTeam: 'N/A', status: 'N/A',
-                                    excelItems: [], generalInfo: {}, dbData: plan
-                                };
-                            }
-
-                            ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
-                                if (plan[dept] && Array.isArray(plan[dept])) {
-                                    plan[dept].forEach(item => {
-                                        let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim() : 'General';
-                                        if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
-                                        groupedData[plan.orderNo].buyers.add(b);
-                                    });
-                                }
-                            });
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
