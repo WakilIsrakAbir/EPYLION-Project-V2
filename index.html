@@ -1109,6 +1109,7 @@
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
+            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
             document.getElementById('dashboardHomeView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
@@ -1122,6 +1123,7 @@
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('listView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
+            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
@@ -1138,6 +1140,7 @@
             document.getElementById('dashboardHomeView').classList.add('hidden');
             document.getElementById('dataManagementView').classList.add('hidden');
             document.getElementById('detailedView').classList.add('hidden');
+            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
             document.getElementById('listView').classList.remove('hidden');
 
             if (isReportMode) {
@@ -3694,6 +3697,7 @@
             if (document.getElementById('listView')) document.getElementById('listView').classList.add('hidden');
             if (document.getElementById('detailedView')) document.getElementById('detailedView').classList.add('hidden');
             if (document.getElementById('orderStatusSection')) document.getElementById('orderStatusSection').classList.add('hidden');
+            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
 
             // Show Plan vs Actual view
             const pvaView = document.getElementById('planVsActualView');
