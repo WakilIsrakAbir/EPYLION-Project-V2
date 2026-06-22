@@ -847,11 +847,17 @@
 
                 <!-- Date Range Filter -->
                 <div class="flex flex-wrap items-center gap-2 mb-3 shrink-0">
-                    <span class="text-[11px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">Start/End</span>
-                    <input type="date" id="actualFilterStartDate" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none">
+                    <span class="text-[11px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">Start</span>
+                    <input type="date" id="actualFilterStartMin" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none" title="Min Start Date">
                     <span class="text-gray-400 font-bold">—</span>
-                    <input type="date" id="actualFilterEndDate" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none">
-                    <button onclick="applyActualDateFilter()" class="px-3 py-1 bg-green-600 text-white font-bold rounded text-[11px] hover:bg-green-700 transition-colors">Apply Filter</button>
+                    <input type="date" id="actualFilterStartMax" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none" title="Max Start Date">
+                    
+                    <span class="text-[11px] font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded ml-2">End</span>
+                    <input type="date" id="actualFilterEndMin" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none" title="Min End Date">
+                    <span class="text-gray-400 font-bold">—</span>
+                    <input type="date" id="actualFilterEndMax" class="p-1 border border-gray-300 rounded text-[11px] focus:border-blue-500 outline-none" title="Max End Date">
+
+                    <button onclick="applyActualDateFilter()" class="px-3 py-1 bg-green-600 text-white font-bold rounded text-[11px] hover:bg-green-700 transition-colors ml-2">Apply Filter</button>
                     <button onclick="clearActualDateFilter()" class="px-3 py-1 bg-gray-200 text-gray-600 font-bold rounded text-[11px] hover:bg-gray-300 transition-colors">Clear</button>
                 </div>
 
@@ -869,8 +875,10 @@
                             <thead class="sticky top-0 z-20 bg-tableHeader shadow-sm">
                                 <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
                                     <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">SL</th>
-                                    <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+                                    <th class="p-2 border-r border-gray-300 bg-tableHeader w-[100px] min-w-[100px] max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">Order/Booking No.</th>
                                     <th class="p-2 border-r border-gray-300 bg-tableHeader">Buyer</th>
+                                    <th class="p-2 border-r border-gray-300 text-center bg-yellow-50 text-yellow-800 hidden" id="thDynamic1"></th>
+                                    <th class="p-2 border-r border-gray-300 text-center bg-yellow-50 text-yellow-800 hidden" id="thDynamic2"></th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-blue-50 text-blue-800">Plan Start</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-blue-50 text-blue-800">Plan End</th>
                                     <th class="p-2 border-r border-gray-300 text-center bg-green-50 text-green-800">Actual Start</th>
@@ -884,6 +892,8 @@
                                     <th class="p-1 border-r border-gray-300 bg-white"></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterActualByColumn(1, this.value)" placeholder="Search No..."></th>
                                     <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterActualByColumn(2, this.value)" placeholder="Search Buyer..."></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white hidden" id="thSearchDynamic1"></th>
+                                    <th class="p-1 border-r border-gray-300 bg-white hidden" id="thSearchDynamic2"></th>
                                     <th class="p-1 border-r border-gray-300 bg-white" colspan="8"></th>
                                 </tr>
                             </thead>
@@ -3456,11 +3466,36 @@
             actualColFilters = {};
             actualActiveTab = 'Pending';
             actualActiveBuyer = '';
-            actualFilterStart = '';
-            actualFilterEnd = '';
+            actualFilterStartMin = '';
+            actualFilterStartMax = '';
+            actualFilterEndMin = '';
+            actualFilterEndMax = '';
             document.querySelectorAll('#actualDataTable .header-search').forEach(inp => inp.value = '');
-            document.getElementById('actualFilterStartDate').value = '';
-            document.getElementById('actualFilterEndDate').value = '';
+            document.getElementById('actualFilterStartMin').value = '';
+            document.getElementById('actualFilterStartMax').value = '';
+            document.getElementById('actualFilterEndMin').value = '';
+            document.getElementById('actualFilterEndMax').value = '';
+
+            const th1 = document.getElementById('thDynamic1');
+            const th2 = document.getElementById('thDynamic2');
+            const ts1 = document.getElementById('thSearchDynamic1');
+            const ts2 = document.getElementById('thSearchDynamic2');
+            if (deptKey === 'knitting') {
+                th1.innerText = 'Knit Prod.'; th2.innerText = 'Knit Bal.';
+                th1.classList.remove('hidden'); th2.classList.remove('hidden');
+                ts1.classList.remove('hidden'); ts2.classList.remove('hidden');
+            } else if (deptKey === 'dyeing') {
+                th1.innerText = 'Dyeing Prod.'; th2.innerText = 'Dyeing Bal.';
+                th1.classList.remove('hidden'); th2.classList.remove('hidden');
+                ts1.classList.remove('hidden'); ts2.classList.remove('hidden');
+            } else if (deptKey === 'delivery') {
+                th1.innerText = 'NetDeliveryQtyKgs'; th2.innerText = 'Deli. Bal.';
+                th1.classList.remove('hidden'); th2.classList.remove('hidden');
+                ts1.classList.remove('hidden'); ts2.classList.remove('hidden');
+            } else {
+                th1.classList.add('hidden'); th2.classList.add('hidden');
+                ts1.classList.add('hidden'); ts2.classList.add('hidden');
+            }
 
             // Reset tab buttons UI
             document.getElementById('btnActualPending').className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
@@ -3526,6 +3561,48 @@
                     } catch (e) { console.error('File read err:', e); }
                 }
 
+                let deptExtMap = {};
+                let targetDeptName = actualDeptKey === 'knitting' ? 'Knitting' :
+                                     actualDeptKey === 'dyeing' ? 'Dyeing' :
+                                     actualDeptKey === 'delivery' ? 'Delivery' : null;
+
+                if (targetDeptName) {
+                    const dFilesRaw = allFiles.filter(f => f.category === targetDeptName);
+                    dFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    const latestDFilesMap = new Map();
+                    dFilesRaw.forEach(f => latestDFilesMap.set(f.originalName, f));
+                    const deptFiles = Array.from(latestDFilesMap.values());
+
+                    for (let file of deptFiles) {
+                        try {
+                            const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
+                            if (!fRes.ok) continue;
+                            const ab = await fRes.arrayBuffer();
+                            const wb = XLSX.read(ab, { type: 'array' });
+                            let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                            
+                            sheetData.forEach(row => {
+                                let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
+                                let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
+                                if (!bNo) return;
+                                
+                                if (!deptExtMap[bNo]) deptExtMap[bNo] = { prod: 0, bal: 0 };
+                                
+                                if (actualDeptKey === 'knitting') {
+                                    deptExtMap[bNo].prod += Number(getColData(row, ['Knit Prod.'])) || 0;
+                                    deptExtMap[bNo].bal += Number(getColData(row, ['Knit. Bala.', 'Knit Bal.'])) || 0;
+                                } else if (actualDeptKey === 'dyeing') {
+                                    deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
+                                    deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
+                                } else if (actualDeptKey === 'delivery') {
+                                    deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs'])) || 0;
+                                    deptExtMap[bNo].bal += Number(getColData(row, ['Deli. Bal.', 'Deli Bal.'])) || 0;
+                                }
+                            });
+                        } catch (e) { console.error('Dept File read err:', e); }
+                    }
+                }
+
                 // Process saved plans - find orders with confirmed items in the target department
                 savedPlans.forEach(plan => {
                     const deptItems = plan[actualDeptKey];
@@ -3584,6 +3661,13 @@
                         if (buyersFromItems.size > 0) displayBuyer = Array.from(buyersFromItems).join(', ');
                     }
 
+                    let extProd = '';
+                    let extBal = '';
+                    if (targetDeptName && deptExtMap[plan.orderNo]) {
+                        extProd = deptExtMap[plan.orderNo].prod;
+                        extBal = deptExtMap[plan.orderNo].bal;
+                    }
+
                     actualTrackingData.push({
                         orderNo: plan.orderNo,
                         buyer: displayBuyer,
@@ -3593,7 +3677,9 @@
                         actualStart: actualStart,
                         actualEnd: actualEnd,
                         failReason: failReason,
-                        relatedDept: relatedDept
+                        relatedDept: relatedDept,
+                        extProd: extProd,
+                        extBal: extBal
                     });
                 });
 
@@ -3649,17 +3735,23 @@
         }
 
         function applyActualDateFilter() {
-            actualFilterStart = document.getElementById('actualFilterStartDate').value;
-            actualFilterEnd = document.getElementById('actualFilterEndDate').value;
+            actualFilterStartMin = document.getElementById('actualFilterStartMin').value;
+            actualFilterStartMax = document.getElementById('actualFilterStartMax').value;
+            actualFilterEndMin = document.getElementById('actualFilterEndMin').value;
+            actualFilterEndMax = document.getElementById('actualFilterEndMax').value;
             actualCurrentPage = 1;
             renderActualTable();
         }
 
         function clearActualDateFilter() {
-            actualFilterStart = '';
-            actualFilterEnd = '';
-            document.getElementById('actualFilterStartDate').value = '';
-            document.getElementById('actualFilterEndDate').value = '';
+            actualFilterStartMin = '';
+            actualFilterStartMax = '';
+            actualFilterEndMin = '';
+            actualFilterEndMax = '';
+            document.getElementById('actualFilterStartMin').value = '';
+            document.getElementById('actualFilterStartMax').value = '';
+            document.getElementById('actualFilterEndMin').value = '';
+            document.getElementById('actualFilterEndMax').value = '';
             actualCurrentPage = 1;
             renderActualTable();
         }
@@ -3694,15 +3786,29 @@
             }
 
             // Filter by date range (plan start/end)
-            if (actualFilterStart) {
-                const fs = new Date(actualFilterStart).setHours(0, 0, 0, 0);
+            if (actualFilterStartMin) {
+                const fs = new Date(actualFilterStartMin).setHours(0, 0, 0, 0);
                 data = data.filter(d => {
                     if (!d.planStart) return false;
                     return new Date(d.planStart).setHours(0, 0, 0, 0) >= fs;
                 });
             }
-            if (actualFilterEnd) {
-                const fe = new Date(actualFilterEnd).setHours(0, 0, 0, 0);
+            if (actualFilterStartMax) {
+                const fe = new Date(actualFilterStartMax).setHours(0, 0, 0, 0);
+                data = data.filter(d => {
+                    if (!d.planStart) return false;
+                    return new Date(d.planStart).setHours(0, 0, 0, 0) <= fe;
+                });
+            }
+            if (actualFilterEndMin) {
+                const fs = new Date(actualFilterEndMin).setHours(0, 0, 0, 0);
+                data = data.filter(d => {
+                    if (!d.planEnd) return false;
+                    return new Date(d.planEnd).setHours(0, 0, 0, 0) >= fs;
+                });
+            }
+            if (actualFilterEndMax) {
+                const fe = new Date(actualFilterEndMax).setHours(0, 0, 0, 0);
                 data = data.filter(d => {
                     if (!d.planEnd) return false;
                     return new Date(d.planEnd).setHours(0, 0, 0, 0) <= fe;
@@ -3726,7 +3832,8 @@
 
             if (data.length === 0) {
                 paginationControls.classList.add('hidden');
-                tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500 bg-white"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found.</td></tr>`;
+                let cols = (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery') ? 13 : 11;
+                tbody.innerHTML = `<tr><td colspan="${cols}" class="p-10 text-center text-gray-500 bg-white"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found.</td></tr>`;
                 return;
             }
 
@@ -3767,11 +3874,20 @@
                     }
                 }
 
+                let dynColsHtml = '';
+                if (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery') {
+                    dynColsHtml = `
+                    <td class="p-2 border-r border-gray-200 text-center font-medium bg-yellow-50/30">${d.extProd !== '' ? d.extProd.toFixed(2) : ''}</td>
+                    <td class="p-2 border-r border-gray-200 text-center font-medium bg-yellow-50/30">${d.extBal !== '' ? d.extBal.toFixed(2) : ''}</td>
+                    `;
+                }
+
                 html += `
                 <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors actual-row" data-orderno="${encodedOrderNo}">
                     <td class="p-2 border-r border-gray-200 text-center font-bold text-gray-500">${sl}</td>
-                    <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${d.orderNo}</td>
+                    <td class="p-2 border-r border-gray-200 text-blue-700 font-bold w-[100px] min-w-[100px] max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap" title="${d.orderNo}">${d.orderNo}</td>
                     <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${d.buyer}</td>
+                    ${dynColsHtml}
                     <td class="p-2 border-r border-gray-200 text-center font-medium text-blue-700 bg-blue-50/30">${formatDateDisplay(d.planStart)}</td>
                     <td class="p-2 border-r border-gray-200 text-center font-medium text-blue-700 bg-blue-50/30">${formatDateDisplay(d.planEnd)}</td>
                     <td class="p-2 border-r border-gray-200 text-center">
