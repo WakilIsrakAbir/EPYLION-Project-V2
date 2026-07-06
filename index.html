@@ -1086,7 +1086,7 @@
             const sidebarDataManagement = document.getElementById('sidebarDataManagement');
             if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
             else { if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden'); }
-            if (role === 'Viewer') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
+            if (role === 'Viewer' || role === 'Approver') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
             else { if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden'); }
             const uploadArea = document.getElementById('uploadArea');
             if (role === 'Viewer') { if (uploadArea) uploadArea.style.display = 'none'; }
@@ -2391,7 +2391,7 @@
             itemBody.innerHTML = itemHtml;
 
             const userRole = localStorage.getItem('role');
-            const isAdmin = userRole ? userRole.toLowerCase() === 'admin' : false;
+            const isAdmin = userRole ? (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'approver') : false;
 
             document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
                 const planSelect = row.querySelector('.row-plan-type');
@@ -2690,7 +2690,7 @@
                 let validationFailed = false;
 
                 const userRole = localStorage.getItem('role');
-                const isAdmin = userRole ? userRole.toLowerCase() === 'admin' : false;
+                const isAdmin = userRole ? (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'approver') : false;
 
                 const checkDownstreamConfirm = (dept, itemId) => {
                     if (!existingData.dbData) return false;

@@ -103,6 +103,7 @@
                                 class="w-full border border-gray-300 rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition bg-gray-50 focus:bg-white appearance-none cursor-pointer relative z-0">
                                 <option value="Viewer">Viewer (Read Only)</option>
                                 <option value="Planner">Planner (Edit Data)</option>
+                                <option value="Approver">Approver (Admin without Data Mgmt)</option>
                                 <option value="Admin">Admin (Full Access)</option>
                             </select>
                             <i
@@ -161,6 +162,7 @@
                 const users = await response.json();
 
                 const admins = users.filter(u => u.role === 'Admin');
+                const approvers = users.filter(u => u.role === 'Approver');
                 const planners = users.filter(u => u.role === 'Planner');
                 const viewers = users.filter(u => u.role === 'Viewer');
 
@@ -168,6 +170,7 @@
                 container.innerHTML = '';
 
                 if (admins.length > 0) container.innerHTML += renderUserSection('Admin Management Team', admins, 'text-red-600', 'bg-red-50', 'border-red-200', 'fa-user-shield');
+                if (approvers.length > 0) container.innerHTML += renderUserSection('Approvers', approvers, 'text-purple-600', 'bg-purple-50', 'border-purple-200', 'fa-user-check');
                 if (planners.length > 0) container.innerHTML += renderUserSection('Planning & Operation Team', planners, 'text-blue-600', 'bg-blue-50', 'border-blue-200', 'fa-user-edit');
                 if (viewers.length > 0) container.innerHTML += renderUserSection('Viewers & Observers', viewers, 'text-gray-600', 'bg-gray-100', 'border-gray-200', 'fa-eye');
 
