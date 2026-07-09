@@ -3388,44 +3388,37 @@
                 if (!itemsBody) return;
                 itemsBody.innerHTML = '';
 
-                if (orderData.mergedItems && orderData.mergedItems.length > 0) {
+                if (orderData.dbData) {
                     let knitStarts = [], knitEnds = [], knitTypes = new Set();
                     let dyeStarts = [], dyeEnds = [], dyeTypes = new Set();
                     let deliStarts = [], deliEnds = [], deliTypes = new Set();
 
-                    orderData.mergedItems.forEach(item => {
-                        const itemData = item.itemData || {};
+                    // Extract ALL knitting plan dates from dbData directly (not filtered by mergedItems)
+                    if (orderData.dbData.knitting && Array.isArray(orderData.dbData.knitting)) {
+                        orderData.dbData.knitting.forEach(kItem => {
+                            if (kItem.startDate && kItem.startDate !== '' && kItem.startDate !== '-') knitStarts.push(kItem.startDate);
+                            if (kItem.endDate && kItem.endDate !== '' && kItem.endDate !== '-') knitEnds.push(kItem.endDate);
+                            if (kItem.planType) knitTypes.add(kItem.planType);
+                        });
+                    }
 
-                        if (orderData.dbData) {
-                            const myColor = String(itemData.Color || '').trim().toLowerCase();
-                            const myConst = String(itemData.FabricConstruction || '').trim().toLowerCase();
+                    // Extract ALL dyeing plan dates from dbData directly
+                    if (orderData.dbData.dyeing && Array.isArray(orderData.dbData.dyeing)) {
+                        orderData.dbData.dyeing.forEach(dItem => {
+                            if (dItem.startDate && dItem.startDate !== '' && dItem.startDate !== '-') dyeStarts.push(dItem.startDate);
+                            if (dItem.endDate && dItem.endDate !== '' && dItem.endDate !== '-') dyeEnds.push(dItem.endDate);
+                            if (dItem.planType) dyeTypes.add(dItem.planType);
+                        });
+                    }
 
-                            if (orderData.dbData.knitting) {
-                                const kItem = orderData.dbData.knitting.find(k => k.itemData && String(k.itemData.Color || '').trim().toLowerCase() === myColor && String(k.itemData.FabricConstruction || '').trim().toLowerCase() === myConst);
-                                if (kItem) {
-                                    if (kItem.startDate) knitStarts.push(kItem.startDate);
-                                    if (kItem.endDate) knitEnds.push(kItem.endDate);
-                                    if (kItem.planType) knitTypes.add(kItem.planType);
-                                }
-                            }
-                            if (orderData.dbData.dyeing) {
-                                const dItem = orderData.dbData.dyeing.find(d => d.itemData && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
-                                if (dItem) {
-                                    if (dItem.startDate) dyeStarts.push(dItem.startDate);
-                                    if (dItem.endDate) dyeEnds.push(dItem.endDate);
-                                    if (dItem.planType) dyeTypes.add(dItem.planType);
-                                }
-                            }
-                            if (orderData.dbData.delivery) {
-                                const delItem = orderData.dbData.delivery.find(dl => dl.itemData && String(dl.itemData.Color || '').trim().toLowerCase() === myColor && String(dl.itemData.FabricConstruction || '').trim().toLowerCase() === myConst);
-                                if (delItem) {
-                                    if (delItem.startDate) deliStarts.push(delItem.startDate);
-                                    if (delItem.endDate) deliEnds.push(delItem.endDate);
-                                    if (delItem.planType) deliTypes.add(delItem.planType);
-                                }
-                            }
-                        }
-                    });
+                    // Extract ALL delivery plan dates from dbData directly
+                    if (orderData.dbData.delivery && Array.isArray(orderData.dbData.delivery)) {
+                        orderData.dbData.delivery.forEach(delItem => {
+                            if (delItem.startDate && delItem.startDate !== '' && delItem.startDate !== '-') deliStarts.push(delItem.startDate);
+                            if (delItem.endDate && delItem.endDate !== '' && delItem.endDate !== '-') deliEnds.push(delItem.endDate);
+                            if (delItem.planType) deliTypes.add(delItem.planType);
+                        });
+                    }
 
                     const getMinDate = (dates) => {
                         const valid = dates.filter(d => d && d !== '-');
@@ -3460,7 +3453,7 @@
                             <td class="px-2 py-2 text-orange-900 font-bold bg-orange-50/30">${delType}</td>
                         </tr>`;
                 } else {
-                    itemsBody.innerHTML = `<tr><td colspan="9" class="p-4 text-gray-500">No specific fabric item planning found.</td></tr>`;
+                    itemsBody.innerHTML = `<tr><td colspan="9" class="p-4 text-gray-500">No planning data available for this order.</td></tr>`;
                 }
             }
 
