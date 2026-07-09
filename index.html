@@ -2892,6 +2892,45 @@
                         }
                     });
                 });
+
+                const floorStartInputs = document.querySelectorAll('#detFabricItemsBody .row-floor-start');
+                const floorEndInputs = document.querySelectorAll('#detFabricItemsBody .row-floor-end');
+                const floorPlanInputs = document.querySelectorAll('#detFabricItemsBody .row-floor-plan');
+
+                if (floorStartInputs.length > 0) {
+                    floorStartInputs.forEach((input, index) => {
+                        input.addEventListener('change', function () {
+                            if (index === 0) {
+                                const newVal = this.value;
+                                floorStartInputs.forEach((otherInput, idx) => {
+                                    if (idx !== 0) otherInput.value = newVal;
+                                });
+                            }
+                        });
+                    });
+
+                    floorEndInputs.forEach((input, index) => {
+                        input.addEventListener('change', function () {
+                            if (index === 0) {
+                                const newVal = this.value;
+                                floorEndInputs.forEach((otherInput, idx) => {
+                                    if (idx !== 0) otherInput.value = newVal;
+                                });
+                            }
+                        });
+                    });
+
+                    floorPlanInputs.forEach((input, index) => {
+                        input.addEventListener('change', function () {
+                            if (index === 0) {
+                                const newVal = this.value;
+                                floorPlanInputs.forEach((otherInput, idx) => {
+                                    if (idx !== 0) otherInput.value = newVal;
+                                });
+                            }
+                        });
+                    });
+                }
             }
         }
 
