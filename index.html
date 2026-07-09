@@ -433,6 +433,22 @@
 
                 <div id="normalListContainer" class="flex-1 flex flex-col min-h-0 w-full">
                     <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
+                        <!-- Global Booking Search Bar -->
+                        <div class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-md p-2">
+                            <i class="fas fa-search text-blue-500 ml-2"></i>
+                            <input type="text" id="globalBookingSearch" placeholder="Search Booking No. (e.g., 270757, 270952)..." 
+                                class="flex-1 px-3 py-2 border border-blue-300 rounded text-sm focus:border-blue-500 outline-none"
+                                onkeypress="if(event.key==='Enter') searchGlobalBooking()" />
+                            <button onclick="searchGlobalBooking()" 
+                                class="px-4 py-2 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 transition text-sm">
+                                <i class="fas fa-search mr-1"></i> Search
+                            </button>
+                            <button onclick="clearGlobalSearch()" 
+                                class="px-3 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition text-sm">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
                         <div
                             class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3 sm:gap-2">
                             <div class="flex flex-wrap w-full sm:w-auto gap-1 sm:gap-2">
@@ -1352,6 +1368,85 @@
             document.querySelectorAll('.buyer-tab').forEach(t => t.classList.remove('active'));
             currentPage = 1;
             renderMainTable();
+        }
+
+        function searchGlobalBooking() {
+            const searchVal = document.getElementById('globalBookingSearch').value.trim();
+            if (!searchVal) {
+                showToast('Please enter a Booking No. to search');
+                return;
+            }
+
+            const searchLower = searchVal.toLowerCase();
+            let found = false;
+            let foundList = '';
+            let foundBuyer = '';
+
+            // Search in all lists
+            Object.values(groupedData).forEach(g => {
+                if (g.bookingNo.toLowerCase() === searchLower || g.bookingNo.toLowerCase().includes(searchLower)) {
+                    found = true;
+                    
+                    // Determine which list it belongs to
+                    const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
+                    if (status === 'Completed') {
+                        foundList = 'All';
+                    } else if (g.isPending) {
+                        foundList = 'Pending';
+                    } else if (g.isConfirm) {
+                        foundList = 'Confirm';
+                    } else if (g.isTentative) {
+                        foundList = 'Tentative';
+                    }
+                    
+                    // Get buyer
+                    if (g.buyers && g.buyers.size > 0) {
+                        foundBuyer = Array.from(g.buyers)[0];
+                    }
+                }
+            });
+
+            if (!found) {
+                showToast(`Booking "${searchVal}" not found in this department!`);
+                return;
+            }
+
+            // Activate the correct list
+            if (foundList) {
+                activateMainTab(foundList);
+            }
+
+            // After a small delay, activate the buyer filter and scroll to result
+            setTimeout(() => {
+                if (foundBuyer) {
+                    activateBuyerFilter(foundBuyer);
+                }
+                
+                // Highlight the searched row
+                setTimeout(() => {
+                    const rows = document.querySelectorAll('#mainTableBody tr');
+                    rows.forEach(row => {
+                        const bookingCell = row.querySelector('td:nth-child(2)');
+                        if (bookingCell && bookingCell.innerText.toLowerCase() === searchLower) {
+                            row.style.backgroundColor = '#fef08a'; // Yellow highlight
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            
+                            // Remove highlight after 3 seconds
+                            setTimeout(() => {
+                                row.style.backgroundColor = '';
+                            }, 3000);
+                        }
+                    });
+                }, 100);
+                
+                showToast(`Found "${searchVal}" in ${foundList} List under ${foundBuyer || 'Unknown'} buyer!`);
+            }, 200);
+        }
+
+        function clearGlobalSearch() {
+            document.getElementById('globalBookingSearch').value = '';
+            activateMainTab('Pending');
+            showToast('Search cleared. Showing Pending List.');
         }
 
         async function fetchAndProcessData(isSilent = false) {
