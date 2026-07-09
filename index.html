@@ -1381,66 +1381,152 @@
             let found = false;
             let foundList = '';
             let foundBuyer = '';
+            let foundBookingExact = '';
 
-            // Search in all lists
-            Object.values(groupedData).forEach(g => {
-                if (g.bookingNo.toLowerCase() === searchLower || g.bookingNo.toLowerCase().includes(searchLower)) {
-                    found = true;
-                    
-                    // Determine which list it belongs to
-                    const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
-                    if (status === 'Completed') {
-                        foundList = 'All';
-                    } else if (g.isPending) {
-                        foundList = 'Pending';
-                    } else if (g.isConfirm) {
-                        foundList = 'Confirm';
-                    } else if (g.isTentative) {
-                        foundList = 'Tentative';
-                    }
-                    
-                    // Get buyer
-                    if (g.buyers && g.buyers.size > 0) {
-                        foundBuyer = Array.from(g.buyers)[0];
-                    }
-                }
+            // First find all matches
+            const allItems = Object.values(groupedData);
+            let matchedItems = allItems.filter(g => {
+                const bookingLower = g.bookingNo.toLowerCase();
+                return bookingLower === searchLower || bookingLower.includes(searchLower);
             });
+
+            if (matchedItems.length > 0) {
+                found = true;
+                
+                // Prioritize exact match if available
+                let targetGroup = matchedItems.find(g => g.bookingNo.toLowerCase() === searchLower);
+                if (!targetGroup) {
+                    targetGroup = matchedItems[0]; // Fallback to the first partial match
+                }
+                
+                foundBookingExact = targetGroup.bookingNo;
+                
+                // Determine which list it belongs to
+                const status = (targetGroup.generalInfo && targetGroup.generalInfo.OrderStatus) ? targetGroup.generalInfo.OrderStatus : 'On Process';
+                if (status === 'Completed') {
+                    foundList = 'All';
+                } else if (targetGroup.isPending) {
+                    foundList = 'Pending';
+                } else if (targetGroup.isConfirm) {
+                    foundList = 'Confirm';
+                } else if (targetGroup.isTentative) {
+                    foundList = 'Tentative';
+                }
+                
+                // Get buyer - uppercase normalize
+                if (targetGroup.buyers && targetGroup.buyers.size > 0) {
+                    foundBuyer = Array.from(targetGroup.buyers)[0].toUpperCase().trim();
+                }
+            }
 
             if (!found) {
                 showToast(`Booking "${searchVal}" not found in this department!`);
                 return;
             }
 
-            // Activate the correct list
+            // First activate the correct list
             if (foundList) {
-                activateMainTab(foundList);
+                activeMainTab = foundList;
+                const tabs = ['Pending', 'Confirm', 'Tentative', 'All'];
+                tabs.forEach(t => {
+                    const btn = document.getElementById('btn' + t);
+                    if (btn) {
+                        if (t === foundList) btn.className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+                        else btn.className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+                    }
+                });
             }
 
-            // After a small delay, activate the buyer filter and scroll to result
-            setTimeout(() => {
-                if (foundBuyer) {
-                    activateBuyerFilter(foundBuyer);
+            // Set buyer filter
+            if (foundBuyer) {
+                activeBuyer = foundBuyer;
+            }
+            
+            // Get filtered data to calculate correct page
+            let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
+            
+            // Filter by status
+            data = data.filter(g => {
+                const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
+                if (activeMainTab === 'All') return status === 'Completed';
+                return status !== 'Completed';
+            });
+            
+            // Filter by main tab
+            if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
+            else if (activeMainTab === 'Confirm') data = data.filter(d => d.isConfirm);
+            else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
+            
+            // Filter by buyer
+            if (activeBuyer !== '') {
+                const searchB = activeBuyer.toLowerCase().trim();
+                data = data.filter(d => {
+                    const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim());
+                    return bArr.includes(searchB);
+                });
+            }
+            
+            // Find which page the booking is on
+            let foundIndex = -1;
+            data.forEach((d, idx) => {
+                if (d.bookingNo === foundBookingExact || d.bookingNo.toLowerCase() === searchLower) {
+                    foundIndex = idx;
                 }
+            });
+            
+            // Calculate correct page
+            if (foundIndex >= 0) {
+                currentPage = Math.floor(foundIndex / rowsPerPage) + 1;
+            } else {
+                currentPage = 1;
+            }
+            
+            // Render table FIRST
+            renderMainTable();
+            
+            // After table renders, FORCE buyer tab activation and highlight row
+            setTimeout(() => {
+                // FORCE buyer tabs visual update (re-render all tabs with correct active state)
+                const buyerTabs = document.querySelectorAll('.buyer-tab');
+                buyerTabs.forEach(tab => {
+                    const tabText = tab.innerText.toUpperCase().trim();
+                    if (tabText === foundBuyer.toUpperCase().trim()) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
                 
-                // Highlight the searched row
-                setTimeout(() => {
-                    const rows = document.querySelectorAll('#mainTableBody tr');
-                    rows.forEach(row => {
-                        const bookingCell = row.querySelector('td:nth-child(2)');
-                        if (bookingCell && bookingCell.innerText.toLowerCase() === searchLower) {
-                            row.style.backgroundColor = '#fef08a'; // Yellow highlight
-                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight the matching row with yellow background
+                const rows = document.querySelectorAll('#mainTableBody tr');
+                let highlighted = false;
+                rows.forEach(row => {
+                    const bookingCell = row.querySelector('td:nth-child(2)');
+                    if (bookingCell) {
+                        const cellText = bookingCell.innerText.trim();
+                        if (cellText === foundBookingExact || cellText.toLowerCase() === searchLower) {
+                            // Apply yellow highlight
+                            row.style.backgroundColor = '#fef08a';
+                            row.style.transition = 'background-color 0.3s';
                             
-                            // Remove highlight after 3 seconds
+                            // Scroll into view
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            highlighted = true;
+                            
+                            // Remove highlight after 4 seconds
                             setTimeout(() => {
                                 row.style.backgroundColor = '';
-                            }, 3000);
+                            }, 4000);
                         }
-                    });
-                }, 100);
+                    }
+                });
                 
-                showToast(`Found "${searchVal}" in ${foundList} List under ${foundBuyer || 'Unknown'} buyer!`);
-            }, 200);
+                if (highlighted) {
+                    showToast(`✓ Found "${foundBookingExact}" in ${foundList} List under ${foundBuyer} buyer!`);
+                } else {
+                    showToast(`Booking found in database but not displayed. Try different filters.`);
+                }
+            }, 500);
         }
 
         function clearGlobalSearch() {
