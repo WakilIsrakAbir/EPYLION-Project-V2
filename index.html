@@ -844,7 +844,12 @@
                                             Start</th>
                                         <th class="px-2 py-3 border-r border-gray-200 bg-orange-50/50 text-orange-800">Deli End
                                         </th>
-                                        <th class="px-2 py-3 bg-orange-50/50 text-orange-800">Deli Type</th>
+                                        <th class="px-2 py-3 border-r border-gray-200 bg-orange-50/50 text-orange-800">Deli Type</th>
+                                        <th class="px-2 py-3 border-r border-gray-200 bg-orange-50/50 text-orange-800">Deli
+                                            Start (Floor)</th>
+                                        <th class="px-2 py-3 border-r border-gray-200 bg-orange-50/50 text-orange-800">Deli End (Floor)
+                                        </th>
+                                        <th class="px-2 py-3 bg-orange-50/50 text-orange-800">Deli Type (Floor)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="osDetailedItemsBody" class="divide-y divide-gray-100 text-gray-600">
@@ -3668,6 +3673,7 @@
                     let knitStarts = [], knitEnds = [], knitTypes = new Set();
                     let dyeStarts = [], dyeEnds = [], dyeTypes = new Set();
                     let deliStarts = [], deliEnds = [], deliTypes = new Set();
+                    let deliFloorStarts = [], deliFloorEnds = [], deliFloorTypes = new Set();
 
                     // Extract ALL knitting plan dates from dbData directly (not filtered by mergedItems)
                     if (orderData.dbData.knitting && Array.isArray(orderData.dbData.knitting)) {
@@ -3693,6 +3699,9 @@
                             if (delItem.startDate && delItem.startDate !== '' && delItem.startDate !== '-') deliStarts.push(delItem.startDate);
                             if (delItem.endDate && delItem.endDate !== '' && delItem.endDate !== '-') deliEnds.push(delItem.endDate);
                             if (delItem.planType) deliTypes.add(delItem.planType);
+                            if (delItem.floorStartDate && delItem.floorStartDate !== '' && delItem.floorStartDate !== '-') deliFloorStarts.push(delItem.floorStartDate);
+                            if (delItem.floorEndDate && delItem.floorEndDate !== '' && delItem.floorEndDate !== '-') deliFloorEnds.push(delItem.floorEndDate);
+                            if (delItem.floorPlanType) deliFloorTypes.add(delItem.floorPlanType);
                         });
                     }
 
@@ -3715,6 +3724,7 @@
                     let kStart = getMinDate(knitStarts), kEnd = getMaxDate(knitEnds), kType = getAggType(knitTypes);
                     let dStart = getMinDate(dyeStarts), dEnd = getMaxDate(dyeEnds), dType = getAggType(dyeTypes);
                     let delStart = getMinDate(deliStarts), delEnd = getMaxDate(deliEnds), delType = getAggType(deliTypes);
+                    let delFloorStart = getMinDate(deliFloorStarts), delFloorEnd = getMaxDate(deliFloorEnds), delFloorType = getAggType(deliFloorTypes);
 
                     itemsBody.innerHTML = `
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
@@ -3726,10 +3736,13 @@
                             <td class="px-2 py-2 border-r text-green-900 font-bold bg-green-50/30">${dType}</td>
                             <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delStart)}</td>
                             <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delEnd)}</td>
-                            <td class="px-2 py-2 text-orange-900 font-bold bg-orange-50/30">${delType}</td>
+                            <td class="px-2 py-2 border-r text-orange-900 font-bold bg-orange-50/30">${delType}</td>
+                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delFloorStart)}</td>
+                            <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delFloorEnd)}</td>
+                            <td class="px-2 py-2 text-orange-900 font-bold bg-orange-50/30">${delFloorType}</td>
                         </tr>`;
                 } else {
-                    itemsBody.innerHTML = `<tr><td colspan="9" class="p-4 text-gray-500">No planning data available for this order.</td></tr>`;
+                    itemsBody.innerHTML = `<tr><td colspan="12" class="p-4 text-gray-500">No planning data available for this order.</td></tr>`;
                 }
             }
 
