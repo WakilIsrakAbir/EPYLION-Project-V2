@@ -1298,6 +1298,8 @@
                     document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
 
                     let rightHtml = `
+                        <th class="p-2 border-r border-gray-300 text-center bg-gray-200 dynamic-th" colspan="2">Delivery Planning (Floor)</th>
+                        <th class="p-2 border-r border-gray-300 text-center dynamic-th">Plan Type (Floor)</th>
                         <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">RequiredQtyKgs</th>
                         <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">NetReceivedQtyKgs</th>
                         <th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">NetDeliveryQtyKgs</th>
@@ -1316,9 +1318,14 @@
                         <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
                         <th class="border-r border-gray-300 dynamic-th"></th>
                     `;
+                    let floorSubHtml = `
+                        <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Start Date</th>
+                        <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">End Date</th>
+                        <th class="border-r border-gray-300 dynamic-th"></th>
+                    `;
 
                     document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="3"></th>` + knitSubHtml + dyeingSubHtml);
-                    document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="6"></th>`);
+                    document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', floorSubHtml + `<th class="border-r border-gray-300 dynamic-th" colspan="6"></th>`);
 
                 } else {
                     mainCols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'Process Name', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'BP Qty', 'Dyeing Prod.', 'Dyeing Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
@@ -1844,6 +1851,9 @@
                                     planType: oldDbItem.planType || '',
                                     limitation: oldDbItem.limitation || '',
                                     remarks: oldDbItem.remarks || '',
+                                    floorStartDate: oldDbItem.floorStartDate || '',
+                                    floorEndDate: oldDbItem.floorEndDate || '',
+                                    floorPlanType: oldDbItem.floorPlanType || '',
                                     source: 'Both'
                                 });
                             } else {
@@ -1869,12 +1879,16 @@
                                         planType: recoveredDbItem.planType || '',
                                         limitation: recoveredDbItem.limitation || '',
                                         remarks: recoveredDbItem.remarks || '',
+                                        floorStartDate: recoveredDbItem.floorStartDate || '',
+                                        floorEndDate: recoveredDbItem.floorEndDate || '',
+                                        floorPlanType: recoveredDbItem.floorPlanType || '',
                                         source: 'Recovered'
                                     });
                                 } else {
                                     mergedItemsMap.set(strictId, {
                                         itemId: strictId, itemData: dynamicItemData,
-                                        startDate: '', endDate: '', planType: '', limitation: '', remarks: '', source: 'Excel'
+                                        startDate: '', endDate: '', planType: '', limitation: '', remarks: '',
+                                        floorStartDate: '', floorEndDate: '', floorPlanType: '', source: 'Excel'
                                     });
                                 }
                             }
@@ -1913,6 +1927,9 @@
                                     planType: dbItem.planType || '',
                                     limitation: dbItem.limitation || '',
                                     remarks: dbItem.remarks || '',
+                                    floorStartDate: dbItem.floorStartDate || '',
+                                    floorEndDate: dbItem.floorEndDate || '',
+                                    floorPlanType: dbItem.floorPlanType || '',
                                     source: 'DB_Only'
                                 });
                             }
@@ -2510,6 +2527,36 @@
                         <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Notes" value="${item.remarks || ''}"></td>
                     `;
 
+                    let floorStart = item.floorStartDate || '';
+                    let floorEnd = item.floorEndDate || '';
+                    let floorPlanType = item.floorPlanType || '';
+
+                    if (!item.floorStartDate && dyePlan.start) {
+                        let d = new Date(dyePlan.start);
+                        d.setDate(d.getDate() + 7);
+                        floorStart = d.toISOString().split('T')[0];
+                    }
+                    if (!item.floorEndDate && dyePlan.end) {
+                        let d = new Date(dyePlan.end);
+                        d.setDate(d.getDate() + 7);
+                        floorEnd = d.toISOString().split('T')[0];
+                    }
+                    if (!item.floorPlanType) {
+                        floorPlanType = 'Tentative';
+                    }
+
+                    itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-start p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${floorStart}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${floorEnd}"></td>
+                        <td class="p-2 border-r border-gray-300 text-center">
+                            <select class="row-floor-plan p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                                <option value="" ${!floorPlanType ? 'selected' : ''}>Select</option>
+                                <option value="Confirm" ${floorPlanType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                                <option value="Tentative" ${floorPlanType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                            </select>
+                        </td>
+                    `;
+
                     const numCols = ['RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
                     numCols.forEach(c => {
                         let val = item.itemData[c];
@@ -2978,6 +3025,13 @@
                     const newLimitation = row.querySelector('.row-limitation') ? row.querySelector('.row-limitation').value : '';
                     const newRemarks = row.querySelector('.row-remarks') ? row.querySelector('.row-remarks').value : '';
 
+                    let floorStart = '', floorEnd = '', floorPlan = '';
+                    if (row.querySelector('.row-floor-start')) {
+                        floorStart = row.querySelector('.row-floor-start').value;
+                        floorEnd = row.querySelector('.row-floor-end').value;
+                        floorPlan = row.querySelector('.row-floor-plan').value;
+                    }
+
                     if (row.querySelector('.row-unit')) itemData.Unit = row.querySelector('.row-unit').value;
                     if (row.querySelector('.row-process')) {
                         let pVal = row.querySelector('.row-process').value;
@@ -2988,13 +3042,15 @@
                     allItemsMap.set(id, {
                         itemId: id, itemData: itemData,
                         startDate: newStartDate, endDate: newEndDate,
-                        planType: newPlanType, limitation: newLimitation, remarks: newRemarks
+                        planType: newPlanType, limitation: newLimitation, remarks: newRemarks,
+                        floorStartDate: floorStart, floorEndDate: floorEnd, floorPlanType: floorPlan
                     });
 
                     let target = existingData.mergedItems.find(m => m.itemId === id);
                     if (target) {
                         target.planType = newPlanType; target.startDate = newStartDate; target.endDate = newEndDate;
                         target.limitation = newLimitation; target.remarks = newRemarks;
+                        target.floorStartDate = floorStart; target.floorEndDate = floorEnd; target.floorPlanType = floorPlan;
                     }
                 });
 
