@@ -3017,6 +3017,23 @@
                         }
                     }
 
+                    if (currentDept === 'dyeing') {
+                        const knitStartElem = row.querySelector('.knit-start');
+                        const knitEndElem = row.querySelector('.knit-end');
+
+                        const knitStart = knitStartElem && knitStartElem.dataset ? knitStartElem.dataset.val : "";
+                        const knitEnd = knitEndElem && knitEndElem.dataset ? knitEndElem.dataset.val : "";
+
+                        if (newStartDate && knitStart && knitStart !== '-' && new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(knitStart).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Dyeing Start Date cannot be before Knitting Start Date!");
+                            validationFailed = true;
+                        }
+                        if (newEndDate && knitEnd && knitEnd !== '-' && new Date(newEndDate).setHours(0, 0, 0, 0) < new Date(knitEnd).setHours(0, 0, 0, 0)) {
+                            showToast("Save failed: Dyeing End Date cannot be before Knitting End Date!");
+                            validationFailed = true;
+                        }
+                    }
+
                     if (currentDept === 'delivery') {
                         const dyeStartElem = row.querySelector('.dye-start');
                         const dyeEndElem = row.querySelector('.dye-end');
