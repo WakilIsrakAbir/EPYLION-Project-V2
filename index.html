@@ -18,10 +18,10 @@
             theme: {
                 extend: {
                     colors: {
-                        sidebar: '#313644',
-                        sidebarDark: '#2b2f3a',
-                        sidebarHover: '#1f232b',
-                        sidebarActive: '#404656',
+                        sidebar: '#1e222b',
+                        sidebarDark: '#161920',
+                        sidebarHover: '#0f1115',
+                        sidebarActive: '#2a2f3a',
                         textMuted: '#aeb2b7',
                         epylionGreen: '#4CAF50',
                         activeBlue: '#3b82f6',
@@ -192,7 +192,7 @@
     </style>
 </head>
 
-<body class="flex h-screen bg-[#f4f5f7] text-gray-800 overflow-hidden text-[13px] font-sans" onload="initDashboard()">
+<body class="flex h-screen bg-slate-50 text-gray-800 overflow-hidden text-[13px] font-sans" onload="initDashboard()">
 
     <div id="toast"
         class="fixed top-5 right-5 bg-gray-800 text-white px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3">
@@ -391,7 +391,7 @@
         <!-- Load Calculation View -->
         <div id="loadCalculationView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             
-            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col min-h-0 custom-scrollbar">
+            <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 flex flex-col min-h-0 custom-scrollbar">
                 <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6 shrink-0">
                     <div class="p-4 md:p-6">
                         <!-- Common month selector -->
@@ -463,13 +463,15 @@
         </div>
 
         <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
-            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6 min-h-0">
-                <div
-                    class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-5 sm:p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
+            <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 flex flex-col gap-6 min-h-0">
+                <div class="rounded-xl p-5 sm:p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0 min-h-[160px] flex flex-col justify-center">
+                    <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none">
+                        <source src="5c7fd89ea76d18aa8c7e03b0fa118b88.mp4" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 bg-[#1f232b]/60 z-0 pointer-events-none"></div>
                     <div class="relative z-10">
-                        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 tracking-wide">Welcome Back!</h2>
-                        <p class="text-gray-300 text-sm sm:text-base">Select a Production Plan or Report from the
-                            sidebar to manage data.</p>
+                        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 tracking-wide drop-shadow-md">Welcome Back!</h2>
+                        <p class="text-gray-200 text-sm sm:text-base drop-shadow">Select a Production Plan or Report from the sidebar to manage data.</p>
                     </div>
                 </div>
 
@@ -514,7 +516,7 @@
                             </svg>
                         </div>
                         <p class="text-gray-600 text-base font-semibold tracking-wide" style="animation: fadeInUp 1.5s ease-out;">
-                            Your production dashboard is ready
+                            Your Planning Dashboard Is Ready!
                         </p>
                         <p class="text-gray-500 text-sm mt-1" style="animation: fadeInUp 2s ease-out;">
                             Navigate the sidebar to start planning
@@ -525,7 +527,7 @@
             </div>
         </div>
 
-        <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f4f5f7]">
+        <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-slate-50">
             <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
 
                 <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col shrink-0">
@@ -598,7 +600,7 @@
             </div>
         </div>
 
-        <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+        <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
 
             <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
 
@@ -746,7 +748,7 @@
             </div>
         </div>
 
-        <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+        <div id="detailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
             <div
                 class="bg-gray-100 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center px-4 py-2 shrink-0 justify-between w-full gap-2">
                 <div class="flex items-center w-full sm:w-auto">
@@ -871,7 +873,7 @@
             </div>
         </div>
 
-        <div id="orderStatusSection" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+        <div id="orderStatusSection" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
         
             <div id="osListView" class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
 
@@ -945,7 +947,7 @@
                 </div>
         
                 <div id="osPrintableArea"
-                    class="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 flex flex-col gap-6 w-full min-h-0 bg-[#f4f5f7] pb-10">
+                    class="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 flex flex-col gap-6 w-full min-h-0 bg-slate-50 pb-10">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-300 overflow-x-auto custom-scrollbar w-full">
                         <table class="w-full text-center text-xs md:text-sm border-collapse min-w-[950px] whitespace-nowrap">
                             <tbody>
@@ -1032,7 +1034,7 @@
             </div>
         </div>
 
-        <div id="planVsActualReportView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+        <div id="planVsActualReportView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 w-full">
                 <div class="px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
                     <span id="actualReportViewTitle">Plan Vs Actual Tracking Report</span> <i class="fas fa-file-invoice ml-2 text-activeBlue"></i>
@@ -1080,7 +1082,7 @@
             </div>
         </div>
 
-        <div id="planVsActualView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
+        <div id="planVsActualView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
 
 
             <div class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
