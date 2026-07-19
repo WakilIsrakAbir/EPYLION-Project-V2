@@ -1272,12 +1272,13 @@
                 document.getElementById('limitationHeaderText').innerText = 'Knitting Limitation';
 
                 let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+                leftHtml += `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[90px] dynamic-th bg-yellow-100 font-bold">Yarn Date</th>`;
                 let rightHtml = rightCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
 
                 document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
                 document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightHtml);
 
-                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
+                document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length + 1}"></th>`);
                 document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
             }
             else if (currentDept === 'dyeing') {
@@ -1406,7 +1407,25 @@
             }
         }
 
-        function generateItemId(itemData, tabId) {
+        
+        function autoFillYarnDate(inputElem) {
+            const currentDept = activeTabId.replace('_report', '');
+            if (currentDept !== 'knitting') return;
+
+            const tbody = document.getElementById('detFabricItemsBody');
+            const yarnInputs = Array.from(tbody.querySelectorAll('.row-yarn-date'));
+            if (yarnInputs.length === 0) return;
+
+            // Only auto-fill if the changed input is the very first one
+            if (inputElem === yarnInputs[0]) {
+                const newValue = inputElem.value;
+                for (let i = 1; i < yarnInputs.length; i++) {
+                    yarnInputs[i].value = newValue;
+                }
+            }
+        }
+
+function generateItemId(itemData, tabId) {
             if (!itemData) return Date.now().toString();
             const currentDept = tabId.replace('_report', '');
             let bNo = String(itemData.OrderNo !== undefined && itemData.OrderNo !== null ? itemData.OrderNo : 'N/A').trim();
@@ -1919,6 +1938,7 @@
                                     floorStartDate: oldDbItem.floorStartDate || '',
                                     floorEndDate: oldDbItem.floorEndDate || '',
                                     floorPlanType: oldDbItem.floorPlanType || '',
+                                    yarnDate: oldDbItem.yarnDate || '',
                                     source: 'Both'
                                 });
                             } else {
@@ -1947,13 +1967,14 @@
                                         floorStartDate: recoveredDbItem.floorStartDate || '',
                                         floorEndDate: recoveredDbItem.floorEndDate || '',
                                         floorPlanType: recoveredDbItem.floorPlanType || '',
+                                        yarnDate: recoveredDbItem.yarnDate || '',
                                         source: 'Recovered'
                                     });
                                 } else {
                                     mergedItemsMap.set(strictId, {
                                         itemId: strictId, itemData: dynamicItemData,
                                         startDate: '', endDate: '', planType: '', limitation: '', remarks: '',
-                                        floorStartDate: '', floorEndDate: '', floorPlanType: '', source: 'Excel'
+                                        floorStartDate: '', floorEndDate: '', floorPlanType: '', yarnDate: '', source: 'Excel'
                                     });
                                 }
                             }
@@ -1995,6 +2016,7 @@
                                     floorStartDate: dbItem.floorStartDate || '',
                                     floorEndDate: dbItem.floorEndDate || '',
                                     floorPlanType: dbItem.floorPlanType || '',
+                                    yarnDate: dbItem.yarnDate || '',
                                     source: 'DB_Only'
                                 });
                             }
@@ -2114,6 +2136,7 @@
             }
 
             const currentDeptLower = activeTabId.replace('_report', '');
+            const currentDept = currentDeptLower.toUpperCase();
             const isDeliveryDept = (currentDeptLower === 'delivery');
             let allRows = [];
 
@@ -2200,6 +2223,10 @@
                                 // For all other departments: keep original behavior
                                 let rowData = { ...item.itemData };
 
+                                if (currentDept === 'KNITTING') {
+                                    rowData['Yarn Date'] = item.yarnDate ? formatDateDisplay(item.yarnDate) : '';
+                                }
+
                                 rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
                                 rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
                                 rowData['Plan Type'] = item.planType || '';
@@ -2213,7 +2240,6 @@
                 }
             });
 
-            const currentDept = activeTabId.replace('_report', '').toUpperCase();
 
             if (allRows.length === 0) {
                 showToast(`No Confirm or Tentative data found to export for ${currentDept}!`);
@@ -2537,7 +2563,9 @@
                     });
 
                     
+                    let yarnDateVal = item.yarnDate || '';
                     itemHtml += `
+                        <td class="p-2 border-r border-gray-300 text-center bg-yellow-50"><input type="date" class="row-yarn-date p-1 border border-yellow-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${yarnDateVal}" onchange="autoFillYarnDate(this)"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
@@ -3123,6 +3151,8 @@
                     const newPlanType = row.querySelector('.row-plan-type').value;
                     const newStartDate = row.querySelector('.row-start-date').value;
                     const newEndDate = row.querySelector('.row-end-date').value;
+                    const yarnDateElemVal = row.querySelector('.row-yarn-date');
+                    const newYarnDate = yarnDateElemVal ? yarnDateElemVal.value : '';
 
                     let existingItem = existingData.mergedItems ? existingData.mergedItems.find(m => m.itemId === itemId) : null;
                     let wasConfirmed = existingItem && existingItem.planType === 'Confirm';
@@ -3154,6 +3184,15 @@
                         if (!newStartDate || !newEndDate) {
                             showToast("Save failed: Plan Type selected without Start and End dates.");
                             validationFailed = true;
+                        }
+                    }
+
+                    if (currentDept === 'knitting') {
+                        if (newStartDate && newYarnDate) {
+                            if (new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(newYarnDate).setHours(0, 0, 0, 0)) {
+                                showToast("Save failed: Knitting Planning Start Date cannot be less than Yarn Date!");
+                                validationFailed = true;
+                            }
                         }
                     }
 
@@ -3223,6 +3262,8 @@
                     const newPlanType = row.querySelector('.row-plan-type').value;
                     const newStartDate = row.querySelector('.row-start-date') ? row.querySelector('.row-start-date').value : '';
                     const newEndDate = row.querySelector('.row-end-date') ? row.querySelector('.row-end-date').value : '';
+                    const yarnDateElem = row.querySelector('.row-yarn-date');
+                    const newYarnDate = yarnDateElem ? yarnDateElem.value : '';
                     const newLimitation = row.querySelector('.row-limitation') ? row.querySelector('.row-limitation').value : '';
                     const newRemarks = row.querySelector('.row-remarks') ? row.querySelector('.row-remarks').value : '';
 
@@ -3244,7 +3285,8 @@
                         itemId: id, itemData: itemData,
                         startDate: newStartDate, endDate: newEndDate,
                         planType: newPlanType, limitation: newLimitation, remarks: newRemarks,
-                        floorStartDate: floorStart, floorEndDate: floorEnd, floorPlanType: floorPlan
+                        floorStartDate: floorStart, floorEndDate: floorEnd, floorPlanType: floorPlan,
+                        yarnDate: newYarnDate
                     });
 
                     let target = existingData.mergedItems.find(m => m.itemId === id);
@@ -3252,6 +3294,7 @@
                         target.planType = newPlanType; target.startDate = newStartDate; target.endDate = newEndDate;
                         target.limitation = newLimitation; target.remarks = newRemarks;
                         target.floorStartDate = floorStart; target.floorEndDate = floorEnd; target.floorPlanType = floorPlan;
+                        target.yarnDate = newYarnDate;
                     }
                 });
 
