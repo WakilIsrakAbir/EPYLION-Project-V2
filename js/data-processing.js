@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // DATA PROCESSING: Fetch, Merge, Filter
 // ==========================================================
 function generateItemId(itemData, tabId) {
@@ -210,8 +210,20 @@ async function fetchAndProcessData(isSilent = false) {
     const currentDept = activeTabId.replace('_report', '');
 
     try {
-        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
-        const allFiles = await res.json();
+        const [res, datesRes] = await Promise.all([
+            fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; }),
+            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`).catch(e => { console.error(e); return null; })
+        ]);
+
+        let allFiles = [];
+        if (res && res.ok) {
+            allFiles = await res.json();
+        }
+
+        let savedPlans = [];
+        if (datesRes && datesRes.ok) {
+            savedPlans = await datesRes.json();
+        }
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
         const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
@@ -237,8 +249,12 @@ async function fetchAndProcessData(isSilent = false) {
             for (let i = 0; i < fileList.length; i++) {
                 let file = fileList[i];
                 try {
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
-                    if (!fRes.ok) continue;
+                    const encodedName = encodeURIComponent(file.savedName);
+                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                    if (!fRes.ok) {
+                        console.error(`Failed to fetch file: ${file.originalName}`);
+                        continue;
+                    }
                     const ab = await fRes.arrayBuffer();
                     const wb = XLSX.read(ab, { type: 'array' });
                     let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
@@ -346,9 +362,7 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         try {
-            const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
-            if (datesRes.ok) {
-                const savedPlans = await datesRes.json();
+            if (savedPlans && savedPlans.length > 0) {
                 savedPlans.forEach(plan => {
                     initGroup(plan.orderNo);
                     groupedData[plan.orderNo].dbData = plan;
