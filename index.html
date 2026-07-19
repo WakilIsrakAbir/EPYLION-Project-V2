@@ -2053,21 +2053,101 @@
                 return;
             }
 
+            const currentDeptLower = activeTabId.replace('_report', '');
+            const isDeliveryDept = (currentDeptLower === 'delivery');
             let allRows = [];
 
             Object.values(groupedData).forEach(group => {
                 if (group.mergedItems) {
                     group.mergedItems.forEach(item => {
                         if (item.planType === 'Confirm' || item.planType === 'Tentative') {
-                            let rowData = { ...item.itemData };
 
-                            rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
-                            rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
-                            rowData['Plan Type'] = item.planType || '';
-                            rowData['Limitation'] = item.limitation || '';
-                            rowData['Remarks'] = item.remarks || '';
+                            if (isDeliveryDept) {
+                                // For delivery: build row with proper column order including knitting/dyeing plan data
+                                let knitPlan = { start: '', end: '', type: '' };
+                                let dyePlan = { start: '', end: '', type: '' };
 
-                            allRows.push(rowData);
+                                if (group.dbData) {
+                                    let myColor = String(item.itemData.Color || '').trim().toLowerCase();
+                                    let myConst = String(item.itemData.FabricConstruction || '').trim().toLowerCase();
+                                    let myGSM = String(item.itemData.GSM || '').trim().toLowerCase();
+
+                                    // Knitting plan lookup: match by Color + FabricConstruction + GSM
+                                    if (group.dbData.knitting && Array.isArray(group.dbData.knitting)) {
+                                        const kItem = group.dbData.knitting.find(k => k.itemData
+                                            && String(k.itemData.Color || '').trim().toLowerCase() === myColor
+                                            && String(k.itemData.FabricConstruction || '').trim().toLowerCase() === myConst
+                                            && String(k.itemData.GSM || '').trim().toLowerCase() === myGSM);
+                                        if (kItem) {
+                                            knitPlan.start = kItem.startDate || '';
+                                            knitPlan.end = kItem.endDate || '';
+                                            knitPlan.type = kItem.planType || '';
+                                        }
+                                    }
+
+                                    // Dyeing plan lookup: match by Color
+                                    if (group.dbData.dyeing && Array.isArray(group.dbData.dyeing)) {
+                                        const dItem = group.dbData.dyeing.find(d => d.itemData
+                                            && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
+                                        if (dItem) {
+                                            dyePlan.start = dItem.startDate || '';
+                                            dyePlan.end = dItem.endDate || '';
+                                            dyePlan.type = dItem.planType || '';
+                                        }
+                                    }
+                                }
+
+                                // Build ordered row for delivery
+                                let rowData = {};
+                                rowData['OrderNo'] = item.itemData.OrderNo || '';
+                                rowData['Color'] = item.itemData.Color || '';
+                                rowData['FabricConstruction'] = item.itemData.FabricConstruction || '';
+                                rowData['GSM'] = item.itemData.GSM || '';
+                                rowData['RequiredQtyKgs'] = item.itemData.RequiredQtyKgs || '';
+                                rowData['Buyer'] = item.itemData.Buyer || '';
+                                rowData['KnitBala'] = item.itemData.KnitBala || '';
+                                rowData['NetReceivedQtyKgs'] = item.itemData.NetReceivedQtyKgs || '';
+                                rowData['NetDeliveryQtyKgs'] = item.itemData.NetDeliveryQtyKgs || '';
+                                rowData['RFD'] = item.itemData.RFD || '';
+                                rowData['Slowmoving'] = item.itemData.Slowmoving || '';
+                                rowData['FFStock'] = item.itemData.FFStock || '';
+
+                                // NEW: Knitting plan columns
+                                rowData['Knit Start Date'] = formatDateDisplay(knitPlan.start) || '';
+                                rowData['Knit End Date'] = formatDateDisplay(knitPlan.end) || '';
+                                rowData['Knit Plan Type'] = knitPlan.type || '';
+
+                                // NEW: Dyeing plan columns
+                                rowData['Dyeing Start Date'] = formatDateDisplay(dyePlan.start) || '';
+                                rowData['Dyeing End Date'] = formatDateDisplay(dyePlan.end) || '';
+                                rowData['Dyeing Plan Type'] = dyePlan.type || '';
+
+                                // Delivery plan columns
+                                rowData['Delivery Plan Start'] = formatDateDisplay(item.startDate) || '';
+                                rowData['Delivery Plan End'] = formatDateDisplay(item.endDate) || '';
+                                rowData['Delivery Plan Type'] = item.planType || '';
+
+                                // NEW: Floor planning columns
+                                rowData['Delivery Plan Start (Floor)'] = formatDateDisplay(item.floorStartDate) || '';
+                                rowData['Delivery Plan End (Floor)'] = formatDateDisplay(item.floorEndDate) || '';
+                                rowData['Delivery Plan Type (Floor)'] = item.floorPlanType || '';
+
+                                rowData['Limitation'] = item.limitation || '';
+                                rowData['Remarks'] = item.remarks || '';
+
+                                allRows.push(rowData);
+                            } else {
+                                // For all other departments: keep original behavior
+                                let rowData = { ...item.itemData };
+
+                                rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
+                                rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
+                                rowData['Plan Type'] = item.planType || '';
+                                rowData['Limitation'] = item.limitation || '';
+                                rowData['Remarks'] = item.remarks || '';
+
+                                allRows.push(rowData);
+                            }
                         }
                     });
                 }
