@@ -1698,11 +1698,12 @@ function generateItemId(itemData, tabId) {
                     let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
 
                     let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
-                    if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
+                    let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
 
                     initGroup(bNo);
-                    groupedData[bNo].buyers.add(buyer);
+                    if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
+                        groupedData[bNo].buyers.add(buyer);
+                    }
 
                     let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
                     if (dateVal) groupedData[bNo].bookingDate = formatExcelDate(dateVal);
@@ -1758,9 +1759,10 @@ function generateItemId(itemData, tabId) {
                     
                     if (groupedData[bNo]) {
                         let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                        let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
-                        if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
-                        groupedData[bNo].buyers.add(buyer);
+                        let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
+                        if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
+                            groupedData[bNo].buyers.add(buyer);
+                        }
 
                         groupedData[bNo].excelItems.push(row);
                     }
@@ -1780,9 +1782,11 @@ function generateItemId(itemData, tabId) {
                                 ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
                                     if (plan[dept] && Array.isArray(plan[dept])) {
                                         plan[dept].forEach(item => {
-                                            let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim() : 'General';
-                                            if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
-                                            groupedData[plan.orderNo].buyers.add(b);
+                                            let rawB = item.itemData ? (item.itemData.Buyer || item.itemData.BuyerName || item.itemData.Customer || '') : '';
+                                            let b = String(rawB).trim().toUpperCase().replace(/\s+/g, ' ');
+                                            if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
+                                                groupedData[plan.orderNo].buyers.add(b);
+                                            }
                                         });
                                     }
                                 });
@@ -2001,9 +2005,11 @@ function generateItemId(itemData, tabId) {
                                     }
                                 }
 
-                                let b = dbItem.itemData.Buyer ? String(dbItem.itemData.Buyer).trim() : 'General';
-                                if (b.toLowerCase() === 'undefined' || b.toLowerCase() === 'n/a' || b === '') b = 'General';
-                                group.buyers.add(b.toUpperCase().replace(/\s+/g, ' '));
+                                let rawB = dbItem.itemData ? (dbItem.itemData.Buyer || dbItem.itemData.BuyerName || dbItem.itemData.Customer || '') : '';
+                                let b = String(rawB).trim().toUpperCase().replace(/\s+/g, ' ');
+                                if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
+                                    group.buyers.add(b);
+                                }
 
                                 mergedItemsMap.set(strictId, {
                                     itemId: strictId,
@@ -2031,8 +2037,6 @@ function generateItemId(itemData, tabId) {
 
                     let totalItems = group.mergedItems.length;
 
-                    group.buyers.clear();
-
                     if (totalItems > 0) {
                         let hasSelect = false;
                         let hasTentative = false;
@@ -2047,9 +2051,11 @@ function generateItemId(itemData, tabId) {
                                 confirmCount++;
                             }
 
-                            let b = item.itemData && item.itemData.Buyer ? String(item.itemData.Buyer).trim().toUpperCase().replace(/\s+/g, ' ') : 'GENERAL';
-                            if (b === 'UNDEFINED' || b === 'N/A' || b === '') b = 'GENERAL';
-                            group.buyers.add(b);
+                            let rawBuyer = item.itemData ? (item.itemData.Buyer || item.itemData.BuyerName || item.itemData['Buyer Name(s)'] || item.itemData.Customer || '') : '';
+                            let b = String(rawBuyer).trim().toUpperCase().replace(/\s+/g, ' ');
+                            if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
+                                group.buyers.add(b);
+                            }
                         });
 
                         if (hasSelect) {
@@ -3645,9 +3651,10 @@ function generateItemId(itemData, tabId) {
                         initGroup(bNo);
 
                         let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                        let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
-                        if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
-                        osGroupedData[bNo].buyers.add(buyer);
+                        let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
+                        if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
+                            osGroupedData[bNo].buyers.add(buyer);
+                        }
 
                         osGroupedData[bNo].excelItems.push(row);
 
@@ -4272,8 +4279,7 @@ function generateItemId(itemData, tabId) {
                             if (!bNo) return;
 
                             let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                            let buyer = String(buyerVal !== '' ? buyerVal : 'General').trim();
-                            if (buyer.toLowerCase() === 'undefined' || buyer.toLowerCase() === 'n/a' || buyer === '') buyer = 'General';
+                            let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
 
                             let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
                             let bookingDate = formatExcelDate(dateVal);
@@ -4281,7 +4287,9 @@ function generateItemId(itemData, tabId) {
                             if (!generalDataMap[bNo]) {
                                 generalDataMap[bNo] = { buyers: new Set(), bookingDate: bookingDate };
                             }
-                            generalDataMap[bNo].buyers.add(buyer);
+                            if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
+                                generalDataMap[bNo].buyers.add(buyer);
+                            }
                             if (bookingDate && bookingDate !== 'N/A') generalDataMap[bNo].bookingDate = bookingDate;
                         });
                     } catch (e) { console.error('File read err:', e); }
