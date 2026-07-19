@@ -1438,6 +1438,18 @@
             }
         }
 
+        function checkEndDateValid(endInput, startInputClass) {
+            const row = endInput.closest('tr');
+            if (!row) return;
+            const startInput = row.querySelector('.' + startInputClass);
+            if (startInput && startInput.value && endInput.value) {
+                if (endInput.value < startInput.value) {
+                    alert("End date cant be less than start date");
+                    endInput.value = startInput.value;
+                }
+            }
+        }
+
 function generateItemId(itemData, tabId) {
             if (!itemData) return Date.now().toString();
             const currentDept = tabId.replace('_report', '');
@@ -2586,7 +2598,7 @@ function generateItemId(itemData, tabId) {
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center bg-yellow-50"><input type="date" class="row-yarn-date p-1 border border-yellow-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${yarnDateVal}" onchange="autoFillYarnDate(this)"></td>
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -2657,7 +2669,7 @@ function generateItemId(itemData, tabId) {
 
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -2718,7 +2730,7 @@ function generateItemId(itemData, tabId) {
 
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-start p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50" value="${floorStart}" onchange="enforceEndDateMin(this, 'row-floor-end')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50" value="${floorEnd}" ${floorStart ? `min="${floorStart}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50" value="${floorEnd}" ${floorStart ? `min="${floorStart}"` : ''} onchange="checkEndDateValid(this, 'row-floor-start')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-floor-plan p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!floorPlanType ? 'selected' : ''}>Select</option>
@@ -2730,7 +2742,7 @@ function generateItemId(itemData, tabId) {
 
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -2765,7 +2777,7 @@ function generateItemId(itemData, tabId) {
 
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -2794,7 +2806,7 @@ function generateItemId(itemData, tabId) {
 
                     itemHtml += `
                         <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''}></td>
+                        <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                         <td class="p-2 border-r border-gray-300 text-center">
                             <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                                 <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -3195,7 +3207,14 @@ function generateItemId(itemData, tabId) {
 
                     if (newStartDate && newEndDate) {
                         if (new Date(newStartDate) > new Date(newEndDate)) {
-                            showToast("Save failed: A Start Date is greater than its End Date.");
+                            showToast("Save failed: End date cant be less than start date.");
+                            validationFailed = true;
+                        }
+                    }
+
+                    if (floorStart && floorEnd) {
+                        if (new Date(floorStart) > new Date(floorEnd)) {
+                            showToast("Save failed: End date cant be less than start date.");
                             validationFailed = true;
                         }
                     }
