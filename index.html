@@ -153,6 +153,42 @@
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Load Calculation specific styles */
+        #summaryPreviewTable thead th {
+            background: #dbeafe;
+            color: #1e3a8a;
+            border-color: #93c5fd;
+        }
+        #summaryPreviewTable tbody tr:nth-child(even) td {
+            background: #f8fbff;
+        }
+        #summaryPreviewTable tbody tr:hover td {
+            background: #eff6ff;
+        }
+        #summaryPreviewTable tfoot td {
+            background: #bfdbfe;
+            color: #172554;
+            border-color: #60a5fa;
+            font-weight: 700;
+        }
+        .department-tab {
+            transition: all 0.2s ease;
+        }
+        .department-tab.active-knitting {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+        .department-tab.active-dyeing {
+            background: #16a34a;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+        .department-tab.active-delivery {
+            background: #f97316;
+            color: #ffffff;
+            border-color: #f97316;
+        }
     </style>
 </head>
 
@@ -289,7 +325,7 @@
                         </div>
                         <i class="fas fa-chevron-left text-xs transition-transform duration-200"></i>
                     </div>
-                    <ul id="submenu-actual-report" class="hidden bg-[#1e2333]">
+                    <ul id="submenu-actual-report" class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar">
                         <li><a href="#" id="menu-yd-actual-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadTrackingReport('yd')">YD</a></li>
@@ -305,6 +341,26 @@
                         <li><a href="#" id="menu-delivery-actual-report"
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
                                 onclick="loadTrackingReport('delivery')">Delivery</a></li>
+                    </ul>
+                </li>
+
+                <!-- Load Calculation Menu -->
+                <li>
+                    <div class="px-4 py-3 flex items-center justify-between hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                        onclick="toggleSubmenu(this, 'submenu-load-calc')">
+                        <div class="flex items-center">
+                            <i class="fas fa-calculator text-gray-400 w-6"></i>
+                            <span class="ml-2">Load Calculation</span>
+                        </div>
+                        <i class="fas fa-chevron-left text-xs transition-transform duration-200"></i>
+                    </div>
+                    <ul id="submenu-load-calc" class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar">
+                        <li><a href="#" id="menu-load-detailed"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="showLoadCalculation('detailed')">Detailed Load Download</a></li>
+                        <li><a href="#" id="menu-load-summary"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                onclick="showLoadCalculation('summary')">Buyer-wise Load Summary</a></li>
                     </ul>
                 </li>
 
@@ -328,14 +384,85 @@
                 onclick="toggleSidebar()"></i>
         </div>
 
-        <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
-            <div
-                class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto custom-scrollbar">
-                <div
-                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 cursor-pointer flex items-center shrink-0">
-                    Dashboard <i class="fas fa-home ml-2 text-activeBlue"></i>
-                </div>
+        <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full" id="tabBarContainer">
+            <div id="dynamicTabsWrapper" class="flex gap-1 items-end w-max"></div>
+        </div>
+
+        <!-- Load Calculation View -->
+        <div id="loadCalculationView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
+            
+            <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col min-h-0 custom-scrollbar">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6 shrink-0">
+                    <div class="p-4 md:p-6">
+                        <!-- Common month selector -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h2 class="font-bold text-blue-900 mb-3"><i class="fas fa-calendar-alt mr-2"></i>Report Month Selection</h2>
+                                <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                                    <label class="flex flex-col gap-1">
+                                        <span class="text-xs font-bold text-slate-700">Starting Month</span>
+                                        <select id="loadStartMonth" onchange="refreshCurrentView()" class="border border-slate-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-blue-500 min-w-[180px]"></select>
+                                    </label>
+                                    <div class="text-xs text-slate-600 bg-white border border-blue-200 rounded px-3 py-2">
+                                        <strong>Fixed period:</strong> Selected month + next 4 months
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                <h2 class="font-bold text-amber-900 mb-2"><i class="fas fa-calculator mr-2"></i>Allocation Rule</h2>
+                                <div class="text-sm text-slate-700 leading-6">
+                                    Allocation starts from the later of Plan Start Date or Today.<br/>
+                                    When Plan End Date is today or earlier, the full pending quantity goes to the first selected report month.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MENU 1: Detailed reports -->
+                        <section id="detailedMenu">
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="downloadLoadReport('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Knitting Load</button>
+                                <button onclick="downloadLoadReport('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Dyeing Load</button>
+                                <button onclick="downloadLoadReport('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Delivery Load</button>
+                            </div>
+                        </section>
+
+                        <!-- MENU 2: Summary reports -->
+                        <section id="summaryMenu" class="hidden">
+                            <div class="border-2 border-blue-400 ring-2 ring-blue-100 rounded-xl overflow-hidden shadow-lg bg-white">
+                                <div class="bg-blue-50 border-b border-blue-300 px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                    <div>
+                                        <h2 class="font-bold text-lg text-blue-950"><i class="fas fa-chart-column mr-2 text-blue-600"></i> Buyer-wise Summary Preview</h2>
+                                        <p class="text-xs text-blue-700 mt-1">The month names change automatically from the selected starting month.</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button onclick="setSummaryDepartment('knitting')" id="summaryBtnKnitting" class="department-tab px-4 py-2 rounded border text-xs font-bold">Knitting</button>
+                                        <button onclick="setSummaryDepartment('dyeing')" id="summaryBtnDyeing" class="department-tab px-4 py-2 rounded border text-xs font-bold">Dyeing</button>
+                                        <button onclick="setSummaryDepartment('delivery')" id="summaryBtnDelivery" class="department-tab px-4 py-2 rounded border text-xs font-bold">Delivery</button>
+                                    </div>
+                                </div>
+                                <div class="overflow-auto custom-scrollbar max-h-[560px]">
+                                    <table id="summaryPreviewTable" class="w-full text-xs min-w-max border-collapse border border-gray-300">
+                                        <thead></thead>
+                                        <tbody></tbody>
+                                        <tfoot></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button onclick="downloadLoadSummary('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Knitting Summary</button>
+                                <button onclick="downloadLoadSummary('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Dyeing Summary</button>
+                                <button onclick="downloadLoadSummary('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2"><i class="fas fa-file-excel text-sm"></i> Download Delivery Summary</button>
+                            </div>
+                            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-slate-700">
+                                <strong>Summary output format:</strong> Buyer, five full month names, Total [Kg], and a Grand Total row.
+                            </div>
+                        </section>
+                    </div>
+                </section>
             </div>
+        </div>
+
+        <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             <div class="flex-1 overflow-y-auto bg-[#f4f5f7] p-4 md:p-6 flex flex-col gap-6 min-h-0">
                 <div
                     class="bg-gradient-to-r from-sidebarDark to-[#3a445c] rounded-xl p-5 sm:p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0">
@@ -399,12 +526,6 @@
         </div>
 
         <div id="dataManagementView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f4f5f7]">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0">
-                <div
-                    class="nav-tab active-tab px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
-                    Data Management <i class="fas fa-database ml-2 text-activeBlue"></i>
-                </div>
-            </div>
             <div class="p-4 md:p-6 flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
 
                 <div class="bg-white p-4 rounded-md shadow-sm border border-gray-200 flex flex-col shrink-0">
@@ -478,10 +599,6 @@
         </div>
 
         <div id="listView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full"
-                id="tabBarContainer">
-                <div id="dynamicTabsWrapper" class="flex gap-1 items-end w-max"></div>
-            </div>
 
             <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
 
@@ -755,12 +872,6 @@
         </div>
 
         <div id="orderStatusSection" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 w-full">
-                <div
-                    class="px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
-                    Order Status Dashboard <i class="fas fa-chart-line ml-2 text-activeBlue"></i>
-                </div>
-            </div>
         
             <div id="osListView" class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
 
@@ -970,12 +1081,7 @@
         </div>
 
         <div id="planVsActualView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#f4f5f7]">
-            <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 w-full">
-                <div
-                    class="px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
-                    <span id="actualViewTitle">Plan Vs Actual Tracking</span> <i class="fas fa-balance-scale ml-2 text-activeBlue"></i>
-                </div>
-            </div>
+
 
             <div class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
 
@@ -986,18 +1092,17 @@
                     <p class="text-sm text-gray-500 mt-1">Fetching confirmed plan data</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
-                    <h2 class="font-bold text-xl text-gray-700"><i class="fas fa-clipboard-check text-blue-500 mr-2"></i><span id="actualDeptTitle">Department</span> — Plan vs Actual</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-2 gap-3 shrink-0">
+                    <!-- Pending / Complete Tabs -->
+                    <div class="flex flex-wrap gap-1 sm:gap-2">
+                        <div id="btnActualPending" onclick="switchActualTab('Pending')" class="bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Pending Actual Data</div>
+                        <div id="btnActualComplete" onclick="switchActualTab('Complete')" class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Complete Actual Data</div>
+                    </div>
+
                     <button id="btnSaveActual" onclick="saveActualData()"
-                        class="px-5 py-2 bg-blue-600 text-white font-bold rounded shadow-sm hover:bg-blue-700 transition-colors text-xs flex items-center gap-2">
+                        class="px-5 py-2 bg-blue-600 text-white font-bold rounded shadow-sm hover:bg-blue-700 transition-colors text-xs flex items-center gap-2 shrink-0">
                         <i class="fas fa-save"></i> Save Data
                     </button>
-                </div>
-
-                <!-- Pending / Complete Tabs -->
-                <div class="flex flex-wrap gap-1 sm:gap-2 mb-2 shrink-0">
-                    <div id="btnActualPending" onclick="switchActualTab('Pending')" class="bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Pending Actual Data</div>
-                    <div id="btnActualComplete" onclick="switchActualTab('Complete')" class="bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center">Complete Actual Data</div>
                 </div>
 
                 <!-- Buyer Filter Bar -->
@@ -1183,14 +1288,28 @@
             toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
         }
 
+        function hideAllCoreViews() {
+            const views = [
+                'dashboardHomeView', 
+                'dataManagementView', 
+                'listView', 
+                'detailedView', 
+                'planVsActualReportView', 
+                'planVsActualView',
+                'orderStatusSection', 
+                'loadCalculationView'
+            ];
+            views.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
         function showDashboardHome() {
             localStorage.setItem('activePage', JSON.stringify({ page: 'dashboard' }));
 
             activeTabId = 'dashboard';
-            document.getElementById('dataManagementView').classList.add('hidden');
-            document.getElementById('listView').classList.add('hidden');
-            document.getElementById('detailedView').classList.add('hidden');
-            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
+            hideAllCoreViews();
             document.getElementById('dashboardHomeView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
@@ -1201,10 +1320,7 @@
             localStorage.setItem('activePage', JSON.stringify({ page: 'dataManagement' }));
 
             activeTabId = 'dataManagement';
-            document.getElementById('dashboardHomeView').classList.add('hidden');
-            document.getElementById('listView').classList.add('hidden');
-            document.getElementById('detailedView').classList.add('hidden');
-            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
+            hideAllCoreViews();
             document.getElementById('dataManagementView').classList.remove('hidden');
             renderTabs();
             closeSidebarMobile();
@@ -1218,10 +1334,7 @@
             activeTabId = uniqueId;
             isReportMode = (mode === 'report');
 
-            document.getElementById('dashboardHomeView').classList.add('hidden');
-            document.getElementById('dataManagementView').classList.add('hidden');
-            document.getElementById('detailedView').classList.add('hidden');
-            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
+            hideAllCoreViews();
             document.getElementById('listView').classList.remove('hidden');
 
             if (isReportMode) {
@@ -1706,9 +1819,10 @@ function generateItemId(itemData, tabId) {
                 groupedData = {};
 
                 const initGroup = (bNo) => {
-                    if (!groupedData[bNo]) {
-                        groupedData[bNo] = {
-                            bookingNo: bNo.startsWith('Unknown_Booking_') ? 'N/A' : bNo,
+                    let bNoStr = String(bNo);
+                    if (!groupedData[bNoStr]) {
+                        groupedData[bNoStr] = {
+                            bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
                             buyers: new Set(),
                             generalInfo: {},
                             excelItems: [],
@@ -1798,10 +1912,10 @@ function generateItemId(itemData, tabId) {
                     if (datesRes.ok) {
                         const savedPlans = await datesRes.json();
                         savedPlans.forEach(plan => {
-                            if (groupedData[plan.orderNo]) {
-                                groupedData[plan.orderNo].dbData = plan;
+                            initGroup(plan.orderNo);
+                            groupedData[plan.orderNo].dbData = plan;
 
-                                groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
+                            groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
                                 groupedData[plan.orderNo].generalInfo.CompletedDate = plan[`${currentDept}CompletedDate`] || null;
                                 
                                 ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
@@ -1815,7 +1929,6 @@ function generateItemId(itemData, tabId) {
                                         });
                                     }
                                 });
-                            }
                         });
                     }
                 } catch (e) { console.error("Error fetching db dates", e); }
@@ -3212,6 +3325,12 @@ function generateItemId(itemData, tabId) {
                         }
                     }
 
+                    let floorStart = '', floorEnd = '';
+                    if (row.querySelector('.row-floor-start')) {
+                        floorStart = row.querySelector('.row-floor-start').value;
+                        floorEnd = row.querySelector('.row-floor-end').value;
+                    }
+
                     if (floorStart && floorEnd) {
                         if (new Date(floorStart) > new Date(floorEnd)) {
                             showToast("Save failed: End date cant be less than start date.");
@@ -3502,14 +3621,32 @@ function generateItemId(itemData, tabId) {
             }
         function renderTabs() {
             const container = document.getElementById('dynamicTabsWrapper'); let tabHtml = '';
+            const tabBar = document.getElementById('tabBarContainer');
+            if (openTabs.length === 0) {
+                if(tabBar) tabBar.classList.add('hidden');
+            } else {
+                if(tabBar) tabBar.classList.remove('hidden');
+            }
             openTabs.forEach(t => {
-                tabHtml += `<div class="px-3 sm:px-4 py-2 text-[11px] sm:text-[13px] border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="loadMenuData('${t.dept}', '${t.title}', '${t.mode}')">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
+                let onClickStr = `loadMenuData('${t.dept}', '${t.title}', '${t.mode}')`;
+                if(t.mode === 'actualTracking') onClickStr = `loadActualTracking('${t.dept}')`;
+                else if(t.mode === 'trackingReport') onClickStr = `loadTrackingReport('${t.dept}')`;
+                else if(t.mode === 'loadCalculation') onClickStr = `showLoadCalculation('${t.dept}')`;
+                
+                tabHtml += `<div class="px-3 sm:px-4 py-2 text-[11px] sm:text-[13px] border border-gray-200 border-b-0 rounded-t cursor-pointer flex items-center shrink-0 transition-colors ${activeTabId === t.id ? 'bg-white font-bold text-gray-800' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}" onclick="${onClickStr}">${t.title} <i class="fas fa-times ml-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors" onclick="closeTab(event, '${t.id}')"></i></div>`;
             });
             container.innerHTML = tabHtml;
         }
         function closeTab(e, id) {
             e.stopPropagation(); openTabs = openTabs.filter(t => t.id !== id);
-            if (openTabs.length === 0) showDashboardHome(); else loadMenuData(openTabs[0].dept, openTabs[0].title, openTabs[0].mode);
+            if (openTabs.length === 0) showDashboardHome(); 
+            else {
+                let t = openTabs[0];
+                if(t.mode === 'actualTracking') loadActualTracking(t.dept);
+                else if(t.mode === 'trackingReport') loadTrackingReport(t.dept);
+                else if(t.mode === 'loadCalculation') showLoadCalculation(t.dept);
+                else loadMenuData(t.dept, t.title, t.mode);
+            }
         }
         function toggleSubmenu(header, id) {
             const m = document.getElementById(id); const i = header.querySelector('.fa-chevron-left');
@@ -3577,12 +3714,8 @@ function generateItemId(itemData, tabId) {
             async function showOrderStatus() {
                 localStorage.setItem('activePage', JSON.stringify({ page: 'orderStatus' }));
 
-                if (document.getElementById('dashboardHomeView')) document.getElementById('dashboardHomeView').classList.add('hidden');
-                if (document.getElementById('dataManagementView')) document.getElementById('dataManagementView').classList.add('hidden');
-                if (document.getElementById('listView')) document.getElementById('listView').classList.add('hidden');
-                if (document.getElementById('detailedView')) document.getElementById('detailedView').classList.add('hidden');
-                if (document.getElementById('planVsActualView')) document.getElementById('planVsActualView').classList.add('hidden');
-
+                hideAllCoreViews();
+                
                 const osSection = document.getElementById('orderStatusSection');
                 if (osSection) osSection.classList.remove('hidden');
 
@@ -3666,9 +3799,10 @@ function generateItemId(itemData, tabId) {
                     osGroupedData = {};
 
                     const initGroup = (bNo) => {
-                        if (!osGroupedData[bNo]) {
-                            osGroupedData[bNo] = {
-                                bookingNo: bNo.startsWith('Unknown_Booking_') ? 'N/A' : bNo,
+                        let bNoStr = String(bNo);
+                        if (!osGroupedData[bNoStr]) {
+                            osGroupedData[bNoStr] = {
+                                bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
                                 buyers: new Set(),
                                 excelItems: [],
                                 mergedItems: [],
@@ -3727,9 +3861,8 @@ function generateItemId(itemData, tabId) {
                         if (datesRes.ok) {
                             const savedPlans = await datesRes.json();
                             savedPlans.forEach(plan => {
-                                if (osGroupedData[plan.orderNo]) {
-                                    osGroupedData[plan.orderNo].dbData = plan;
-                                }
+                                initGroup(plan.orderNo);
+                                osGroupedData[plan.orderNo].dbData = plan;
                             });
                         }
                     } catch (e) { }
@@ -4053,26 +4186,16 @@ function generateItemId(itemData, tabId) {
             document.getElementById('actualReportPageHeader').innerText = deptName + ' Tracking Report';
             
             // Highlight sidebar
-            document.querySelectorAll('.sidebar-menu-item').forEach(el => {
-                el.classList.remove('bg-sidebarDark', 'border-activeBlue', 'text-white');
-                el.classList.add('border-transparent', 'text-gray-400');
-            });
-            const activeMenu = document.getElementById('menu-' + deptKey + '-actual-report');
-            if (activeMenu) {
-                activeMenu.classList.remove('border-transparent', 'text-gray-400');
-                activeMenu.classList.add('bg-sidebarDark', 'border-activeBlue', 'text-white');
-            }
+            setActiveSidebarMenu('menu-' + deptKey + '-actual-report');
 
-            // Hide other views, show this one
-            if (document.getElementById('dashboardHomeView')) document.getElementById('dashboardHomeView').classList.add('hidden');
-            if (document.getElementById('dataManagementView')) document.getElementById('dataManagementView').classList.add('hidden');
-            if (document.getElementById('listView')) document.getElementById('listView').classList.add('hidden');
-            if (document.getElementById('detailedView')) document.getElementById('detailedView').classList.add('hidden');
-            if (document.getElementById('orderStatusSection')) document.getElementById('orderStatusSection').classList.add('hidden');
-            if (document.getElementById('reportActionContainer')) document.getElementById('reportActionContainer').classList.add('hidden');
-            if (document.getElementById('planVsActualView')) document.getElementById('planVsActualView').classList.add('hidden');
-            
+            hideAllCoreViews();
             if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.remove('hidden');
+            
+            const uniqueId = `trackingReport_${deptKey}`;
+            activeTabId = uniqueId;
+            const menuTitle = deptName + ' Trck. Rep.';
+            if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuTitle, dept: deptKey, mode: 'trackingReport' });
+            renderTabs();
             if(typeof closeSidebarMobile === 'function') closeSidebarMobile();
         }
 
@@ -4213,20 +4336,19 @@ function generateItemId(itemData, tabId) {
 
             localStorage.setItem('activePage', JSON.stringify({ page: 'actualTracking', dept: deptKey }));
 
-            // Hide all other views
-            if (document.getElementById('dashboardHomeView')) document.getElementById('dashboardHomeView').classList.add('hidden');
-            if (document.getElementById('dataManagementView')) document.getElementById('dataManagementView').classList.add('hidden');
-            if (document.getElementById('listView')) document.getElementById('listView').classList.add('hidden');
-            if (document.getElementById('detailedView')) document.getElementById('detailedView').classList.add('hidden');
-            if (document.getElementById('orderStatusSection')) document.getElementById('orderStatusSection').classList.add('hidden');
-            if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.add('hidden');
+            hideAllCoreViews();
 
             // Show Plan vs Actual view
             const pvaView = document.getElementById('planVsActualView');
             if (pvaView) pvaView.classList.remove('hidden');
 
-            document.getElementById('actualViewTitle').innerText = `Plan Vs Actual — ${deptName}`;
-            document.getElementById('actualDeptTitle').innerText = deptName;
+            const uniqueId = `actualTracking_${deptKey}`;
+            activeTabId = uniqueId;
+            const menuTitle = deptName + ' Tracking';
+            if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuTitle, dept: deptKey, mode: 'actualTracking' });
+            renderTabs();
+            if (document.getElementById('actualViewTitle')) document.getElementById('actualViewTitle').innerText = `Plan Vs Actual - ${deptName}`;
+            if (document.getElementById('actualDeptTitle')) document.getElementById('actualDeptTitle').innerText = deptName;
 
             actualCurrentPage = 1;
             actualColFilters = {};
@@ -5040,6 +5162,397 @@ function generateItemId(itemData, tabId) {
             });
         })();
         // ==================== End Dashboard Animation ====================
+
+        // ==========================================
+        // LOAD CALCULATION LOGIC
+        // ==========================================
+        const LOAD_MONTH_COUNT = 5;
+        let activeMainMenu = 'detailed';
+        let activeDetailedDepartment = 'knitting';
+        let activeSummaryDepartment = 'knitting';
+
+        let globalLoadData = { knitting: [], dyeing: [], delivery: [] };
+
+        const LOAD_REPORT_CONFIG = {
+            knitting: {
+                name: 'Knitting',
+                pendingQtyField: 'KnitBala',
+                columns: ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'Buyer', 'GreyReq', 'KnitProd', 'KnitBala']
+            },
+            dyeing: {
+                name: 'Dyeing',
+                pendingQtyField: 'DyeingBala',
+                columns: ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'ProcessName', 'GreyReq', 'KnitProd', 'KnitBala', 'BPQty', 'DyeingProd', 'DyeingBala']
+            },
+            delivery: {
+                name: 'Delivery',
+                pendingQtyField: 'DeliBal',
+                columns: ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'Buyer', 'RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'DeliBal', 'RFD', 'Slowmoving']
+            }
+        };
+
+        function showLoadCalculation(menuName) {
+            localStorage.setItem('activePage', JSON.stringify({ page: 'loadCalculation', menu: menuName }));
+            const uniqueId = `loadCalculation_${menuName}`;
+            activeTabId = uniqueId;
+
+            hideAllCoreViews();
+            document.getElementById('loadCalculationView').classList.remove('hidden');
+            
+            activeMainMenu = menuName;
+
+            const detailedMenu = document.getElementById('detailedMenu');
+            const summaryMenu = document.getElementById('summaryMenu');
+
+            detailedMenu.classList.toggle('hidden', menuName !== 'detailed');
+            summaryMenu.classList.toggle('hidden', menuName !== 'summary');
+
+            const detailedLink = document.getElementById('menu-load-detailed');
+            const summaryLink = document.getElementById('menu-load-summary');
+
+            if(detailedLink) detailedLink.classList.toggle('active', menuName === 'detailed');
+            if(summaryLink) summaryLink.classList.toggle('active', menuName === 'summary');
+
+            const title = menuName === 'detailed' ? 'Detailed Load Download' : 'Buyer-wise Load Summary';
+            const description = menuName === 'detailed' ? 'Download item-level Knitting, Dyeing and Delivery load reports.' : 'Download buyer-wise Knitting, Dyeing and Delivery load summaries.';
+
+            const menuTitle = menuName === 'detailed' ? 'Detailed Load' : 'Load Summary';
+            if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuTitle, dept: menuName, mode: 'loadCalculation' });
+            renderTabs();
+
+            if (document.getElementById('contentTabTitle')) document.getElementById('contentTabTitle').textContent = title;
+            if (document.getElementById('pageMainTitle')) document.getElementById('pageMainTitle').textContent = title;
+            if (document.getElementById('pageMainDescription')) document.getElementById('pageMainDescription').textContent = description;
+
+            closeSidebarMobile();
+            
+            setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
+            
+            // fetch and render
+            fetchLoadCalculationData().then(() => {
+                if (document.getElementById('loadStartMonth').options.length === 0) {
+                    initLoadMonthSelector();
+                }
+                if (menuName === 'summary') {
+                    setSummaryDepartment(activeSummaryDepartment);
+                } else {
+                    refreshCurrentView();
+                }
+            });
+        }
+
+        async function fetchLoadCalculationData() {
+            if (Object.keys(groupedData).length === 0) {
+                await fetchAndProcessData(true);
+            }
+
+            globalLoadData = { knitting: [], dyeing: [], delivery: [] };
+            
+            for (const bNo in groupedData) {
+                const order = groupedData[bNo];
+                if (!order.dbData) continue;
+                
+                ['knitting', 'dyeing', 'delivery'].forEach(dept => {
+                    if (order.dbData[dept] && Array.isArray(order.dbData[dept])) {
+                        order.dbData[dept].forEach(savedItem => {
+                            if (savedItem.planType === 'Confirm' || savedItem.planType === 'Tentative') {
+                                let latestItemData = savedItem.itemData;
+                                if (order.mergedItems) {
+                                    const latestItem = order.mergedItems.find(m => m.itemId === savedItem.itemId);
+                                    if (latestItem) {
+                                        latestItemData = latestItem.itemData;
+                                    }
+                                }
+
+                                let row = { ...latestItemData };
+                                row.OrderNo = bNo;
+                                row.planStart = savedItem.startDate;
+                                row.planEnd = savedItem.endDate;
+                                row.planType = savedItem.planType;
+                                
+                                // Standardize values
+                                row.Buyer = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                                row.Color = getColData(row, ['Color', 'Colour', 'Fab Color']);
+                                row.FabricConstruction = getColData(row, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
+                                row.GSM = getColData(row, ['GSM', 'G S M']);
+                                row.GreyReq = getColData(row, ['GreyReq', 'Grey Req', 'G. Req', 'Grey req']);
+                                row.KnitProd = getColData(row, ['KnitProd', 'Knit Prod', 'K. Prod']);
+                                row.KnitBala = getColData(row, ['KnitBala', 'Knit Bala', 'K. Bala', 'Knit. Bala.']);
+                                row.DyeingProd = getColData(row, ['DyeingProd', 'Dyeing Prod', 'D. Prod']);
+                                row.DyeingBala = getColData(row, ['DyeingBala', 'Dyeing Bala', 'D. Bala', 'Dyeing Bala.']);
+                                row.DeliBal = getColData(row, ['DeliBal', 'Deli Bal', 'Deli. Bal.']);
+                                row.RequiredQtyKgs = getColData(row, ['RequiredQtyKgs', 'RequiredQty', 'ReqQty']);
+                                
+                                globalLoadData[dept].push(row);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        function initLoadMonthSelector() {
+            const select = document.getElementById('loadStartMonth');
+            select.innerHTML = '';
+            const today = new Date();
+            const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            for (let i = -12; i <= 24; i++) {
+                const monthDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + i, 1);
+                const value = monthDate.getFullYear() + '-' + String(monthDate.getMonth() + 1).padStart(2, '0');
+                const label = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '-');
+                
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                if (i === 0) option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        function parseLoadDate(value) {
+            if (!value) return null;
+            if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+            const text = String(value).trim();
+            const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+            const parsed = new Date(text);
+            if (Number.isNaN(parsed.getTime())) return null;
+            return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+        }
+
+        function startOfLoadDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+        function addLoadMonths(date, number) { return new Date(date.getFullYear(), date.getMonth() + number, 1); }
+        function loadMonthEnd(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0); }
+        function minLoadDate(date1, date2) { return date1 <= date2 ? date1 : date2; }
+        function maxLoadDate(date1, date2) { return date1 >= date2 ? date1 : date2; }
+        function inclusiveLoadDays(startDate, endDate) { return Math.floor((startOfLoadDay(endDate) - startOfLoadDay(startDate)) / 86400000) + 1; }
+
+        function loadNumber(value) {
+            if (value === null || value === undefined || value === '') return 0;
+            const cleaned = String(value).replace(/,/g, '').replace(/\s*Kg$/i, '').trim();
+            const number = Number(cleaned);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function getSelectedLoadMonths() {
+            const selectedValue = document.getElementById('loadStartMonth').value;
+            if(!selectedValue) return [];
+            const [year, month] = selectedValue.split('-').map(Number);
+            const firstMonth = new Date(year, month - 1, 1);
+            return Array.from({ length: LOAD_MONTH_COUNT }, (_, index) => addLoadMonths(firstMonth, index));
+        }
+
+        function formatLoadMonthHeader(date) { return date.toLocaleDateString('en-US', { month: 'short' }); }
+        function formatSummaryMonthHeader(date) { return date.toLocaleDateString('en-US', { month: 'long' }); }
+        function formatLoadMonthYear(date) { return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(' ', '-'); }
+        function formatLoadDate(dateValue) {
+            const date = parseLoadDate(dateValue);
+            if (!date) return '';
+            return date.getDate() + '-' + date.toLocaleDateString('en-US', { month: 'short' });
+        }
+
+        function calculateLoadAllocation(pendingQty, planStartValue, planEndValue, reportMonths) {
+            const qty = Math.max(0, loadNumber(pendingQty));
+            const planStart = parseLoadDate(planStartValue);
+            const planEnd = parseLoadDate(planEndValue);
+            const today = startOfLoadDay(new Date());
+
+            const emptyResult = { leadDay: 0, loadPerDay: 0, monthlyLoads: new Array(LOAD_MONTH_COUNT).fill(0) };
+
+            if (!planStart || !planEnd || qty <= 0) return emptyResult;
+
+            if (planEnd <= today) {
+                return {
+                    leadDay: 1,
+                    loadPerDay: Math.round(qty),
+                    monthlyLoads: reportMonths.map((_, index) => index === 0 ? Math.round(qty) : 0)
+                };
+            }
+
+            const allocationStart = maxLoadDate(planStart, today);
+            const leadDay = Math.max(1, inclusiveLoadDays(allocationStart, planEnd));
+
+            const monthlyLoads = reportMonths.map(monthStart => {
+                const currentMonthEnd = loadMonthEnd(monthStart);
+                const previousMonthEnd = loadMonthEnd(addLoadMonths(monthStart, -1));
+                const currentCutoff = minLoadDate(planEnd, currentMonthEnd);
+                const previousCutoff = minLoadDate(planEnd, previousMonthEnd);
+                
+                const currentDays = Math.max(0, inclusiveLoadDays(allocationStart, currentCutoff));
+                const previousDays = Math.max(0, inclusiveLoadDays(allocationStart, previousCutoff));
+
+                const currentCumulative = Math.round(qty * currentDays / leadDay);
+                const previousCumulative = Math.round(qty * previousDays / leadDay);
+
+                return Math.max(0, currentCumulative - previousCumulative);
+            });
+
+            return {
+                leadDay,
+                loadPerDay: Math.round(qty / leadDay),
+                monthlyLoads
+            };
+        }
+
+        function buildReportData(department) {
+            const config = LOAD_REPORT_CONFIG[department];
+            const reportMonths = getSelectedLoadMonths();
+            const sourceRows = globalLoadData[department] || [];
+
+            const headers = [
+                ...config.columns,
+                `${config.name} Plan Start Date`,
+                `${config.name} Plan End Date`,
+                `${config.name} Plan Type`,
+                'Lead Day',
+                'L/Day',
+                ...reportMonths.map(formatLoadMonthHeader)
+            ];
+
+            const rows = sourceRows
+                .filter(row => row.planType === 'Confirm' || row.planType === 'Tentative')
+                .filter(row => loadNumber(row[config.pendingQtyField]) > 0)
+                .map(row => {
+                    const allocation = calculateLoadAllocation(row[config.pendingQtyField], row.planStart, row.planEnd, reportMonths);
+                    return {
+                        source: row,
+                        excelRow: [
+                            ...config.columns.map(col => row[col] !== undefined && row[col] !== null ? row[col] : ''),
+                            formatLoadDate(row.planStart),
+                            formatLoadDate(row.planEnd),
+                            row.planType || '',
+                            allocation.leadDay,
+                            allocation.loadPerDay,
+                            ...allocation.monthlyLoads
+                        ],
+                        monthlyLoads: allocation.monthlyLoads
+                    };
+                });
+
+            return { config, reportMonths, headers, rows };
+        }
+
+        function buildSummaryData(department) {
+            const detailData = buildReportData(department);
+            const buyerMap = new Map();
+
+            detailData.rows.forEach(detailRow => {
+                const buyer = String(detailRow.source.Buyer || 'Unspecified').trim() || 'Unspecified';
+                if (!buyerMap.has(buyer)) buyerMap.set(buyer, new Array(LOAD_MONTH_COUNT).fill(0));
+                
+                const buyerMonths = buyerMap.get(buyer);
+                detailRow.monthlyLoads.forEach((value, index) => {
+                    buyerMonths[index] += loadNumber(value);
+                });
+            });
+
+            const summaryRows = Array.from(buyerMap.entries())
+                .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: 'base' }))
+                .map(([buyer, monthlyValues]) => ({ buyer, monthlyValues, total: monthlyValues.reduce((sum, val) => sum + val, 0) }));
+
+            const grandMonthlyTotals = new Array(LOAD_MONTH_COUNT).fill(0);
+            summaryRows.forEach(row => {
+                row.monthlyValues.forEach((val, idx) => grandMonthlyTotals[idx] += val);
+            });
+            const grandTotal = grandMonthlyTotals.reduce((sum, val) => sum + val, 0);
+
+            return {
+                config: detailData.config,
+                reportMonths: detailData.reportMonths,
+                headers: ['Buyer', ...detailData.reportMonths.map(formatSummaryMonthHeader), 'Total [Kg]'],
+                rows: summaryRows,
+                grandMonthlyTotals,
+                grandTotal
+            };
+        }
+
+        function setSummaryDepartment(department) {
+            activeSummaryDepartment = department;
+            document.querySelectorAll('.department-tab').forEach(tab => {
+                tab.className = 'department-tab px-4 py-2 rounded border text-xs font-bold bg-white text-gray-700 hover:bg-gray-50';
+            });
+            const activeBtn = document.getElementById('summaryBtn' + department.charAt(0).toUpperCase() + department.slice(1));
+            if(activeBtn) {
+                activeBtn.className = `department-tab px-4 py-2 rounded border text-xs font-bold active-${department}`;
+            }
+            refreshCurrentView();
+        }
+
+        function refreshCurrentView() {
+            if (activeMainMenu === 'summary') {
+                const data = buildSummaryData(activeSummaryDepartment);
+                renderSummaryTable(data);
+            }
+        }
+
+        function renderSummaryTable(data) {
+            const table = document.getElementById('summaryPreviewTable');
+            table.querySelector('thead').innerHTML = `<tr>${data.headers.map(h => `<th class="p-2 border text-center">${h}</th>`).join('')}</tr>`;
+            
+            const tbody = table.querySelector('tbody');
+            if (data.rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${data.headers.length}" class="text-center p-4 text-slate-500">No load data available for this department.</td></tr>`;
+                table.querySelector('tfoot').innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = data.rows.map(row => `
+                <tr>
+                    <td class="p-2 border text-left font-semibold text-slate-700">${row.buyer}</td>
+                    ${row.monthlyValues.map(val => `<td class="p-2 border text-right">${val.toLocaleString()}</td>`).join('')}
+                    <td class="p-2 border text-right font-bold text-slate-800">${row.total.toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            table.querySelector('tfoot').innerHTML = `
+                <tr>
+                    <td class="p-2 border text-left">Grand Total</td>
+                    ${data.grandMonthlyTotals.map(val => `<td class="p-2 border text-right">${val.toLocaleString()}</td>`).join('')}
+                    <td class="p-2 border text-right">${data.grandTotal.toLocaleString()}</td>
+                </tr>
+            `;
+        }
+
+        function downloadLoadReport(department) {
+            const { config, reportMonths, headers, rows } = buildReportData(department);
+            if (!rows.length) { showToast(`No ${config.name} load data found.`); return; }
+
+            const worksheetData = [headers, ...rows.map(row => row.excelRow)];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            
+            worksheet['!autofilter'] = {
+                ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: headers.length - 1 } })
+            };
+            worksheet['!cols'] = headers.map(header => {
+                if (header.includes('Date') || header.includes('Construction') || header.includes('Process')) return { wch: 21 };
+                return { wch: Math.max(10, Math.min(String(header).length + 3, 18)) };
+            });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Load`);
+            const filename = `${config.name}_Load_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        }
+
+        function downloadLoadSummary(department) {
+            const { config, reportMonths, headers, rows, grandMonthlyTotals, grandTotal } = buildSummaryData(department);
+            if (!rows.length) { showToast(`No ${config.name} summary data found.`); return; }
+
+            const worksheetData = [
+                headers,
+                ...rows.map(row => [row.buyer, ...row.monthlyValues, row.total]),
+                ['Grand Total', ...grandMonthlyTotals, grandTotal]
+            ];
+
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            worksheet['!cols'] = [{ wch: 25 }, ...reportMonths.map(() => ({ wch: 15 })), { wch: 15 }];
+            
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Summary`);
+            const filename = `${config.name}_Summary_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        }
 
     </script>
 </body>
