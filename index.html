@@ -143,6 +143,16 @@
             color: #374151;
             border-bottom-color: #d1d5db;
         }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 
@@ -335,6 +345,56 @@
                             sidebar to manage data.</p>
                     </div>
                 </div>
+
+
+                <!-- Animated Relaxing Dashboard Widget -->
+                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[300px] relative">
+                    <canvas id="dashboardCanvas" class="absolute inset-0 w-full h-full" style="z-index: 0;"></canvas>
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center flex-1 p-6 pointer-events-none select-none">
+                        <div id="dashboardAnimIcon" class="mb-5" style="animation: breathe 4s ease-in-out infinite;">
+                            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                                <circle cx="60" cy="60" r="54" stroke="url(#dashGrad1)" stroke-width="2.5" fill="none" opacity="0.6">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="60" cy="60" r="40" stroke="url(#dashGrad2)" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="6 8">
+                                    <animateTransform attributeName="transform" type="rotate" from="360 60 60" to="0 60 60" dur="15s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="60" cy="60" r="26" stroke="url(#dashGrad1)" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="3 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="10s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="60" cy="60" r="14" stroke="url(#dashGrad3)" stroke-width="1" fill="none" opacity="0.35" stroke-dasharray="2 3">
+                                    <animateTransform attributeName="transform" type="rotate" from="360 60 60" to="0 60 60" dur="8s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="60" cy="60" r="7" fill="url(#dashGrad2)" opacity="0.7">
+                                    <animate attributeName="r" values="5;9;5" dur="3s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="3s" repeatCount="indefinite"/>
+                                </circle>
+                                <defs>
+                                    <linearGradient id="dashGrad1" x1="0" y1="0" x2="120" y2="120">
+                                        <stop offset="0%" stop-color="#4f46e5"/>
+                                        <stop offset="100%" stop-color="#0891b2"/>
+                                    </linearGradient>
+                                    <linearGradient id="dashGrad2" x1="0" y1="120" x2="120" y2="0">
+                                        <stop offset="0%" stop-color="#7c3aed"/>
+                                        <stop offset="100%" stop-color="#10b981"/>
+                                    </linearGradient>
+                                    <linearGradient id="dashGrad3" x1="0" y1="0" x2="120" y2="0">
+                                        <stop offset="0%" stop-color="#ec4899"/>
+                                        <stop offset="100%" stop-color="#f59e0b"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600 text-base font-semibold tracking-wide" style="animation: fadeInUp 1.5s ease-out;">
+                            Your production dashboard is ready
+                        </p>
+                        <p class="text-gray-500 text-sm mt-1" style="animation: fadeInUp 2s ease-out;">
+                            Navigate the sidebar to start planning
+                        </p>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -4738,6 +4798,164 @@
             // Re-render to move items between tabs if actualEnd was added/removed
             renderActualTable();
         }
+
+
+        // ==================== Dashboard Relaxing Canvas Animation ====================
+        (function() {
+            const canvas = document.getElementById('dashboardCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let animFrame = null;
+            let particles = [];
+            const PARTICLE_COUNT = 40;
+
+            const palettes = [
+                'rgba(239, 68, 68, 0.22)',     // red
+                'rgba(245, 158, 11, 0.25)',    // amber
+                'rgba(16, 185, 129, 0.22)',    // emerald
+                'rgba(6, 182, 212, 0.25)',     // cyan
+                'rgba(168, 85, 247, 0.22)',    // violet
+                'rgba(236, 72, 153, 0.20)',    // pink
+                'rgba(59, 130, 246, 0.22)',    // blue
+                'rgba(234, 179, 8, 0.20)',     // yellow
+                'rgba(20, 184, 166, 0.22)',    // teal
+            ];
+
+            function resize() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+
+            function createParticle() {
+                const size = Math.random() * 30 + 8;
+                return {
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: size,
+                    baseSize: size,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    color: palettes[Math.floor(Math.random() * palettes.length)],
+                    pulse: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.005 + Math.random() * 0.01,
+                    wobble: Math.random() * Math.PI * 2,
+                    wobbleSpeed: 0.002 + Math.random() * 0.005,
+                    wobbleAmount: Math.random() * 0.3,
+                };
+            }
+
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push(createParticle());
+                }
+            }
+
+            function drawParticle(p) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+
+            function drawConnections() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 120) {
+                            const opacity = (1 - dist / 120) * 0.06;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(99, 102, 241, ${opacity})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw subtle gradient background
+                const grd = ctx.createRadialGradient(
+                    canvas.width / 2, canvas.height / 2, 0,
+                    canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.6
+                );
+                grd.addColorStop(0, 'rgba(238, 242, 255, 0.4)');
+                grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                drawConnections();
+
+                particles.forEach(p => {
+                    p.pulse += p.pulseSpeed;
+                    p.wobble += p.wobbleSpeed;
+                    p.size = p.baseSize + Math.sin(p.pulse) * 3;
+                    p.vx += Math.sin(p.wobble) * p.wobbleAmount * 0.01;
+                    p.vy += Math.cos(p.wobble) * p.wobbleAmount * 0.01;
+
+                    // Dampen velocity
+                    p.vx *= 0.999;
+                    p.vy *= 0.999;
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Wrap around edges smoothly
+                    if (p.x < -p.size) p.x = canvas.width + p.size;
+                    if (p.x > canvas.width + p.size) p.x = -p.size;
+                    if (p.y < -p.size) p.y = canvas.height + p.size;
+                    if (p.y > canvas.height + p.size) p.y = -p.size;
+
+                    drawParticle(p);
+                });
+
+                animFrame = requestAnimationFrame(animate);
+            }
+
+            function startAnimation() {
+                if (animFrame) return;
+                resize();
+                if (particles.length === 0) initParticles();
+                animate();
+            }
+
+            function stopAnimation() {
+                if (animFrame) {
+                    cancelAnimationFrame(animFrame);
+                    animFrame = null;
+                }
+            }
+
+            // Auto-manage animation based on dashboard visibility
+            const observer = new MutationObserver(() => {
+                const dashView = document.getElementById('dashboardHomeView');
+                if (dashView && !dashView.classList.contains('hidden')) {
+                    startAnimation();
+                } else {
+                    stopAnimation();
+                }
+            });
+
+            const dashView = document.getElementById('dashboardHomeView');
+            if (dashView) {
+                observer.observe(dashView, { attributes: true, attributeFilter: ['class'] });
+                if (!dashView.classList.contains('hidden')) startAnimation();
+            }
+
+            window.addEventListener('resize', () => {
+                if (animFrame) {
+                    resize();
+                }
+            });
+        })();
+        // ==================== End Dashboard Animation ====================
 
     </script>
 </body>
