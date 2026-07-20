@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abir Group - Login & Register</title>
+    <title>Epyllion Group - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -206,7 +206,7 @@
             const btn = document.getElementById('loginBtn');
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...';
+            btn.innerHTML = '<div class="inline-flex relative justify-center items-center w-4 h-4 mr-2 align-middle"><div class="absolute w-full h-full rounded-full border-2 border-white/30"></div><div class="absolute w-full h-full rounded-full border-2 border-transparent border-t-white border-r-white animate-spin"></div><div class="absolute w-2 h-2 rounded-full border-2 border-transparent border-b-white border-l-white animate-[spin_1.5s_linear_infinite_reverse]"></div></div> Authenticating...';
 
             try {
                 const res = await fetch('https://abir-backend-api.onrender.com/api/auth/login', {

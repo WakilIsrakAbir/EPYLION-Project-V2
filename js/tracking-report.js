@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // TRACKING REPORT: Department Reports
 // ==========================================================
 function loadTrackingReport(deptKey) {
@@ -30,7 +30,7 @@ async function downloadTrackingReport(statusType, formatType) {
     let btnText = '';
     if (btn) {
         btnText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        btn.innerHTML = '<div class="inline-flex relative justify-center items-center w-4 h-4 mr-2 align-middle"><div class="absolute w-full h-full rounded-full border-2 border-white/30"></div><div class="absolute w-full h-full rounded-full border-2 border-transparent border-t-white border-r-white animate-spin"></div><div class="absolute w-2 h-2 rounded-full border-2 border-transparent border-b-white border-l-white animate-[spin_1.5s_linear_infinite_reverse]"></div></div> Loading...';
         btn.disabled = true;
     }
 

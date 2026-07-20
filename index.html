@@ -13,16 +13,24 @@
     <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <!-- Prevent flash of wrong theme -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme-preference');
+            if (t !== 'light') document.documentElement.classList.add('dark');
+        })();
+    </script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        sidebar: '#1e222b',
-                        sidebarDark: '#161920',
-                        sidebarHover: '#0f1115',
-                        sidebarActive: '#2a2f3a',
-                        textMuted: '#aeb2b7',
+                        sidebar: '#e5e7eb',
+                        sidebarDark: '#d1d5db',
+                        sidebarHover: '#d1d5db',
+                        sidebarActive: '#cbd5e1',
+                        textMuted: '#000000',
                         epylionGreen: '#4CAF50',
                         activeBlue: '#3b82f6',
                         tableHeader: '#e9ecef'
@@ -32,6 +40,259 @@
         }
     </script>
     <style>
+        /* ========== PREMIUM DARK MODE ========== */
+
+        /* --- Smooth transition for theme toggle --- */
+        html { transition: background-color 0.3s ease, color 0.3s ease; }
+        html.dark * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+
+        /* --- Body --- */
+        html.dark body {
+            background-color: #0f1117 !important;
+            color: #e2e8f0 !important;
+        }
+
+        /* --- Sidebar (rich dark with subtle gradient) --- */
+        html.dark #sidebar {
+            background: linear-gradient(180deg, #131620 0%, #0d1017 100%) !important;
+            color: #c8d1dc !important;
+            border-right: 1px solid #1e2536 !important;
+        }
+        html.dark .bg-sidebar { background-color: #131620 !important; }
+        html.dark .bg-sidebarDark { background-color: #0d1017 !important; }
+        html.dark .bg-sidebarHover { background-color: #1a2030 !important; }
+        html.dark .hover\:bg-sidebarHover:hover { background-color: #1a2030 !important; }
+        html.dark .hover\:bg-sidebarDark:hover { background-color: #0d1017 !important; }
+        html.dark .bg-sidebarActive {
+            background: linear-gradient(90deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%) !important;
+            border-left-color: #10b981 !important;
+        }
+        html.dark #sidebar .border-gray-200 { border-color: #1e2536 !important; }
+        html.dark #sidebar .text-epylionGreen { color: #34d399 !important; }
+        html.dark #sidebar .bg-gray-400 { background-color: #374151 !important; }
+        html.dark #sidebar .text-red-500 { color: #f87171 !important; }
+        html.dark #sidebar .text-black,
+        html.dark #sidebar .text-textMuted,
+        html.dark #sidebar .text-gray-900,
+        html.dark #sidebar .text-gray-800,
+        html.dark #sidebar .text-gray-700,
+        html.dark #sidebar span,
+        html.dark #sidebar a { color: #94a3b8 !important; }
+        html.dark #sidebar .hover\:text-black:hover,
+        html.dark #sidebar a:hover { color: #e2e8f0 !important; }
+        html.dark .dm-text-light { color: #e2e8f0 !important; }
+        html.dark #sidebar .fa-chevron-left { color: #475569 !important; }
+        html.dark #sidebar .bg-sidebarActive span,
+        html.dark #sidebar .bg-sidebarActive a,
+        html.dark #sidebar .bg-sidebarActive i { color: #e2e8f0 !important; }
+
+        /* --- Top Header Bar (glass-like) --- */
+        html.dark .bg-white.border-b {
+            background-color: #151921 !important;
+            border-color: #1e2536 !important;
+        }
+
+        /* --- Tab Bar --- */
+        html.dark #tabBarContainer {
+            background-color: #151921 !important;
+            border-color: #1e2536 !important;
+        }
+
+        /* --- General Backgrounds --- */
+        html.dark .bg-white { background-color: #181c25 !important; }
+        html.dark .bg-slate-50 { background-color: #0f1117 !important; }
+        html.dark .bg-slate-100 { background-color: #181c25 !important; }
+        html.dark .bg-gray-50 { background-color: #181c25 !important; }
+        html.dark .bg-gray-100 { background-color: #1e2330 !important; }
+        html.dark .bg-gray-200 { background-color: #252b3b !important; }
+
+        /* --- Borders (subtle blue tint) --- */
+        html.dark .border-gray-200 { border-color: #1e2536 !important; }
+        html.dark .border-gray-300 { border-color: #2a3346 !important; }
+        html.dark .border-slate-200 { border-color: #1e2536 !important; }
+        html.dark .border-slate-300 { border-color: #2a3346 !important; }
+
+        html.dark .text-gray-900 { color: #f8fafc !important; }
+        html.dark .text-gray-800 { color: #e2e8f0 !important; }
+        html.dark .text-gray-700 { color: #cbd5e1 !important; }
+        html.dark .text-gray-600 { color: #94a3b8 !important; }
+        html.dark .text-gray-500 { color: #64748b !important; }
+        html.dark .text-gray-400 { color: #475569 !important; }
+        html.dark .text-gray-300 { color: #cbd5e1 !important; }
+        html.dark .text-slate-800 { color: #e2e8f0 !important; }
+        html.dark .text-slate-700 { color: #cbd5e1 !important; }
+        html.dark .text-blue-900 { color: #6ee7b7 !important; }
+        html.dark .text-blue-950 { color: #34d399 !important; }
+        html.dark .text-yellow-950 { color: #fbbf24 !important; }
+        html.dark .text-green-950 { color: #34d399 !important; }
+        html.dark .text-orange-950 { color: #fb923c !important; }
+        html.dark .text-red-700 { color: #fca5a5 !important; }
+        html.dark .text-red-600 { color: #f87171 !important; }
+        html.dark .text-red-800 { color: #fca5a5 !important; }
+        html.dark .text-blue-800 { color: #6ee7b7 !important; }
+        html.dark .text-blue-700 { color: #34d399 !important; }
+        html.dark .text-blue-600 { color: #10b981 !important; }
+        html.dark .text-blue-500 { color: #10b981 !important; }
+        html.dark .text-green-900 { color: #6ee7b7 !important; }
+        html.dark .text-green-800 { color: #6ee7b7 !important; }
+        html.dark .text-orange-900 { color: #fdba74 !important; }
+        html.dark .text-orange-800 { color: #fdba74 !important; }
+        html.dark .text-orange-700 { color: #fb923c !important; }
+        html.dark .text-yellow-800 { color: #fde68a !important; }
+        html.dark .bg-blue-600 { background-color: #10b981 !important; color: #fff !important; border:none !important; }
+        html.dark .hover\:bg-blue-600:hover { background-color: #059669 !important; color: #fff !important; }
+        html.dark .hover\:bg-blue-700:hover { background-color: #047857 !important; color: #fff !important; }
+        html.dark .bg-blue-100 { background-color: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; }
+
+        /* --- Table Header (rich, colored headers preserved) --- */
+        html.dark .bg-tableHeader {
+            background-color: #151921 !important;
+            border-bottom: 2px solid #2a3346 !important;
+        }
+        html.dark .bg-tableHeader th { color: #e2e8f0 !important; }
+        /* Colored header cells: keep their semantic color but darker */
+        html.dark .bg-blue-50 { background-color: rgba(16, 185, 129, 0.1) !important; }
+        html.dark .bg-blue-50\/50 { background-color: rgba(16, 185, 129, 0.15) !important; }
+        html.dark .bg-green-50 { background-color: rgba(16, 185, 129, 0.1) !important; }
+        html.dark .bg-green-50\/50 { background-color: rgba(16, 185, 129, 0.15) !important; }
+        html.dark .bg-orange-50 { background-color: rgba(245, 158, 11, 0.1) !important; }
+        html.dark .bg-orange-50\/50 { background-color: rgba(245, 158, 11, 0.15) !important; }
+        html.dark .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.08) !important; }
+        html.dark .bg-yellow-50\/50 { background-color: rgba(234, 179, 8, 0.12) !important; }
+        html.dark .bg-yellow-50\/30 { background-color: rgba(234, 179, 8, 0.06) !important; }
+        html.dark .bg-blue-50\/30 { background-color: rgba(16, 185, 129, 0.06) !important; }
+        html.dark .bg-green-50\/30 { background-color: rgba(16, 185, 129, 0.06) !important; }
+        html.dark .bg-orange-50\/30 { background-color: rgba(245, 158, 11, 0.06) !important; }
+        html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.1) !important; }
+        html.dark .bg-green-100 { background-color: rgba(16, 185, 129, 0.15) !important; }
+        html.dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.15) !important; }
+        html.dark .text-green-700 { color: #34d399 !important; }
+        html.dark .hover\:bg-gray-50:hover { background-color: #1e2536 !important; }
+        html.dark .hover\:bg-gray-100:hover { background-color: #232b3f !important; }
+        html.dark .text-green-700 { color: #34d399 !important; }
+
+        /* --- Table Body --- */
+        html.dark #mainTableBody tr { color: #cbd5e1; }
+        html.dark #mainTableBody tr:nth-child(odd) { background-color: #181c25; }
+        html.dark #mainTableBody tr:nth-child(even) { background-color: #13161e; }
+        html.dark #mainTableBody tr:hover { background-color: rgba(16, 185, 129, 0.08) !important; }
+        html.dark #actualTableBody tr { color: #cbd5e1; }
+        html.dark #actualTableBody tr:nth-child(odd) { background-color: #181c25; }
+        html.dark #actualTableBody tr:nth-child(even) { background-color: #13161e; }
+        html.dark #actualTableBody tr:hover { background-color: rgba(16, 185, 129, 0.08) !important; }
+        html.dark #osTableBody tr { color: #cbd5e1; }
+        html.dark #osTableBody tr:nth-child(odd) { background-color: #181c25; }
+        html.dark #osTableBody tr:nth-child(even) { background-color: #13161e; }
+        html.dark #osTableBody tr:hover { background-color: rgba(16, 185, 129, 0.08) !important; }
+        html.dark table th { border-color: #1e2536 !important; }
+        html.dark table td { border-color: #1e2536 !important; }
+
+        /* --- Pagination (clean dark) --- */
+        html.dark #paginationControls,
+        html.dark #actualPaginationControls {
+            background-color: #151921 !important;
+            border-color: #1e2536 !important;
+            color: #94a3b8 !important;
+        }
+        html.dark #paginationControls span,
+        html.dark #actualPaginationControls span { color: #94a3b8 !important; }
+        html.dark #paginationControls button,
+        html.dark #actualPaginationControls button { color: #94a3b8 !important; }
+        html.dark #pageButtons button,
+        html.dark #actualPageButtons button {
+            background-color: #1e2330 !important;
+            color: #94a3b8 !important;
+            border-color: #2a3346 !important;
+        }
+        html.dark #pageButtons button:hover,
+        html.dark #actualPageButtons button:hover { background-color: #2a3346 !important; }
+
+        /* --- All Inputs, Selects, Textareas --- */
+        html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+        html.dark select,
+        html.dark textarea,
+        html.dark .info-input {
+            background-color: #1e2330 !important;
+            color: #e2e8f0 !important;
+            border-color: #2a3346 !important;
+        }
+        
+        html.dark input[type="date"], html.dark input[type="month"] {
+            color-scheme: dark;
+        }
+        html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15) !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder { color: #475569 !important; }
+
+        /* --- Hardcoded CSS elements --- */
+        html.dark .info-label { color: #94a3b8; }
+        html.dark .header-search { background-color: #1e2330 !important; border-color: #2a3346 !important; color: #e2e8f0 !important; }
+        html.dark .buyer-tab { background: #1e2330; border-color: #2a3346; color: #94a3b8; }
+        html.dark .buyer-tab:hover { background: #252b3b !important; color: #e2e8f0 !important; }
+        html.dark .buyer-tab.active { background: #10b981; border-color: #059669; color: white; }
+        html.dark .upload-tab { color: #64748b; }
+        html.dark .upload-tab.active { color: #34d399; border-bottom-color: #10b981; }
+        html.dark .upload-tab:hover:not(.active) { color: #e2e8f0; border-bottom-color: #475569; }
+
+        /* --- Scrollbar (sleek) --- */
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: #0f1117; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #2a3346; border-radius: 4px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3b4560; }
+
+        /* --- Dashboard Widget --- */
+        html.dark .bg-slate-100.rounded-xl { background-color: #181c25 !important; }
+
+        /* --- Colored info areas --- */
+        html.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.3) !important; }
+        html.dark .border-blue-300 { border-color: rgba(59, 130, 246, 0.4) !important; }
+        html.dark .border-red-200 { border-color: rgba(239, 68, 68, 0.3) !important; }
+
+        /* --- Toast --- */
+        html.dark #toast { background-color: #1e2330 !important; border: 1px solid #2a3346; }
+
+        /* --- Load Calculation Summary --- */
+        html.dark #summaryPreviewTable thead th { background: rgba(16, 185, 129, 0.12) !important; color: #6ee7b7 !important; border-color: rgba(16, 185, 129, 0.2) !important; }
+        html.dark #summaryPreviewTable tbody tr:nth-child(even) td { background: #13161e !important; }
+        html.dark #summaryPreviewTable tbody tr:hover td { background: rgba(16, 185, 129, 0.08) !important; }
+        html.dark #summaryPreviewTable tfoot td { background: rgba(16, 185, 129, 0.12) !important; color: #6ee7b7 !important; border-color: rgba(16, 185, 129, 0.2) !important; }
+
+        /* --- Active tab buttons (JS-generated) --- */
+        html.dark .bg-\[\#313644\] { background-color: #10b981 !important; }
+
+        /* --- Loading Overlay --- */
+        html.dark #loadingData { background: rgba(15, 17, 23, 0.9) !important; }
+
+        /* --- Empty state --- */
+        html.dark #emptyState,
+        html.dark #actualEmptyState { background-color: #181c25 !important; color: #64748b !important; }
+
+        /* --- Shadows (subtle glow) --- */
+        html.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 1px rgba(16, 185, 129, 0.05) !important; }
+        html.dark .shadow-lg { box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 1px rgba(16, 185, 129, 0.1) !important; }
+
+        /* --- Toggle button (animated) --- */
+        .dark-mode-toggle {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .dark-mode-toggle:hover { background-color: #f1f5f9; transform: rotate(15deg); }
+        html.dark .dark-mode-toggle:hover { background-color: #1e2330; transform: rotate(15deg); }
+        .dark-mode-toggle i { transition: transform 0.3s ease, color 0.3s ease; }
+
+        /* ========== END PREMIUM DARK MODE ========== */
+
+
         @supports (-webkit-touch-callout: none) {
             body {
                 height: -webkit-fill-available;
@@ -203,171 +464,171 @@
     <div id="sidebar"
         class="shrink-0 fixed md:relative z-50 h-full bg-sidebar transition-all duration-300 overflow-hidden w-[280px] -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
         <div class="w-[280px] h-full flex flex-col overflow-y-auto custom-scrollbar text-textMuted relative">
-            <div class="absolute top-4 right-4 text-white cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
+            <div class="absolute top-4 right-4 text-black cursor-pointer md:hidden z-10" onclick="closeSidebarMobile()">
                 <i class="fas fa-times text-lg"></i>
             </div>
             <div
-                class="p-4 bg-sidebarDark text-white text-lg font-bold flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer">
+                class="p-4 bg-sidebarDark text-black text-lg font-bold flex items-center border-b border-gray-200 whitespace-nowrap cursor-pointer">
                 <span class="text-epylionGreen tracking-wider">Textile Planning Solution</span>
             </div>
 
             <div id="menu-dashboard"
-                class="sidebar-menu-item py-4 pr-4 pl-3 border-l-4 border-transparent flex items-center border-b border-[#1f232b] whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
+                class="sidebar-menu-item py-4 pr-4 pl-3 border-l-4 border-transparent flex items-center border-b border-gray-200 whitespace-nowrap cursor-pointer hover:bg-sidebarHover transition-colors"
                 onclick="showDashboardHome()">
                 <div
-                    class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-white shrink-0">
+                    class="w-[30px] h-[30px] rounded-full mr-3 bg-gray-400 flex items-center justify-center text-black shrink-0">
                     <i class="fas fa-user text-sm"></i>
                 </div>
-                <span class="text-[13px] text-gray-200" id="displayUsername">Loading...</span>
-                <i class="fas fa-sign-out-alt ml-auto text-red-400 hover:text-red-500 cursor-pointer" onclick="logout()"
+                <span class="text-[13px] text-black" id="displayUsername">Loading...</span>
+                <i class="fas fa-sign-out-alt ml-auto text-red-500 hover:text-red-600 cursor-pointer" onclick="logout()"
                     title="Logout"></i>
             </div>
 
             <ul class="py-2 w-full">
                 <li id="sidebarDataManagement">
                     <div id="menu-data-mgmt"
-                        class="sidebar-menu-item py-3 pr-4 pl-3 border-l-4 border-transparent flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                        class="sidebar-menu-item py-3 pr-4 pl-3 border-l-4 border-transparent flex items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="showDataManagementView()">
-                        <i class="fas fa-database text-gray-400 w-6"></i> <span class="ml-2">Data Management</span>
+                        <i class="fas fa-database text-black w-6"></i> <span class="ml-2">Data Management</span>
                     </div>
                 </li>
 
                 <li>
-                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'orderMenu')">
-                        <div class="flex items-center"><i class="fas fa-box text-gray-400 w-6"></i> <span
+                        <div class="flex items-center"><i class="fas fa-box text-black w-6"></i> <span
                                 class="ml-2">Order Management</span></div>
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="orderMenu">
                         <li><a href="#" id="menu-yd-manage"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('yd', 'YD Plan', 'manage')">YD Plan</a></li>
                         <li><a href="#" id="menu-knitting-manage"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('knitting', 'Knitting Plan', 'manage')">Knitting Plan</a></li>
                         <li><a href="#" id="menu-dyeing-manage"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('dyeing', 'Dyeing Plan', 'manage')">Dyeing Plan</a></li>
                         <li><a href="#" id="menu-finishing-manage"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('finishing', 'Finishing Plan', 'manage')">Finishing Plan</a></li>
                         <li><a href="#" id="menu-delivery-manage"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('delivery', 'Delivery Plan', 'manage')">Delivery Plan</a></li>
                     </ul>
                 </li>
 
                 <li>
-                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'reportMenu')">
-                        <div class="flex items-center"><i class="fas fa-chart-bar text-gray-400 w-6"></i> <span
+                        <div class="flex items-center"><i class="fas fa-chart-bar text-black w-6"></i> <span
                                 class="ml-2">Report</span></div>
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="reportMenu">
                         <li><a href="#" id="menu-yd-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('yd', 'YD Report', 'report')">Updated YD Report</a></li>
                         <li><a href="#" id="menu-knitting-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('knitting', 'Knitting Report', 'report')">Updated Knitting Report</a></li>
                         <li><a href="#" id="menu-dyeing-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('dyeing', 'Dyeing Report', 'report')">Updated Dyeing Report</a></li>
                         <li><a href="#" id="menu-finishing-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('finishing', 'Finishing Report', 'report')">Updated Finishing Report</a>
                         </li>
                         <li><a href="#" id="menu-delivery-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadMenuData('delivery', 'Delivery Report', 'report')">Updated Delivery Report</a></li>
                         <li><a href="#" id="menu-order-status"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="showOrderStatus()">Order Status</a>
                         </li>
                     </ul>
                 </li>
 
                 <li>
-                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'actualMenu')">
-                        <div class="flex items-center"><i class="fas fa-balance-scale text-gray-400 w-6"></i> <span
+                        <div class="flex items-center"><i class="fas fa-balance-scale text-black w-6"></i> <span
                                 class="ml-2">Plan Vs Actual Tracking</span></div>
                         <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
                     <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="actualMenu">
                         <li><a href="#" id="menu-yd-actual"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadActualTracking('yd')">YD</a></li>
                         <li><a href="#" id="menu-knitting-actual"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadActualTracking('knitting')">Knitting</a></li>
                         <li><a href="#" id="menu-dyeing-actual"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadActualTracking('dyeing')">Dyeing</a></li>
                         <li><a href="#" id="menu-finishing-actual"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadActualTracking('finishing')">Finishing</a></li>
                         <li><a href="#" id="menu-delivery-actual"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadActualTracking('delivery')">Delivery</a></li>
                     </ul>
                 </li>
 
                 <!-- Plan Vs Actual Tracking Report -->
                 <li>
-                    <div class="px-4 py-3 flex items-center justify-between hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div class="px-4 py-3 flex items-center justify-between hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'submenu-actual-report')">
                         <div class="flex items-center">
-                            <i class="fas fa-file-invoice text-gray-400 w-6"></i>
+                            <i class="fas fa-file-invoice text-black w-6"></i>
                             <span class="ml-2">Tracking Report</span>
                         </div>
                         <i class="fas fa-chevron-left text-xs transition-transform duration-200"></i>
                     </div>
                     <ul id="submenu-actual-report" class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar">
                         <li><a href="#" id="menu-yd-actual-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadTrackingReport('yd')">YD</a></li>
                         <li><a href="#" id="menu-knitting-actual-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadTrackingReport('knitting')">Knitting</a></li>
                         <li><a href="#" id="menu-dyeing-actual-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadTrackingReport('dyeing')">Dyeing</a></li>
                         <li><a href="#" id="menu-finishing-actual-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadTrackingReport('finishing')">Finishing</a></li>
                         <li><a href="#" id="menu-delivery-actual-report"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="loadTrackingReport('delivery')">Delivery</a></li>
                     </ul>
                 </li>
 
                 <!-- Load Calculation Menu -->
                 <li>
-                    <div class="px-4 py-3 flex items-center justify-between hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer"
+                    <div class="px-4 py-3 flex items-center justify-between hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
                         onclick="toggleSubmenu(this, 'submenu-load-calc')">
                         <div class="flex items-center">
-                            <i class="fas fa-calculator text-gray-400 w-6"></i>
+                            <i class="fas fa-calculator text-black w-6"></i>
                             <span class="ml-2">Load Calculation</span>
                         </div>
                         <i class="fas fa-chevron-left text-xs transition-transform duration-200"></i>
                     </div>
                     <ul id="submenu-load-calc" class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar">
                         <li><a href="#" id="menu-load-detailed"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="showLoadCalculation('detailed')">Detailed Load Download</a></li>
                         <li><a href="#" id="menu-load-summary"
-                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-gray-400 hover:text-white transition-colors"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="showLoadCalculation('summary')">Buyer-wise Load Summary</a></li>
                     </ul>
                 </li>
 
                 <li id="sidebarManageUsers" class="hidden">
                     <a href="users.html"
-                        class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-white transition-colors cursor-pointer block">
-                        <i class="fas fa-users-cog text-gray-400 w-6"></i> <span class="ml-2">Manage Users</span>
+                        class="px-4 py-3 flex items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer block">
+                        <i class="fas fa-users-cog text-black w-6"></i> <span class="ml-2">Manage Users</span>
                     </a>
                 </li>
             </ul>
@@ -382,6 +643,9 @@
         <div class="bg-white border-b border-gray-200 flex items-center justify-between px-4 h-[40px] shrink-0">
             <i class="fas fa-bars text-gray-500 cursor-pointer hover:text-activeBlue text-lg transition-transform hover:scale-110"
                 onclick="toggleSidebar()"></i>
+            <button id="darkModeToggle" onclick="toggleDarkMode()" class="dark-mode-toggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon text-gray-500 text-base"></i>
+            </button>
         </div>
 
         <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 overflow-x-auto whitespace-nowrap custom-scrollbar w-full" id="tabBarContainer">
@@ -466,8 +730,7 @@
         <div id="dashboardHomeView" class="flex-1 flex flex-col min-h-0 min-w-0 hidden">
             <div class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 flex flex-col gap-6 min-h-0">
                 <div class="rounded-xl p-5 sm:p-6 md:p-8 text-white shadow-lg relative overflow-hidden shrink-0 min-h-[180px] flex flex-col justify-center bg-[#1f232b]">
-                    <img src="Assets/pexels-going-to-the-river-1386266882-26146519.jpg" alt="Background" class="absolute inset-0 w-full h-full object-cover object-[center_80%] z-0 pointer-events-none opacity-80">
-                    <div class="absolute inset-0 bg-gradient-to-r from-[#1f232b]/90 via-[#1f232b]/50 to-transparent z-0 pointer-events-none"></div>
+                    <img src="Assets/pexels-going-to-the-river-1386266882-26146519.jpg" alt="Background" class="absolute inset-0 w-full h-full object-cover object-[0%_60%] z-0 pointer-events-none dark:opacity-40 transition-opacity duration-300">
                     <div class="relative z-10">
                         <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 tracking-wide drop-shadow-md">Welcome Back!</h2>
                         <p class="text-gray-200 text-sm sm:text-base drop-shadow">Select a Production Plan or Report from the sidebar to manage data.</p>
@@ -476,7 +739,7 @@
 
 
                 <!-- Animated Relaxing Dashboard Widget -->
-                <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[300px] relative">
+                <div class="flex-1 bg-slate-100 rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[300px] relative">
                     <canvas id="dashboardCanvas" class="absolute inset-0 w-full h-full" style="z-index: 0;"></canvas>
                     
                     <div class="relative z-10 flex flex-col items-center justify-center flex-1 p-6 pointer-events-none select-none">
@@ -514,7 +777,7 @@
                                 </defs>
                             </svg>
                         </div>
-                        <p class="text-gray-600 text-base font-semibold tracking-wide" style="animation: fadeInUp 1.5s ease-out;">
+                        <p class="text-gray-700 text-base font-semibold tracking-wide" style="animation: fadeInUp 1.5s ease-out;">
                             Your Planning Dashboard Is Ready!
                         </p>
                         <p class="text-gray-500 text-sm mt-1" style="animation: fadeInUp 2s ease-out;">
@@ -604,32 +867,23 @@
             <div class="p-3 flex-1 flex flex-col min-h-0 w-full relative">
 
                 <div id="loadingData"
-                    class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white/80 z-30">
-                    <i class="fas fa-spinner fa-spin text-4xl mb-3 text-blue-500"></i>
+                    class="hidden text-center p-10 text-gray-500 w-full flex flex-col justify-center items-center flex-1 absolute inset-0 bg-white/80 dark:bg-[#151921]/90 z-30">
+                    <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                        <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                        <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                        <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-4 h-4 rounded-full bg-orange-500 animate-pulse"></div>
+                    </div>
                     <p>Processing Department Data...</p>
                 </div>
 
                 <div id="normalListContainer" class="flex-1 flex flex-col min-h-0 w-full">
                     <div class="flex flex-col gap-2 mb-3 shrink-0 w-full">
-                        <!-- Global Booking Search Bar -->
-                        <div class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-md p-2">
-                            <i class="fas fa-search text-blue-500 ml-2"></i>
-                            <input type="text" id="globalBookingSearch" placeholder="Search Booking No. (e.g., 270757, 270952)..." 
-                                class="flex-1 px-3 py-2 border border-blue-300 rounded text-sm focus:border-blue-500 outline-none"
-                                onkeypress="if(event.key==='Enter') searchGlobalBooking()" />
-                            <button onclick="searchGlobalBooking()" 
-                                class="px-4 py-2 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 transition text-sm">
-                                <i class="fas fa-search mr-1"></i> Search
-                            </button>
-                            <button onclick="clearGlobalSearch()" 
-                                class="px-3 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition text-sm">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-
-                        <div
-                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3 sm:gap-2">
-                            <div class="flex flex-wrap w-full sm:w-auto gap-1 sm:gap-2">
+                        <!-- Tabs and Search Bar Row -->
+                        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center w-full gap-3 xl:gap-2">
+                            
+                            <!-- Left: Tabs -->
+                            <div class="flex flex-wrap w-full xl:w-auto gap-1 sm:gap-2">
                                 <div id="btnPending"
                                     class="bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center"
                                     onclick="activateMainTab('Pending')">Pending List</div>
@@ -644,11 +898,31 @@
                                     onclick="activateMainTab('All')">Completed List</div>
                             </div>
 
-                            <button id="btnExportExcel"
-                                class="hidden w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-bold rounded shadow hover:bg-green-700 transition flex items-center justify-center text-xs"
-                                onclick="exportReportToExcel()">
-                                <i class="fas fa-file-excel mr-2 text-lg"></i> Download Excel
-                            </button>
+                            <!-- Right: Compact Search Bar & Export -->
+                            <div class="flex flex-col sm:flex-row w-full xl:w-auto items-stretch sm:items-center gap-2">
+                                
+                                <!-- Compact Global Booking Search Bar -->
+                                <div class="flex items-center gap-1 bg-blue-50 border border-blue-200 rounded p-1 px-2 flex-1 xl:flex-none shadow-sm dark:bg-[#1e2330] dark:border-[#2a3346]">
+                                    <i class="fas fa-search text-blue-500 text-sm ml-1"></i>
+                                    <input type="text" id="globalBookingSearch" placeholder="Search Booking No..." 
+                                        class="w-full xl:w-56 px-2 py-1 border border-blue-300 rounded text-xs focus:border-blue-500 outline-none"
+                                        onkeypress="if(event.key==='Enter') searchGlobalBooking()" />
+                                    <button onclick="searchGlobalBooking()" 
+                                        class="px-3 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 transition text-xs whitespace-nowrap">
+                                        Search
+                                    </button>
+                                    <button onclick="clearGlobalSearch()" 
+                                        class="px-2 py-1 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition text-xs">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <button id="btnExportExcel"
+                                    class="hidden w-full sm:w-auto px-4 py-1.5 bg-green-600 text-white font-bold rounded shadow hover:bg-green-700 transition flex items-center justify-center text-xs whitespace-nowrap"
+                                    onclick="exportReportToExcel()">
+                                    <i class="fas fa-file-excel mr-2 text-sm"></i> Export
+                                </button>
+                            </div>
                         </div>
                         <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
                             id="buyerFilterContainer"></div>
@@ -877,8 +1151,13 @@
             <div id="osListView" class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
 
                 <div id="osLoadingSpinner"
-                    class="hidden absolute inset-0 bg-white/70 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-lg mt-14 mx-5">
-                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-activeBlue mb-3"></div>
+                    class="hidden absolute inset-0 bg-white/70 dark:bg-[#151921]/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-lg mt-14 mx-5">
+                    <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                        <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                        <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                        <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-4 h-4 rounded-full bg-orange-500 animate-pulse"></div>
+                    </div>
                     <h3 class="text-gray-800 font-bold text-lg">Compiling Order Data...</h3>
                     <p class="text-sm text-gray-500 mt-1">Fetching records from all departments</p>
                 </div>
@@ -1087,8 +1366,13 @@
             <div class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
 
                 <div id="actualLoadingSpinner"
-                    class="hidden absolute inset-0 bg-white/70 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-lg mt-14 mx-5">
-                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-activeBlue mb-3"></div>
+                    class="hidden absolute inset-0 bg-white/70 dark:bg-[#151921]/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-lg mt-14 mx-5">
+                    <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                        <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                        <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                        <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-4 h-4 rounded-full bg-orange-500 animate-pulse"></div>
+                    </div>
                     <h3 class="text-gray-800 font-bold text-lg">Loading Actual Tracking Data...</h3>
                     <p class="text-sm text-gray-500 mt-1">Fetching confirmed plan data</p>
                 </div>
@@ -1190,6 +1474,7 @@
     <!-- ==========================================
          JS FILES (Topic-wise split)
          ========================================== -->
+    <script defer src="js/dark-mode.js"></script>
     <script defer src="js/globals.js"></script>
     <script defer src="js/utils.js"></script>
     <script defer src="js/core.js"></script>

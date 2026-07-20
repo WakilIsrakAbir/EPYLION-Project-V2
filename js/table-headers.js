@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // TABLE HEADERS & DATE HELPERS
 // ==========================================================
 function renderDynamicHeaders() {
@@ -13,9 +13,9 @@ function renderDynamicHeaders() {
         document.getElementById('planningHeaderText').innerText = 'Knitting Planning';
         document.getElementById('limitationHeaderText').innerText = 'Knitting Limitation';
 
-        let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
-        leftHtml += `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[90px] dynamic-th bg-yellow-100 font-bold">Yarn Date</th>`;
-        let rightHtml = rightCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+        let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+        leftHtml += `<th class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center whitespace-normal min-w-[90px] dynamic-th bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 font-bold">Yarn Date</th>`;
+        let rightHtml = rightCols.map(c => `<th class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
 
         document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
         document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightHtml);

@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // DASHBOARD ANIMATION: Particle Animation
 // ==========================================================
 // ==================== Dashboard Relaxing Canvas Animation ====================
@@ -9,17 +9,18 @@
     let animFrame = null;
     let particles = [];
     const PARTICLE_COUNT = 40;
+    let isDarkMode = document.documentElement.classList.contains('dark');
 
     const palettes = [
-        'rgba(239, 68, 68, 0.22)',     // red
-        'rgba(245, 158, 11, 0.25)',    // amber
-        'rgba(16, 185, 129, 0.22)',    // emerald
-        'rgba(6, 182, 212, 0.25)',     // cyan
-        'rgba(168, 85, 247, 0.22)',    // violet
-        'rgba(236, 72, 153, 0.20)',    // pink
-        'rgba(59, 130, 246, 0.22)',    // blue
-        'rgba(234, 179, 8, 0.20)',     // yellow
-        'rgba(20, 184, 166, 0.22)',    // teal
+        'rgba(239, 68, 68, 0.15)',     // red
+        'rgba(245, 158, 11, 0.15)',    // amber
+        'rgba(16, 185, 129, 0.15)',    // emerald
+        'rgba(6, 182, 212, 0.15)',     // cyan
+        'rgba(168, 85, 247, 0.15)',    // violet
+        'rgba(236, 72, 153, 0.15)',    // pink
+        'rgba(59, 130, 246, 0.15)',    // blue
+        'rgba(234, 179, 8, 0.15)',     // yellow
+        'rgba(20, 184, 166, 0.15)',    // teal
     ];
 
     function resize() {
@@ -82,13 +83,19 @@
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw subtle gradient background
+        // Draw subtle gradient background based on theme
+        const isDark = document.documentElement.classList.contains('dark');
         const grd = ctx.createRadialGradient(
             canvas.width / 2, canvas.height / 2, 0,
             canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.6
         );
-        grd.addColorStop(0, 'rgba(238, 242, 255, 0.4)');
-        grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        if (isDark) {
+            grd.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
+            grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        } else {
+            grd.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        }
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 

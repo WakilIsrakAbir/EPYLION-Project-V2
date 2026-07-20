@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // ORDER STATUS: Order Status Page
 // ==========================================================
 
@@ -218,12 +218,12 @@
         pagedData.forEach(d => {
             const displayBuyer = d.buyers && d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'Unknown';
             html += `
-                <tr class="hover:bg-blue-50 border-b border-gray-100 transition-colors">
-                    <td class="p-3 border-r border-gray-200 text-center">
+                <tr class="hover:bg-blue-50 dark:hover:bg-[#1e2330] border-b border-gray-100 dark:border-[#2a3346] transition-colors">
+                    <td class="p-3 border-r border-gray-200 dark:border-[#2a3346] text-center">
                         <button onclick="viewOSDetails('${encodeURIComponent(d.bookingNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded shadow-sm hover:bg-blue-600 hover:text-white transition"><i class="fas fa-eye"></i></button>
                     </td>
-                    <td class="p-3 border-r border-gray-200 font-bold text-gray-800">${d.bookingNo}</td>
-                    <td class="p-3 text-gray-600">${displayBuyer}</td>
+                    <td class="p-3 border-r border-gray-200 dark:border-[#2a3346] font-bold text-gray-800 dark:text-gray-200">${d.bookingNo}</td>
+                    <td class="p-3 text-gray-600 dark:text-gray-400">${displayBuyer}</td>
                 </tr>
             `;
         });
@@ -396,18 +396,18 @@
             let delFloorStart = getMinDate(deliFloorStarts), delFloorEnd = getMaxDate(deliFloorEnds), delFloorType = getAggType(deliFloorTypes);
 
             itemsBody.innerHTML = `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="px-2 py-2 border-r text-blue-700 font-medium">${formatDateDisplay(kStart)}</td>
-                    <td class="px-2 py-2 border-r text-blue-700 font-medium">${formatDateDisplay(kEnd)}</td>
-                    <td class="px-2 py-2 border-r text-blue-900 font-bold bg-blue-50/30">${kType}</td>
-                    <td class="px-2 py-2 border-r text-green-700 font-medium">${formatDateDisplay(dStart)}</td>
-                    <td class="px-2 py-2 border-r text-green-700 font-medium">${formatDateDisplay(dEnd)}</td>
-                    <td class="px-2 py-2 border-r text-green-900 font-bold bg-green-50/30">${dType}</td>
-                    <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delStart)}</td>
-                    <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delEnd)}</td>
-                    <td class="px-2 py-2 border-r text-orange-900 font-bold bg-orange-50/30">${delType}</td>
-                    <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delFloorStart)}</td>
-                    <td class="px-2 py-2 border-r text-orange-700 font-medium">${formatDateDisplay(delFloorEnd)}</td>
+                <tr class="border-b border-gray-100 dark:border-[#2a3346] hover:bg-gray-50 dark:hover:bg-[#1e2330]">
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-blue-700 font-medium">${formatDateDisplay(kStart)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-blue-700 font-medium">${formatDateDisplay(kEnd)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-blue-900 font-bold bg-blue-50/30">${kType}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-green-700 font-medium">${formatDateDisplay(dStart)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-green-700 font-medium">${formatDateDisplay(dEnd)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-green-900 font-bold bg-green-50/30">${dType}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-orange-700 font-medium">${formatDateDisplay(delStart)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-orange-700 font-medium">${formatDateDisplay(delEnd)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-orange-900 font-bold bg-orange-50/30">${delType}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-orange-700 font-medium">${formatDateDisplay(delFloorStart)}</td>
+                    <td class="px-2 py-2 border-r dark:border-[#2a3346] text-orange-700 font-medium">${formatDateDisplay(delFloorEnd)}</td>
                     <td class="px-2 py-2 text-orange-900 font-bold bg-orange-50/30">${delFloorType}</td>
                 </tr>`;
         } else {

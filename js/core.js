@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // CORE: Init, Permissions, Navigation
 // ==========================================================
 function initDashboard() {
@@ -31,19 +31,23 @@ function initDashboard() {
 }
 
 function setActiveSidebarMenu(activeId) {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textClass = isDark ? 'dm-text-light' : 'text-black';
+    const removeTextClass = isDark ? 'text-black' : 'dm-text-light';
+
     document.querySelectorAll('.sidebar-menu-item').forEach(el => {
-        el.classList.remove('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
+        el.classList.remove('bg-sidebarActive', 'text-black', 'dm-text-light', 'border-[#4CAF50]');
         el.classList.add('border-transparent');
 
         if (el.classList.contains('submenu-item')) {
-            el.classList.add('text-gray-400');
+            el.classList.add(textClass);
         }
     });
 
     const activeEl = document.getElementById(activeId);
     if (activeEl) {
-        activeEl.classList.remove('border-transparent', 'text-gray-400');
-        activeEl.classList.add('bg-sidebarActive', 'text-white', 'border-[#4CAF50]');
+        activeEl.classList.remove('border-transparent');
+        activeEl.classList.add('bg-sidebarActive', textClass, 'border-[#4CAF50]');
 
         const parentMenu = activeEl.closest('ul');
         if (parentMenu && parentMenu.classList.contains('hidden')) {

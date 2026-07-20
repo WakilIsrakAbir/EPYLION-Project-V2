@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // DETAILED VIEW: Order Detail Form
 // ==========================================================
 function openDetailedView(encodedBookingNo) {
@@ -57,7 +57,7 @@ function openDetailedView(encodedBookingNo) {
             
             let yarnDateVal = item.yarnDate || '';
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 text-center bg-yellow-50"><input type="date" class="row-yarn-date p-1 border border-yellow-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${yarnDateVal}" onchange="autoFillYarnDate(this)"></td>
+                <td class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center bg-yellow-50 dark:bg-yellow-900/10"><input type="date" class="row-yarn-date p-1 border border-yellow-300 dark:border-yellow-700/50 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none dark:bg-[#151921] dark:text-yellow-100" value="${yarnDateVal}" onchange="autoFillYarnDate(this)"></td>
                 <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
                 <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
