@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -681,15 +680,15 @@
                                 <h2 class="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wider"><i class="fas fa-download mr-2 text-slate-400"></i>Download Reports</h2>
                                 
                                 <div id="detailedButtons" class="flex flex-wrap gap-2">
-                                    <button onclick="downloadLoadReport('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Knitting Load</button>
-                                    <button onclick="downloadLoadReport('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Dyeing Load</button>
-                                    <button onclick="downloadLoadReport('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Delivery Load</button>
+                                    <button id="btnLoadDetailedKnitting" onclick="downloadLoadReport('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Knitting Load</button>
+                                    <button id="btnLoadDetailedDyeing" onclick="downloadLoadReport('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Dyeing Load</button>
+                                    <button id="btnLoadDetailedDelivery" onclick="downloadLoadReport('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Delivery Load</button>
                                 </div>
 
                                 <div id="summaryButtons" class="flex flex-wrap gap-2 hidden">
-                                    <button onclick="downloadLoadSummary('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Knitting Summary</button>
-                                    <button onclick="downloadLoadSummary('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Dyeing Summary</button>
-                                    <button onclick="downloadLoadSummary('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Delivery Summary</button>
+                                    <button id="btnLoadSummaryKnitting" onclick="downloadLoadSummary('knitting')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Knitting Summary</button>
+                                    <button id="btnLoadSummaryDyeing" onclick="downloadLoadSummary('dyeing')" class="bg-green-600 hover:bg-green-700 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Dyeing Summary</button>
+                                    <button id="btnLoadSummaryDelivery" onclick="downloadLoadSummary('delivery')" class="bg-orange-500 hover:bg-orange-600 text-white rounded-md py-2 px-3 text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2 flex-1"><i class="fas fa-file-excel text-sm"></i> Delivery Summary</button>
                                 </div>
                             </div>
                         </div>
@@ -921,12 +920,6 @@
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
-
-                                <button id="btnExportExcel"
-                                    class="hidden w-full sm:w-auto px-4 py-1.5 bg-green-600 text-white font-bold rounded shadow hover:bg-green-700 transition flex items-center justify-center text-xs whitespace-nowrap"
-                                    onclick="exportReportToExcel()">
-                                    <i class="fas fa-file-excel mr-2 text-sm"></i> Export
-                                </button>
                             </div>
                         </div>
                         <div class="flex flex-nowrap gap-2 mt-1 overflow-x-auto custom-scrollbar pb-2 w-full"
@@ -1015,7 +1008,7 @@
                             </div>
                             <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4" id="combinedReportTitle">Updated Report</h3>
                             <p class="text-gray-500 text-[12px] sm:text-[13px] mb-6 sm:mb-8 leading-relaxed">Extract all data (both Confirm & Tentative). All buyers will be combined into a <strong class="text-gray-700">single sheet.</strong></p>
-                            <button onclick="exportCombinedReportToExcel()"
+                            <button id="btnReportUpdatedExcel" onclick="exportCombinedReportToExcel()"
                                 class="mt-auto w-full max-w-[280px] py-3 sm:py-3.5 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold rounded shadow-md transition-colors flex justify-center items-center gap-2">
                                 <i class="fas fa-file-excel text-lg"></i> <span id="combinedReportBtnText">Download Data</span>
                             </button>
@@ -1217,10 +1210,10 @@
                         <h3 class="font-bold text-gray-800 text-lg">Detailed Plan Status</h3>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="downloadOSDetailedExcel()"
+                        <button id="btnOSDetailedExcel" onclick="downloadOSDetailedExcel()"
                             class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 text-xs font-bold rounded shadow-sm hover:bg-green-100 transition"><i
                                 class="fas fa-file-excel mr-1"></i> Excel</button>
-                        <button onclick="downloadOSDetailedPDF()"
+                        <button id="btnOSDetailedPDF" onclick="downloadOSDetailedPDF()"
                             class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 text-xs font-bold rounded shadow-sm hover:bg-red-100 transition"><i
                                 class="fas fa-file-pdf mr-1"></i> PDF</button>
                         <button onclick="closeOSDetails()"
@@ -1336,10 +1329,10 @@
                         <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Pending Actual Data</h3>
                         <p class="text-sm text-gray-500 mb-6 flex-1">Download tracking report for orders that are currently in progress or not yet completed.</p>
                         <div class="flex gap-2 w-full justify-center">
-                            <button onclick="downloadTrackingReport('Pending', 'Excel')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
+                            <button id="btnTrackingPendingExcel" onclick="downloadTrackingReport('Pending', 'Excel')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fas fa-file-excel"></i> Excel
                             </button>
-                            <button onclick="downloadTrackingReport('Pending', 'PDF')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
+                            <button id="btnTrackingPendingPdf" onclick="downloadTrackingReport('Pending', 'PDF')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
                         </div>
@@ -1353,10 +1346,10 @@
                         <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Complete Actual Data</h3>
                         <p class="text-sm text-gray-500 mb-6 flex-1">Download tracking report for orders that have completed processing in this department.</p>
                         <div class="flex gap-2 w-full justify-center">
-                            <button onclick="downloadTrackingReport('Complete', 'Excel')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
+                            <button id="btnTrackingCompleteExcel" onclick="downloadTrackingReport('Complete', 'Excel')" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fas fa-file-excel"></i> Excel
                             </button>
-                            <button onclick="downloadTrackingReport('Complete', 'PDF')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
+                            <button id="btnTrackingCompletePdf" onclick="downloadTrackingReport('Complete', 'PDF')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </button>
                         </div>

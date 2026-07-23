@@ -14,6 +14,28 @@ function loadTrackingReport(deptKey) {
     hideAllCoreViews();
     if (document.getElementById('planVsActualReportView')) document.getElementById('planVsActualReportView').classList.remove('hidden');
     
+    const permsStr = localStorage.getItem('permissions');
+    if (permsStr) {
+        try {
+            const permissions = JSON.parse(permsStr);
+            if (permissions && permissions.downloads) {
+                const d = permissions.downloads;
+                const deptMap = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'DeliveryFloor' };
+                const key = 'tracking' + deptMap[deptKey];
+                
+                const toggleBtn = (id, hasPerm) => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.style.display = hasPerm ? '' : 'none';
+                };
+                
+                toggleBtn('btnTrackingPendingExcel', d[key]);
+                toggleBtn('btnTrackingPendingPdf', d[key]);
+                toggleBtn('btnTrackingCompleteExcel', d[key]);
+                toggleBtn('btnTrackingCompletePdf', d[key]);
+            }
+        } catch(e) {}
+    }
+    
     const uniqueId = `trackingReport_${deptKey}`;
     activeTabId = uniqueId;
     const menuTitle = deptName + ' Trck. Rep.';

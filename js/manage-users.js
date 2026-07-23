@@ -111,15 +111,31 @@ let buyersLoaded = false;
 
   
   const DOWNLOAD_GROUPS = [
-    {title:'Table & Report Export', items:[
-      ['currentTable','Export Current Table'], ['confirmedData','Export Confirmed Data'], ['tentativeData','Export Tentative Data'],
-      ['completedData','Export Completed Data'], ['combinedReport','Combined Report'], ['orderStatusPdf','Order Status PDF']
+    { title: 'Report Menu', items: [
+      ['osDetailedExcel', 'Order Status (Excel)'],
+      ['osDetailedPdf', 'Order Status (PDF)'],
+      ['reportUpdatedExcelYD', 'Updated YD Report (Combined)'],
+      ['reportUpdatedExcelKnitting', 'Updated Knitting Report (Combined)'],
+      ['reportUpdatedExcelDyeing', 'Updated Dyeing Report (Combined)'],
+      ['reportUpdatedExcelFinishing', 'Updated Finishing Report (Combined)'],
+      ['reportUpdatedExcelDelivery', 'Updated Delivery Report (Combined)']
     ]},
-    {title:'Load Calculation Downloads', items:[
-      ['knittingLoad','Knitting Detailed Load'], ['dyeingLoad','Dyeing Detailed Load'], ['deliveryLoad','Delivery Detailed Load'],
-      ['knittingSummary','Knitting Summary'], ['dyeingSummary','Dyeing Summary'], ['deliverySummary','Delivery Summary']
+    { title: 'Tracking Report Menu', items: [
+      ['trackingYD', 'YD Tracking Reports (Excel/PDF)'],
+      ['trackingKnitting', 'Knitting Tracking Reports (Excel/PDF)'],
+      ['trackingDyeing', 'Dyeing Tracking Reports (Excel/PDF)'],
+      ['trackingFinishing', 'Finishing Tracking Reports (Excel/PDF)'],
+      ['trackingDelivery', 'Delivery Tracking Reports (Excel/PDF)'],
+      ['trackingDeliveryFloor', 'Delivery (Floor) Tracking Reports (Excel/PDF)']
     ]},
-    {title:'Download Formats', items:[['excel','Excel (.xlsx)'], ['pdf','PDF'], ['print','Print']]}
+    { title: 'Load Calculation Menu', items: [
+      ['loadDetailedKnitting', 'Detailed Load (Knitting)'],
+      ['loadDetailedDyeing', 'Detailed Load (Dyeing)'],
+      ['loadDetailedDelivery', 'Detailed Load (Delivery)'],
+      ['loadSummaryKnitting', 'Load Summary (Knitting)'],
+      ['loadSummaryDyeing', 'Load Summary (Dyeing)'],
+      ['loadSummaryDelivery', 'Load Summary (Delivery)']
+    ]}
   ];
   
   function emptyPermissions() {
@@ -139,18 +155,19 @@ let buyersLoaded = false;
     } else if (role === 'Approver') {
       ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(k => setMenu(k));
       ['confirmPlan','tentativePlan','completeOrder','reopenOrder','changeOrderStatus','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
-      setAllObj(p.downloads); p.downloads.currentTable=true; p.buyers.accessType='all';
+      setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Planner') {
       ['orderManagement','reports','actualTracking','loadCalculation'].forEach(k => setMenu(k));
       p.menus.dataManagement.view=true;
       p.actions.viewFiles=true;
       ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActual','tentativePlan','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
 
-      ['currentTable','confirmedData','tentativeData','excel','print'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
+      ['reportUpdatedExcelYD','reportUpdatedExcelKnitting','reportUpdatedExcelDyeing','reportUpdatedExcelFinishing','reportUpdatedExcelDelivery','osDetailedExcel','osDetailedPdf','loadDetailedKnitting','loadDetailedDyeing','loadDetailedDelivery','loadSummaryKnitting','loadSummaryDyeing','loadSummaryDelivery'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
     } else {
       ['reports','trackingReports'].forEach(k => setMenu(k));
       ['globalSearch'].forEach(k=>p.actions[k]=true);
 
+      ['trackingYD','trackingKnitting','trackingDyeing','trackingFinishing','trackingDelivery','trackingDeliveryFloor'].forEach(k=>p.downloads[k]=true);
       p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next'];
     }
     return p;

@@ -148,6 +148,26 @@ function applyPermissions() {
         }
         if (uploadArea) uploadArea.style.display = canUpload ? 'flex' : 'none';
 
+        // Handle Download & Export permissions
+        if (permissions.downloads) {
+            const d = permissions.downloads;
+            
+            const toggleBtn = (id, hasPerm) => {
+                const btn = document.getElementById(id);
+                if (btn) btn.style.display = hasPerm ? '' : 'none';
+            };
+
+            toggleBtn('btnOSDetailedExcel', d.osDetailedExcel);
+            toggleBtn('btnOSDetailedPDF', d.osDetailedPdf);
+            
+            toggleBtn('btnLoadDetailedKnitting', d.loadDetailedKnitting);
+            toggleBtn('btnLoadDetailedDyeing', d.loadDetailedDyeing);
+            toggleBtn('btnLoadDetailedDelivery', d.loadDetailedDelivery);
+            toggleBtn('btnLoadSummaryKnitting', d.loadSummaryKnitting);
+            toggleBtn('btnLoadSummaryDyeing', d.loadSummaryDyeing);
+            toggleBtn('btnLoadSummaryDelivery', d.loadSummaryDelivery);
+        }
+
     } else {
         // Fallback to legacy role checks
         if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
@@ -238,6 +258,22 @@ async function loadMenuData(deptKey, menuName, mode = 'manage') {
         document.getElementById('reportActionContainer').classList.remove('hidden');
         document.getElementById('reportActionContainer').style.display = 'flex';
         document.getElementById('reportPageHeader').innerText = `${deptKey.charAt(0).toUpperCase() + deptKey.slice(1)} Department Reports`;
+        
+        const permsStr = localStorage.getItem('permissions');
+        if (permsStr) {
+            try {
+                const permissions = JSON.parse(permsStr);
+                if (permissions && permissions.downloads) {
+                    const d = permissions.downloads;
+                    const btn = document.getElementById('btnReportUpdatedExcel');
+                    if (btn) {
+                        const deptMap = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery' };
+                        const key = 'reportUpdatedExcel' + deptMap[deptKey];
+                        btn.style.display = d[key] ? '' : 'none';
+                    }
+                }
+            } catch(e) {}
+        }
     } else {
         document.getElementById('normalListContainer').classList.remove('hidden');
         document.getElementById('reportActionContainer').classList.add('hidden');
