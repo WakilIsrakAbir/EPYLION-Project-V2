@@ -233,6 +233,9 @@ function openDetailedView(encodedBookingNo) {
             const leftCols = ['Booking Type', 'YDB', 'YD Booking Date'];
             leftCols.forEach(c => {
                 let val = item.itemData[c];
+                if (c === 'YD Booking Date' && typeof val === 'number') {
+                    val = formatExcelDate(val);
+                }
                 itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
             });
 

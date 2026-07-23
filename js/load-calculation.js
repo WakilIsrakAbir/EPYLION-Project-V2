@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // LOAD CALCULATION: Reports & Summaries
 // ==========================================================
 // ==========================================
@@ -379,6 +379,9 @@ function downloadLoadReport(department) {
         return { wch: Math.max(10, Math.min(String(header).length + 3, 18)) };
     });
 
+    // Apply special formatting
+    formatExcelWorksheet(worksheet);
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Load`);
     const filename = `${config.name}_Load_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
@@ -398,6 +401,9 @@ function downloadLoadSummary(department) {
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     worksheet['!cols'] = [{ wch: 25 }, ...reportMonths.map(() => ({ wch: 15 })), { wch: 15 }];
     
+    // Apply special formatting
+    formatExcelWorksheet(worksheet);
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Summary`);
     const filename = `${config.name}_Summary_${formatLoadMonthYear(reportMonths[0])}.xlsx`;

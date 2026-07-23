@@ -137,18 +137,18 @@ let buyersLoaded = false;
     if (role === 'Admin') {
       Object.keys(p.menus).forEach(k => setMenu(k)); setAllObj(p.actions); setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Approver') {
-      ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(setMenu);
+      ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(k => setMenu(k));
       ['confirmPlan','tentativePlan','completeOrder','reopenOrder','changeOrderStatus','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
       setAllObj(p.downloads); p.downloads.currentTable=true; p.buyers.accessType='all';
     } else if (role === 'Planner') {
-      ['orderManagement','reports','actualTracking','loadCalculation'].forEach(setMenu);
+      ['orderManagement','reports','actualTracking','loadCalculation'].forEach(k => setMenu(k));
       p.menus.dataManagement.view=true;
       p.actions.viewFiles=true;
       ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActual','tentativePlan','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
 
       ['currentTable','confirmedData','tentativeData','excel','print'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
     } else {
-      ['reports','trackingReports'].forEach(setMenu);
+      ['reports','trackingReports'].forEach(k => setMenu(k));
       ['globalSearch'].forEach(k=>p.actions[k]=true);
 
       p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next'];

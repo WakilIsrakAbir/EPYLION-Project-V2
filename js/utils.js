@@ -54,3 +54,67 @@ function formatDateDisplay(dateStr) {
             return ids.includes(id);
         });
     }
+
+    function formatExcelWorksheet(ws) {
+        if (!ws || !ws['!ref']) return;
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        
+        const headers = [];
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
+            headers[C] = cell ? String(cell.v).toLowerCase() : "";
+        }
+        
+        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                const cell = ws[cellRef];
+                if (!cell || cell.v === undefined || cell.v === null || cell.v === '') continue;
+                
+                const headerLower = headers[C];
+                const textCols = ['color', 'fabric construction', 'buyer', 'plan type'];
+                const isText = textCols.some(t => headerLower.includes(t));
+                const isDate = headerLower.includes('date');
+                
+                if (isText) {
+                    cell.t = 's';
+                    cell.v = String(cell.v);
+                } else if (isDate) {
+                    if (cell.v !== 'N/A' && cell.v !== 'Invalid Date' && cell.v !== '-') {
+                        let d;
+                        const numVal = Number(cell.v);
+                        if (!isNaN(numVal) && numVal > 25569 && numVal < 60000) {
+                            d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+                        } else {
+                            d = new Date(cell.v);
+                        }
+                        
+                        if (!isNaN(d.getTime())) {
+                            cell.t = 'd';
+                            cell.v = d;
+                            cell.z = 'dd/mm/yyyy';
+                        } else {
+                            cell.t = 's';
+                            cell.v = String(cell.v);
+                        }
+                    } else {
+                        cell.t = 's';
+                    }
+                } else {
+                    if (cell.v !== 'N/A' && cell.v !== '-') {
+                        const numStr = String(cell.v).replace(/,/g, '');
+                        const num = Number(numStr);
+                        if (!isNaN(num) && numStr.trim() !== '') {
+                            cell.t = 'n';
+                            cell.v = num;
+                        } else {
+                            cell.t = 's';
+                            cell.v = String(cell.v);
+                        }
+                    } else {
+                        cell.t = 's';
+                    }
+                }
+            }
+        }
+    }

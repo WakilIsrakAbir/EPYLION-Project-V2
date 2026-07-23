@@ -98,6 +98,10 @@ async function downloadTrackingReport(statusType, formatType) {
     if (formatType === 'Excel') {
         let wsData = [headers].concat(exportRows);
         const ws = XLSX.utils.aoa_to_sheet(wsData);
+        
+        // Apply special formatting
+        formatExcelWorksheet(ws);
+        
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Report");
         XLSX.writeFile(wb, `${fileName}.xlsx`);

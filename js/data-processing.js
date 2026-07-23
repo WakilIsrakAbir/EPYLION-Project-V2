@@ -486,7 +486,7 @@ async function fetchAndProcessData(isSilent = false) {
                             OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
                             'Booking Type': typeKeys.length > 0 ? exItem[typeKeys[0]] : '',
                             YDB: getColData(exItem, ['YDB', 'YD B']),
-                            'YD Booking Date': dateKeys.length > 0 ? exItem[dateKeys[0]] : '',
+                            'YD Booking Date': dateKeys.length > 0 ? formatExcelDate(exItem[dateKeys[0]]) : '',
                             'YD REQ.': getColData(exItem, ['YD REQ.', 'YD REQ', 'YD Req', 'Requirement']),
                             DYED: getColData(exItem, ['DYED', 'Dyed', 'Dye']),
                             'YD BALANCE': normalBalanceVal,
@@ -815,6 +815,10 @@ function exportCombinedReportToExcel() {
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(allRows);
+    
+    // Apply special formatting
+    formatExcelWorksheet(ws);
+    
     XLSX.utils.book_append_sheet(wb, ws, `${currentDept}_Report`);
 
     const dateStr = new Date().toISOString().split('T')[0];
