@@ -328,8 +328,18 @@
 
             if (item['Slowmoving'] !== undefined) t.slow += parseNumValue(item['Slowmoving']);
 
-            if (item['Deli. Bal.'] !== undefined) t.deliBal += parseNumValue(item['Deli. Bal.']);
-            else if (item['DeliBal'] !== undefined) t.deliBal += parseNumValue(item['DeliBal']);
+            let foundDeliBal = false;
+            if (item['Deli. Bal.'] !== undefined) { t.deliBal += parseNumValue(item['Deli. Bal.']); foundDeliBal = true; }
+            else if (item['DeliBal'] !== undefined) { t.deliBal += parseNumValue(item['DeliBal']); foundDeliBal = true; }
+            else if (item['Delivery Balance'] !== undefined) { t.deliBal += parseNumValue(item['Delivery Balance']); foundDeliBal = true; }
+            
+            if (!foundDeliBal) {
+                const req = parseNumValue(item['RequiredQtyKgs'] || item['Req Qty'] || item['Qty']);
+                const del = parseNumValue(item['NetDeliveryQtyKgs'] || item['NetDeliveryQty'] || item['DeliveryQty']);
+                if (req > 0) {
+                    t.deliBal += (req - del);
+                }
+            }
 
             if (item['RFD'] !== undefined) t.rfd += parseNumValue(item['RFD']);
         });

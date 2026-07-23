@@ -171,8 +171,14 @@ async function fetchActualTrackingData() {
                             deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
                             deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
                         } else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
-                            deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs'])) || 0;
-                            deptExtMap[bNo].bal += Number(getColData(row, ['Deli. Bal.', 'Deli Bal.'])) || 0;
+                            deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty'])) || 0;
+                            let bal = Number(getColData(row, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Delivery Balance'])) || 0;
+                            if (bal === 0) {
+                                const req = Number(getColData(row, ['RequiredQtyKgs', 'Req Qty', 'Qty'])) || 0;
+                                const del = Number(getColData(row, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty'])) || 0;
+                                if (req > 0) bal = req - del;
+                            }
+                            deptExtMap[bNo].bal += bal;
                         }
                     });
                 } catch (e) { console.error('Dept File read err:', e); }

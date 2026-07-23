@@ -486,6 +486,15 @@ async function fetchAndProcessData(isSilent = false) {
                             Slowmoving: getColData(exItem, ['Slowmoving']),
                             FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
                         };
+
+                        const deliBalStr = String(dynamicItemData.DeliBal || '').trim();
+                        if (deliBalStr === '' || parseFloat(deliBalStr) === 0) {
+                            const req = parseFloat(String(dynamicItemData.RequiredQtyKgs || '').replace(/,/g, '')) || 0;
+                            const del = parseFloat(String(dynamicItemData.NetDeliveryQtyKgs || '').replace(/,/g, '')) || 0;
+                            if (req > 0) {
+                                dynamicItemData.DeliBal = req - del;
+                            }
+                        }
                     } else if (currentDept === 'yd') {
                         let ydBalanceKeys = [];
                         let typeKeys = [];

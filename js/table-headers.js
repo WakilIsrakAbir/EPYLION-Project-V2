@@ -135,7 +135,7 @@ function renderDynamicHeaders() {
             `;
 
             document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="3"></th>` + floorSubHtml);
-            document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', dyeingSubHtml + knitSubHtml + `<th class="border-r border-gray-300 dynamic-th" colspan="6"></th>`);
+            document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', dyeingSubHtml + knitSubHtml + `<th class="border-r border-gray-300 dynamic-th" colspan="7"></th>`);
 
         } else {
             mainCols = ['OrderNo', 'Color', 'RequiredQtyKgs', 'Buyer', 'Unit', 'Process Name', 'Grey Req.', 'Knit Prod.', 'Knit. Bala.', 'BP Qty', 'Dyeing Prod.', 'Dyeing Bala.', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FF Stock'];
