@@ -6,6 +6,8 @@
     let osRowsPerPage = 10;
     let osSearchQuery = '';
     let osGroupedData = {}; 
+    let cachedOSFilesStr = "";
+    let cachedOSRawData = [];
 
     async function showOrderStatus() {
         localStorage.setItem('activePage', JSON.stringify({ page: 'orderStatus' }));
@@ -91,7 +93,17 @@
                 return raw;
             };
 
-            const allRawData = await readFiles(latestFiles);
+            const currentOSFilesStr = JSON.stringify(latestFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
+            
+            let allRawData = [];
+            if (currentOSFilesStr === cachedOSFilesStr && cachedOSRawData.length > 0) {
+                allRawData = cachedOSRawData;
+            } else {
+                allRawData = await readFiles(latestFiles);
+                cachedOSRawData = allRawData;
+                cachedOSFilesStr = currentOSFilesStr;
+            }
+
             osGroupedData = {};
 
             const initGroup = (bNo) => {
@@ -254,8 +266,18 @@
         btnContainer.appendChild(nextBtn);
     }
 
-    function viewOSDetails(encodedBookingNo) {
+    window.viewOSDetails = async function(encodedBookingNo) {
         const bookingNo = decodeURIComponent(encodedBookingNo);
+        
+        const l = document.getElementById('osLoadingSpinner');
+        if (l) l.classList.remove('hidden');
+        try {
+            await fetchAllDataForOS();
+        } catch (e) {
+            console.error("Failed to fetch latest OS data on JIT sync:", e);
+        }
+        if (l) l.classList.add('hidden');
+
         const orderData = osGroupedData[bookingNo];
         if (!orderData) return;
 

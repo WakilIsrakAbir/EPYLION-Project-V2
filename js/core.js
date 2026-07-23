@@ -156,6 +156,9 @@ function applyPermissions() {
             toggleTab('tabDyeing', a.uploadDyeing);
             toggleTab('tabFinishing', a.uploadFinishing);
             toggleTab('tabDelivery', a.uploadDelivery);
+            
+            const wipeZone = document.getElementById('wipeSystemZone');
+            if (wipeZone) wipeZone.style.display = a.wipeSystem ? 'flex' : 'none';
         }
         if (uploadArea) uploadArea.style.display = canUpload ? 'flex' : 'none';
 

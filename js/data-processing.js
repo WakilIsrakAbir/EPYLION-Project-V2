@@ -1,6 +1,12 @@
 // ==========================================================
 // DATA PROCESSING: Fetch, Merge, Filter
 // ==========================================================
+// ==========================================================
+let cachedGeneralFilesStr = "";
+let cachedDeptFilesStr = "";
+let cachedGeneralRawData = [];
+let cachedDeptRawData = [];
+
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
     const currentDept = tabId.replace('_report', '');
@@ -242,6 +248,9 @@ async function fetchAndProcessData(isSilent = false) {
         const generalFiles = getLatestFiles(generalFilesRaw);
         const deptFiles = getLatestFiles(deptFilesRaw);
 
+        const currentGeneralFilesStr = JSON.stringify(generalFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
+        const currentDeptFilesStr = JSON.stringify(deptFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
+
         const hasDeptFile = deptFiles.length > 0;
 
         const readFiles = async (fileList) => {
@@ -267,8 +276,23 @@ async function fetchAndProcessData(isSilent = false) {
             return raw;
         };
 
-        const generalRawData = await readFiles(generalFiles);
-        const deptRawData = await readFiles(deptFiles);
+        let generalRawData = [];
+        if (currentGeneralFilesStr === cachedGeneralFilesStr && cachedGeneralRawData.length > 0) {
+            generalRawData = cachedGeneralRawData;
+        } else {
+            generalRawData = await readFiles(generalFiles);
+            cachedGeneralRawData = generalRawData;
+            cachedGeneralFilesStr = currentGeneralFilesStr;
+        }
+
+        let deptRawData = [];
+        if (currentDeptFilesStr === cachedDeptFilesStr && cachedDeptRawData.length > 0) {
+            deptRawData = cachedDeptRawData;
+        } else {
+            deptRawData = await readFiles(deptFiles);
+            cachedDeptRawData = deptRawData;
+            cachedDeptFilesStr = currentDeptFilesStr;
+        }
 
         groupedData = {};
 

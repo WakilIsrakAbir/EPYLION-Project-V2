@@ -1,8 +1,20 @@
 // ==========================================================
 // DETAILED VIEW: Order Detail Form
 // ==========================================================
-function openDetailedView(encodedBookingNo) {
+async function openDetailedView(encodedBookingNo) {
     const bookingNo = decodeURIComponent(encodedBookingNo);
+    
+    const l = document.getElementById('loadingData');
+    if (l) l.classList.remove('hidden');
+    try {
+        if (typeof fetchAndProcessData === 'function') {
+            await fetchAndProcessData(true);
+        }
+    } catch (e) {
+        console.error("Failed to fetch latest data on JIT sync:", e);
+    }
+    if (l) l.classList.add('hidden');
+
     let data = groupedData[bookingNo];
     if (!data) return;
 

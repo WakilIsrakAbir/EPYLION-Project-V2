@@ -276,11 +276,25 @@ let buyersLoaded = false;
 
       users = rawUsers.map(u => {
         let isLive = false;
+        let isFakeLastActive = false;
+        
+        // The backend occasionally sends `lastActive = new Date()` on the fly for users who have never logged in.
+        // We can detect this because the generated `lastActive` will be exactly when the API was called (close to `now`),
+        // but their `updatedAt` (if they have one) will remain untouched in the database.
         if (u.lastActive) {
+            const lastActiveTime = new Date(u.lastActive).getTime();
+            const isGeneratedNow = Math.abs(now - lastActiveTime) < 60000;
+            const isUpdatedAtNow = u.updatedAt ? (Math.abs(now - new Date(u.updatedAt).getTime()) < 60000) : false;
+            
+            if (isGeneratedNow && !isUpdatedAtNow) {
+                isFakeLastActive = true;
+            }
+        }
+
+        if (u.lastActive && !isFakeLastActive) {
            const diff = now - new Date(u.lastActive).getTime();
-           // Strict check: diff must be between -60 seconds (clock skew) and the threshold.
-           // This prevents users with future timestamps (e.g. timezone bugs) from always appearing active.
-           isLive = diff >= -60000 && diff < liveThreshold;
+           // Allow up to 5 minutes of clock skew (-300000ms) to accommodate users with slightly out-of-sync clocks
+           isLive = diff >= -300000 && diff < liveThreshold;
         }
 
         return {
@@ -289,7 +303,7 @@ let buyersLoaded = false;
           role: u.role,
           status: u.status || 'active',
           createdAt: new Date(u.createdAt).toLocaleDateString(),
-          lastLogin: u.lastActive ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]` : 'Never',
+          lastLogin: (u.lastActive && !isFakeLastActive) ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]` : 'Never',
           isLive: isLive,
           passwordHint: u.password || 'Hidden',
           permissions: u.permissions || makeTemplate(u.role)
@@ -301,10 +315,12 @@ let buyersLoaded = false;
 
       // Loading state is automatically replaced by renderUsers()
 
+      // Removed auto-refresh to prevent blinking
+      // Instead, we use a silent heartbeat to keep the user's online status active on the server
       if (!liveUpdateInterval) {
         liveUpdateInterval = setInterval(() => {
-            loadUsers(true);
-        }, 15000);
+            fetch('https://abir-backend-api.onrender.com/api/auth/users', { headers: { 'Authorization': `Bearer ${token}` } }).catch(()=>{});
+        }, 30000);
       }
 
     } catch (err) {
