@@ -164,6 +164,12 @@
                 }
             } catch (e) { }
 
+            Object.keys(osGroupedData).forEach(bNo => {
+                if (!hasBuyerPermission(osGroupedData[bNo].buyers)) {
+                    delete osGroupedData[bNo];
+                }
+            });
+
         } catch (error) {
             console.error("Error fetching OS data:", error);
         }

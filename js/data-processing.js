@@ -388,6 +388,13 @@ async function fetchAndProcessData(isSilent = false) {
             }
         } catch (e) { console.error("Error fetching db dates", e); }
 
+        // Apply Buyer Permissions globally
+        Object.keys(groupedData).forEach(bNo => {
+            if (!hasBuyerPermission(groupedData[bNo].buyers)) {
+                delete groupedData[bNo];
+            }
+        });
+
         const globalBuyersList = new Set();
 
         Object.values(groupedData).forEach(group => {

@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // UTILS: Helper Functions
 // ==========================================================
 function getColData(row, keys) {
@@ -35,4 +35,22 @@ function formatDateDisplay(dateStr) {
             if (!isNaN(parsed.getTime())) return formatDateDisplay(val);
         }
         return val;
+    }
+
+    function hasBuyerPermission(buyersSetOrArray) {
+        let userPerms = null;
+        try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+        const type = userPerms?.buyers?.accessType || 'all';
+        const ids = userPerms?.buyers?.buyerIds || [];
+        
+        if (type === 'all') return true;
+        if (type === 'none') return false;
+        
+        const arr = buyersSetOrArray instanceof Set ? Array.from(buyersSetOrArray) : buyersSetOrArray;
+        if (!arr || arr.length === 0) return ids.includes('general');
+        
+        return arr.some(b => {
+            const id = String(b).toLowerCase().replace(/[^a-z0-9]/g, '');
+            return ids.includes(id);
+        });
     }

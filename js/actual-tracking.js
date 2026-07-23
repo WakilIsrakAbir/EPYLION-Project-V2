@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // ACTUAL TRACKING: Plan vs Actual
 // ==========================================================
 async function loadActualTracking(deptKey) {
@@ -228,6 +228,8 @@ async function fetchActualTrackingData() {
                 extProd = deptExtMap[plan.orderNo].prod;
                 extBal = deptExtMap[plan.orderNo].bal;
             }
+
+            if (!hasBuyerPermission(displayBuyer.split(','))) return;
 
             actualTrackingData.push({
                 orderNo: plan.orderNo,
