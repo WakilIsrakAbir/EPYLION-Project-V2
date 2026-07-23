@@ -3,7 +3,7 @@
 // ==========================================================
 function loadTrackingReport(deptKey) {
     reportActualDeptKey = deptKey;
-    const deptNames = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery' };
+    const deptNames = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'Delivery (Floor)' };
     const deptName = deptNames[deptKey] || deptKey;
     
     document.getElementById('actualReportPageHeader').innerText = deptName + ' Tracking Report';
@@ -53,46 +53,54 @@ async function downloadTrackingReport(statusType, formatType) {
     
     if (reportActualDeptKey === 'knitting') { dynCol1 = 'Knit Prod.'; dynCol2 = 'Knit Bal.'; }
     else if (reportActualDeptKey === 'dyeing') { dynCol1 = 'Dyeing Prod.'; dynCol2 = 'Dyeing Bal.'; }
-    else if (reportActualDeptKey === 'delivery') { dynCol1 = 'NetDeliveryQtyKgs'; dynCol2 = 'Deli. Bal.'; }
+    else if (reportActualDeptKey === 'delivery' || reportActualDeptKey === 'deliveryfloor') { dynCol1 = 'NetDeliveryQtyKgs'; dynCol2 = 'Deli. Bal.'; }
     
     if (dynCol1) { headers.push(dynCol1); headers.push(dynCol2); }
     headers = headers.concat(['Plan Start', 'Plan End', 'Actual Start', 'Actual End', 'Start Result', 'End Result', 'Fail Reason', 'Related Dept.']);
     
-    let exportRows = dataToExport.map((d, index) => {
+    let exportRows = dataToExport.map((d, idx) => {
         let row = [
-            index + 1,
+            idx + 1,
             d.orderNo,
             d.buyer
         ];
+        
         if (dynCol1) {
-            row.push(d.extProd !== '' ? Number(d.extProd).toFixed(2) : '');
-            row.push(d.extBal !== '' ? Number(d.extBal).toFixed(2) : '');
+            row.push(d.extProd !== '' ? Number(d.extProd) : '');
+            row.push(d.extBal !== '' ? Number(d.extBal) : '');
         }
         
-        let startResult = '';
-        if (d.planStart && d.actualStart) {
-            startResult = (new Date(d.actualStart) <= new Date(d.planStart)) ? 'Pass' : 'Fail';
+        // Pass/Fail Logic exactly like UI
+        let startRes = '—';
+        if (d.actualStart && d.planStart) {
+            const actualS = new Date(d.actualStart).setHours(0, 0, 0, 0);
+            const planS = new Date(d.planStart).setHours(0, 0, 0, 0);
+            startRes = actualS <= planS ? 'Pass' : 'Fail';
         }
-        let endResult = '';
-        if (d.planEnd && d.actualEnd) {
-            endResult = (new Date(d.actualEnd) <= new Date(d.planEnd)) ? 'Pass' : 'Fail';
+        
+        let endRes = '—';
+        if (d.actualEnd && d.planEnd) {
+            const actualE = new Date(d.actualEnd).setHours(0, 0, 0, 0);
+            const planE = new Date(d.planEnd).setHours(0, 0, 0, 0);
+            endRes = actualE <= planE ? 'Pass' : 'Fail';
         }
 
         row = row.concat([
-            d.planStart ? new Date(d.planStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '',
-            d.planEnd ? new Date(d.planEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '',
-            d.actualStart ? new Date(d.actualStart).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '',
-            d.actualEnd ? new Date(d.actualEnd).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '',
-            startResult,
-            endResult,
+            formatDateDisplay(d.planStart),
+            formatDateDisplay(d.planEnd),
+            formatDateDisplay(d.actualStart),
+            formatDateDisplay(d.actualEnd),
+            startRes,
+            endRes,
             d.failReason,
             d.relatedDept
         ]);
+        
         return row;
     });
     
-    const deptNames = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery' };
-    const deptName = deptNames[reportActualDeptKey] || reportActualDeptKey;
+    const deptNames2 = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'Delivery (Floor)' };
+    const deptName = deptNames2[reportActualDeptKey] || reportActualDeptKey;
     const fileName = `${deptName}_${statusType}_Tracking_Report`;
 
     if (formatType === 'Excel') {

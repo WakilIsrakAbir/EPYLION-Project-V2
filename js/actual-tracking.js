@@ -3,7 +3,7 @@
 // ==========================================================
 async function loadActualTracking(deptKey) {
     actualDeptKey = deptKey;
-    const deptNames = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery' };
+    const deptNames = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'Delivery (Floor)' };
     const deptName = deptNames[deptKey] || deptKey;
 
     localStorage.setItem('activePage', JSON.stringify({ page: 'actualTracking', dept: deptKey }));
@@ -48,7 +48,7 @@ async function loadActualTracking(deptKey) {
         th1.innerText = 'Dyeing Prod.'; th2.innerText = 'Dyeing Bal.';
         th1.classList.remove('hidden'); th2.classList.remove('hidden');
         ts1.classList.remove('hidden'); ts2.classList.remove('hidden');
-    } else if (deptKey === 'delivery') {
+    } else if (deptKey === 'delivery' || deptKey === 'deliveryfloor') {
         th1.innerText = 'NetDeliveryQtyKgs'; th2.innerText = 'Deli. Bal.';
         th1.classList.remove('hidden'); th2.classList.remove('hidden');
         ts1.classList.remove('hidden'); ts2.classList.remove('hidden');
@@ -125,7 +125,7 @@ async function fetchActualTrackingData() {
         let deptExtMap = {};
         let targetDeptName = actualDeptKey === 'knitting' ? 'Knitting' :
                              actualDeptKey === 'dyeing' ? 'Dyeing' :
-                             actualDeptKey === 'delivery' ? 'Delivery' : null;
+                             (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') ? 'Delivery' : null;
 
         if (targetDeptName) {
             const dFilesRaw = allFiles.filter(f => f.category === targetDeptName);
@@ -155,7 +155,7 @@ async function fetchActualTrackingData() {
                         } else if (actualDeptKey === 'dyeing') {
                             deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
                             deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
-                        } else if (actualDeptKey === 'delivery') {
+                        } else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
                             deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs'])) || 0;
                             deptExtMap[bNo].bal += Number(getColData(row, ['Deli. Bal.', 'Deli Bal.'])) || 0;
                         }
@@ -166,16 +166,25 @@ async function fetchActualTrackingData() {
 
         // Process saved plans - find orders with confirmed items in the target department
         savedPlans.forEach(plan => {
-            const deptItems = plan[actualDeptKey];
+            const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
+            const deptItems = plan[dbDeptKey];
             if (!deptItems || !Array.isArray(deptItems) || deptItems.length === 0) return;
 
-            // Check if ALL items in this dept are 'Confirm'
-            const allConfirm = deptItems.every(item => item.planType === 'Confirm');
-            if (!allConfirm) return;
-
-            // Calculate MIN start date and MAX end date
-            let startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
-            let endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
+            let startDates, endDates;
+            
+            if (actualDeptKey === 'deliveryfloor') {
+                const floorItems = deptItems.filter(item => item.floorPlanType === 'Confirm' || item.floorPlanType === 'Tentative');
+                if (floorItems.length === 0) return;
+                
+                startDates = floorItems.map(item => item.floorStartDate).filter(d => d && d !== '' && d !== '-');
+                endDates = floorItems.map(item => item.floorEndDate).filter(d => d && d !== '' && d !== '-');
+            } else {
+                const allConfirm = deptItems.every(item => item.planType === 'Confirm');
+                if (!allConfirm) return;
+                
+                startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
+                endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
+            }
 
             let planStart = '';
             let planEnd = '';
@@ -201,25 +210,27 @@ async function fetchActualTrackingData() {
                 relatedDept = plan[actualKey].relatedDept || '';
             }
 
-            // Get buyer and booking date from general data
-            let genInfo = generalDataMap[plan.orderNo];
+            // First try to get buyer from dept items (file data)
             let displayBuyer = 'N/A';
-            let bookingDate = 'N/A';
-            if (genInfo) {
-                displayBuyer = genInfo.buyers.size > 0 ? Array.from(genInfo.buyers).join(', ') : 'N/A';
-                bookingDate = genInfo.bookingDate || 'N/A';
+            let buyersFromItems = new Set();
+            deptItems.forEach(item => {
+                if (item.itemData && item.itemData.Buyer) {
+                    let b = String(item.itemData.Buyer).trim();
+                    if (b && b.toLowerCase() !== 'undefined' && b.toLowerCase() !== 'n/a') buyersFromItems.add(b);
+                }
+            });
+            if (buyersFromItems.size > 0) {
+                displayBuyer = Array.from(buyersFromItems).join(', ');
             }
 
-            // Also try to get buyer from dept items
-            if (displayBuyer === 'N/A') {
-                let buyersFromItems = new Set();
-                deptItems.forEach(item => {
-                    if (item.itemData && item.itemData.Buyer) {
-                        let b = String(item.itemData.Buyer).trim();
-                        if (b && b.toLowerCase() !== 'undefined' && b.toLowerCase() !== 'n/a') buyersFromItems.add(b);
-                    }
-                });
-                if (buyersFromItems.size > 0) displayBuyer = Array.from(buyersFromItems).join(', ');
+            // Fallback to general data if not found in file, also get booking date
+            let genInfo = generalDataMap[plan.orderNo];
+            let bookingDate = 'N/A';
+            if (genInfo) {
+                if (displayBuyer === 'N/A') {
+                    displayBuyer = genInfo.buyers.size > 0 ? Array.from(genInfo.buyers).join(', ') : 'N/A';
+                }
+                bookingDate = genInfo.bookingDate || 'N/A';
             }
 
             let extProd = '';
@@ -395,7 +406,7 @@ function renderActualTable() {
 
     if (data.length === 0) {
         paginationControls.classList.add('hidden');
-        let cols = (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery') ? 13 : 11;
+        let cols = (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') ? 13 : 11;
         tbody.innerHTML = `<tr><td colspan="${cols}" class="p-10 text-center text-gray-500 bg-white"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No matching data found.</td></tr>`;
         return;
     }
@@ -438,7 +449,7 @@ function renderActualTable() {
         }
 
         let dynColsHtml = '';
-        if (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery') {
+        if (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
             dynColsHtml = `
             <td class="p-2 border-r border-gray-200 text-center font-medium bg-yellow-50/30">${d.extProd !== '' ? d.extProd.toFixed(2) : ''}</td>
             <td class="p-2 border-r border-gray-200 text-center font-medium bg-yellow-50/30">${d.extBal !== '' ? d.extBal.toFixed(2) : ''}</td>

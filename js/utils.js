@@ -74,7 +74,7 @@ function formatDateDisplay(dateStr) {
                 const headerLower = headers[C];
                 const textCols = ['color', 'fabric construction', 'buyer', 'plan type'];
                 const isText = textCols.some(t => headerLower.includes(t));
-                const isDate = headerLower.includes('date');
+                const isDate = headerLower.includes('date') || headerLower === 'plan start' || headerLower === 'plan end' || headerLower === 'actual start' || headerLower === 'actual end';
                 
                 if (isText) {
                     cell.t = 's';

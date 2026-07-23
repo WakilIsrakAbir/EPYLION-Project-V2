@@ -112,7 +112,7 @@ function applyPermissions() {
         if (m.actualTracking) {
             const actualMenuEl = document.getElementById('actualMenu');
             if (actualMenuEl) hasAny(m.actualTracking) ? actualMenuEl.parentElement.classList.remove('hidden') : actualMenuEl.parentElement.classList.add('hidden');
-            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery', 'deliveryfloor'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-actual`);
                 if (el) m.actualTracking[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
             });
@@ -122,7 +122,7 @@ function applyPermissions() {
         if (m.trackingReports) {
             const trackingReportMenuEl = document.getElementById('submenu-actual-report');
             if (trackingReportMenuEl) hasAny(m.trackingReports) ? trackingReportMenuEl.parentElement.classList.remove('hidden') : trackingReportMenuEl.parentElement.classList.add('hidden');
-            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery', 'deliveryfloor'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-actual-report`);
                 if (el) m.trackingReports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
             });

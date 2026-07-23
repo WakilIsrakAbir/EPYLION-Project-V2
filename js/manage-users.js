@@ -73,10 +73,10 @@ let buyersLoaded = false;
       ['yd','Updated YD Report'], ['knitting','Updated Knitting Report'], ['dyeing','Updated Dyeing Report'], ['finishing','Updated Finishing Report'], ['delivery','Updated Delivery Report'], ['orderStatus','Order Status']
     ]},
     {key:'actualTracking', title:'Plan Vs Actual Tracking', icon:'fa-scale-balanced', items:[
-      ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery']
+      ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery'], ['deliveryfloor','Delivery (Floor)']
     ]},
     {key:'trackingReports', title:'Tracking Report', icon:'fa-file-waveform', items:[
-      ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery']
+      ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery'], ['deliveryfloor','Delivery (Floor)']
     ]},
     {key:'loadCalculation', title:'Load Calculation', icon:'fa-calculator', items:[
       ['detailed','Detailed Load Download'], ['summary','Buyer-wise Load Summary']
@@ -621,7 +621,15 @@ let buyersLoaded = false;
       
       if (tabId === 'buyers' && !buyersLoaded) {
           const buyersTab = document.getElementById('permissionTab-buyers');
-          buyersTab.innerHTML = `<div class="flex flex-col items-center justify-center p-10 h-full"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-4xl mb-4"></i><span class="font-bold text-gray-500">Extracting buyers from uploaded files...</span></div>`;
+          buyersTab.innerHTML = `<div class="flex flex-col items-center justify-center p-10 h-full">
+            <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                <div class="absolute w-4 h-4 rounded-full bg-orange-500 animate-pulse"></div>
+            </div>
+            <span class="font-bold text-gray-500">Extracting buyers from uploaded files...</span>
+          </div>`;
           await updateDynamicBuyers();
           renderBuyerPermissions();
       }
@@ -665,15 +673,12 @@ let buyersLoaded = false;
       document.querySelectorAll('.buyer-checkbox').forEach(cb => cb.checked = check);
   }
   function renderBuyerPermissions(){
-    const type=permissionDraft.buyers.accessType;
+    const originalType = permissionDraft.buyers.accessType;
     document.getElementById('permissionTab-buyers').innerHTML=`
       <div><h3 class="font-black text-lg">Buyer-wise Data Visibility</h3></div>
-      <div class="grid sm:grid-cols-3 gap-3">
-        ${[['all','All Buyers','Full buyer visibility'],['selected','Selected Buyers','Only checked buyers'],['none','No Buyer Access','Hide buyer data']].map(([v,t,d])=>`<label class="rounded-xl border p-4 cursor-pointer ${type===v?'border-blue-500 bg-blue-50 dark:bg-blue-950/20':'border-slate-200 dark:border-slate-700'}"><input type="radio" name="buyerAccessType" value="${v}" ${type===v?'checked':''} onchange="buyerAccessChanged(this.value)" class="mr-2"><span class="font-black text-sm">${t}</span><p class="text-[11px] text-slate-500 mt-1">${d}</p></label>`).join('')}
-      </div>
-      <div id="buyerSelectionPanel" class="${type==='selected'?'':'hidden'} rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div id="buyerSelectionPanel" class="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div class="p-3 bg-slate-50 dark:bg-[#11151d] flex flex-col sm:flex-row gap-2 justify-between"><div><h4 class="font-black text-sm">Select Buyers</h4></div><div class="flex gap-2"><button type="button" onclick="setAllBuyers(true)" class="px-3 py-1.5 rounded border text-xs font-bold">Select All</button><button type="button" onclick="setAllBuyers(false)" class="px-3 py-1.5 rounded border text-xs font-bold">Clear</button></div></div>
-        <div class="p-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">${BUYERS.map(b=>`<label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><input data-buyer-id="${b.id}" type="checkbox" ${permissionDraft.buyers.buyerIds.includes(b.id)?'checked':''} class="w-4 h-4 accent-blue-600 buyer-checkbox"><span class="font-bold text-sm">${b.name}</span></label>`).join('')}</div>
+        <div class="p-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">${BUYERS.map(b=>`<label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><input data-buyer-id="${b.id}" type="checkbox" ${(originalType === 'all' || permissionDraft.buyers.buyerIds.includes(b.id))?'checked':''} class="w-4 h-4 accent-blue-600 buyer-checkbox"><span class="font-bold text-sm">${b.name}</span></label>`).join('')}</div>
       </div>`;
   }
 
@@ -692,15 +697,12 @@ let buyersLoaded = false;
               permissionDraft[path][key] = cb.checked;
           }
       });
-      if (permissionDraft.buyers.accessType === 'selected') {
-          const arr = [];
-          document.querySelectorAll('.buyer-checkbox').forEach(cb => {
-              if (cb.checked) arr.push(cb.getAttribute('data-buyer-id'));
-          });
-          permissionDraft.buyers.buyerIds = arr;
-      } else {
-          permissionDraft.buyers.buyerIds = [];
-      }
+      permissionDraft.buyers.accessType = 'selected';
+      const arr = [];
+      document.querySelectorAll('.buyer-checkbox').forEach(cb => {
+          if (cb.checked) arr.push(cb.getAttribute('data-buyer-id'));
+      });
+      permissionDraft.buyers.buyerIds = arr;
   }
   
   function setAllPermissions(val) {
