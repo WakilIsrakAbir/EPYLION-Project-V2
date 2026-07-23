@@ -7,7 +7,7 @@
 const LOAD_MONTH_COUNT = 5;
 let activeMainMenu = 'detailed';
 let activeDetailedDepartment = 'knitting';
-let activeSummaryDepartment = 'knitting';
+let activeSummaryDepartment = 'yd';
 
 let globalLoadData = { knitting: [], dyeing: [], delivery: [], yd: [], deliveryFloor: [] };
 

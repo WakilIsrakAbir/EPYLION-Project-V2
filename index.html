@@ -433,6 +433,16 @@
         .department-tab {
             transition: all 0.2s ease;
         }
+        .department-tab.active-yd {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        .department-tab.active-deliveryFloor {
+            background: #db2777;
+            color: #ffffff;
+            border-color: #db2777;
+        }
         .department-tab.active-knitting {
             background: #2563eb;
             color: #ffffff;
@@ -713,9 +723,11 @@
                                         <p class="text-xs text-blue-700 mt-1">The month names change automatically from the selected starting month.</p>
                                     </div>
                                     <div class="flex flex-wrap gap-2">
+                                        <button onclick="setSummaryDepartment('yd')" id="summaryBtnYd" class="department-tab px-4 py-2 rounded border text-xs font-bold">YD</button>
                                         <button onclick="setSummaryDepartment('knitting')" id="summaryBtnKnitting" class="department-tab px-4 py-2 rounded border text-xs font-bold">Knitting</button>
                                         <button onclick="setSummaryDepartment('dyeing')" id="summaryBtnDyeing" class="department-tab px-4 py-2 rounded border text-xs font-bold">Dyeing</button>
                                         <button onclick="setSummaryDepartment('delivery')" id="summaryBtnDelivery" class="department-tab px-4 py-2 rounded border text-xs font-bold">Delivery</button>
+                                        <button onclick="setSummaryDepartment('deliveryFloor')" id="summaryBtnDeliveryFloor" class="department-tab px-4 py-2 rounded border text-xs font-bold">Delivery (Floor)</button>
                                     </div>
                                 </div>
                                 <div class="overflow-auto custom-scrollbar max-h-[560px]">
