@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // SAVE PLANNING: Save Fabric Planning Data
 // ==========================================================
 async function saveFabricPlanning() {
@@ -17,8 +17,18 @@ async function saveFabricPlanning() {
 
         let validationFailed = false;
 
-        const userRole = localStorage.getItem('role');
-        const isAdmin = userRole ? (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'approver') : false;
+        let canEditConfirmed = false;
+        let canBypassDownstream = false;
+        const permsStr = localStorage.getItem('permissions');
+        if (permsStr) {
+            try {
+                const permissions = JSON.parse(permsStr);
+                if (permissions && permissions.actions) {
+                    canEditConfirmed = !!permissions.actions.editConfirmedPlan;
+                    canBypassDownstream = !!permissions.actions.bypassDownstreamConfirm;
+                }
+            } catch(e) {}
+        }
 
         const checkDownstreamConfirm = (dept, itemId) => {
             if (!existingData.dbData) return false;
@@ -45,12 +55,12 @@ async function saveFabricPlanning() {
             let existingItem = existingData.mergedItems ? existingData.mergedItems.find(m => m.itemId === itemId) : null;
             let wasConfirmed = existingItem && existingItem.planType === 'Confirm';
 
-            if (wasConfirmed && !isAdmin && newPlanType !== 'Confirm') {
-                showToast("Save failed: Only Admin can change a Confirmed plan!");
+            if (wasConfirmed && !canEditConfirmed && newPlanType !== 'Confirm') {
+                showToast("Save failed: You do not have permission to edit a Confirmed plan!");
                 validationFailed = true;
             }
 
-            if (!isAdmin && checkDownstreamConfirm(currentDept, itemId)) {
+            if (!canBypassDownstream && checkDownstreamConfirm(currentDept, itemId)) {
                 let wasStartDate = existingItem ? existingItem.startDate : '';
                 let wasEndDate = existingItem ? existingItem.endDate : '';
                 let wasPlanType = existingItem ? existingItem.planType : '';

@@ -13,6 +13,21 @@ async function loadActualTracking(deptKey) {
     // Show Plan vs Actual view
     const pvaView = document.getElementById('planVsActualView');
     if (pvaView) pvaView.classList.remove('hidden');
+    
+    const permsStr = localStorage.getItem('permissions');
+    if (permsStr) {
+        try {
+            const permissions = JSON.parse(permsStr);
+            if (permissions && permissions.actions) {
+                const btn = document.getElementById('btnSaveActual');
+                if (btn) {
+                    const deptMap = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'DeliveryFloor' };
+                    const key = 'saveActual' + (deptMap[deptKey] || '');
+                    btn.style.display = permissions.actions[key] ? '' : 'none';
+                }
+            }
+        } catch(e) {}
+    }
 
     const uniqueId = `actualTracking_${deptKey}`;
     activeTabId = uniqueId;

@@ -90,22 +90,18 @@ let buyersLoaded = false;
     {title:'Data Upload & Management', icon:'fa-upload', items:[
       ['uploadGeneral','Upload General Data'], ['uploadYD','Upload YD Data'],
       ['uploadKnitting','Upload Knitting Data'], ['uploadDyeing','Upload Dyeing Data'], ['uploadFinishing','Upload Finishing Data'],
-      ['uploadDelivery','Upload Delivery Data'], ['viewFiles','View Uploaded Files'], ['deleteFiles','Delete Uploaded Files'], ['wipeSystem','Wipe System Data']
+      ['uploadDelivery','Upload Delivery Data'], ['wipeSystem','Wipe System Data']
     ]},
-    {title:'Planning Save Permissions', icon:'fa-floppy-disk', items:[
+    {title:'Plan Save Permissions', icon:'fa-floppy-disk', items:[
       ['saveYD','Save YD Planning'], ['saveKnitting','Save Knitting Planning'], ['saveDyeing','Save Dyeing Planning'],
-      ['saveFinishing','Save Finishing Planning'], ['saveDelivery','Save Delivery Planning'], ['saveActual','Save Plan vs Actual']
+      ['saveFinishing','Save Finishing Planning'], ['saveDelivery','Save Delivery Planning']
+    ]},
+    {title:'Actual Tracking Save Permissions', icon:'fa-floppy-disk', items:[
+      ['saveActualYD','Save YD Actual'], ['saveActualKnitting','Save Knitting Actual'], ['saveActualDyeing','Save Dyeing Actual'],
+      ['saveActualFinishing','Save Finishing Actual'], ['saveActualDelivery','Save Delivery Actual'], ['saveActualDeliveryFloor','Save Delivery (Floor) Actual']
     ]},
     {title:'Order Workflow Actions', icon:'fa-arrows-rotate', items:[
-      ['confirmPlan','Move to Confirm'], ['tentativePlan','Move to Tentative'], ['completeOrder','Mark Order Completed'],
-      ['reopenOrder','Reopen Completed Order'], ['changeOrderStatus','Change Order Status'], ['deletePlan','Delete Planning Data']
-    ]},
-    {title:'Data Editing Actions', icon:'fa-pen-to-square', items:[
-      ['editDates','Edit Production Dates'], ['editActualQty','Edit Actual Quantity'], ['editRemarks','Edit Internal Remarks'],
-      ['bulkUpdate','Bulk Update'], ['globalSearch','Global Booking Search']
-    ]},
-    {title:'User Management', icon:'fa-user-shield', items:[
-      ['createUsers','Create Users'], ['editUsers','Edit Users'], ['deleteUsers','Delete Users'], ['resetPassword','Reset Password'], ['changePermissions','Change Permissions']
+      ['editConfirmedPlan','Edit Confirmed Plan'], ['bypassDownstreamConfirm','Bypass Downstream Confirm']
     ]}
   ];
 
@@ -154,18 +150,17 @@ let buyersLoaded = false;
       Object.keys(p.menus).forEach(k => setMenu(k)); setAllObj(p.actions); setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Approver') {
       ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(k => setMenu(k));
-      ['confirmPlan','tentativePlan','completeOrder','reopenOrder','changeOrderStatus','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
+      ['editConfirmedPlan'].forEach(k=>p.actions[k]=true);
       setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Planner') {
       ['orderManagement','reports','actualTracking','loadCalculation'].forEach(k => setMenu(k));
       p.menus.dataManagement.view=true;
-      p.actions.viewFiles=true;
-      ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActual','tentativePlan','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
+      ['uploadGeneral','uploadYD','uploadKnitting','uploadDyeing','uploadFinishing','uploadDelivery'].forEach(k=>p.actions[k]=true);
+      ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActualYD','saveActualKnitting','saveActualDyeing','saveActualFinishing','saveActualDelivery','saveActualDeliveryFloor'].forEach(k=>p.actions[k]=true);
 
       ['reportUpdatedExcelYD','reportUpdatedExcelKnitting','reportUpdatedExcelDyeing','reportUpdatedExcelFinishing','reportUpdatedExcelDelivery','osDetailedExcel','osDetailedPdf','loadDetailedKnitting','loadDetailedDyeing','loadDetailedDelivery','loadSummaryKnitting','loadSummaryDyeing','loadSummaryDelivery'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
     } else {
       ['reports','trackingReports'].forEach(k => setMenu(k));
-      ['globalSearch'].forEach(k=>p.actions[k]=true);
 
       ['trackingYD','trackingKnitting','trackingDyeing','trackingFinishing','trackingDelivery','trackingDeliveryFloor'].forEach(k=>p.downloads[k]=true);
       p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next'];

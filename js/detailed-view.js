@@ -287,8 +287,16 @@ function openDetailedView(encodedBookingNo) {
     });
     itemBody.innerHTML = itemHtml;
 
-    const userRole = localStorage.getItem('role');
-    const isAdmin = userRole ? (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'approver') : false;
+    let canEditConfirmed = false;
+    const permsStr = localStorage.getItem('permissions');
+    if (permsStr) {
+        try {
+            const permissions = JSON.parse(permsStr);
+            if (permissions && permissions.actions && permissions.actions.editConfirmedPlan) {
+                canEditConfirmed = true;
+            }
+        } catch(e) {}
+    }
 
     document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
         const planSelect = row.querySelector('.row-plan-type');
@@ -297,7 +305,7 @@ function openDetailedView(encodedBookingNo) {
 
         const isConfirmed = planSelect && planSelect.value === 'Confirm';
 
-        if (isConfirmed && !isAdmin) {
+        if (isConfirmed && !canEditConfirmed) {
             if (planSelect) planSelect.disabled = true;
             if (startInput) startInput.disabled = true;
             if (endInput) endInput.disabled = true;
