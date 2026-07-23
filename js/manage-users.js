@@ -128,9 +128,13 @@ let buyersLoaded = false;
       ['loadDetailedKnitting', 'Detailed Load (Knitting)'],
       ['loadDetailedDyeing', 'Detailed Load (Dyeing)'],
       ['loadDetailedDelivery', 'Detailed Load (Delivery)'],
+      ['loadDetailedYD', 'Detailed Load (YD)'],
+      ['loadDetailedDeliveryFloor', 'Detailed Load (Delivery Floor)'],
       ['loadSummaryKnitting', 'Load Summary (Knitting)'],
       ['loadSummaryDyeing', 'Load Summary (Dyeing)'],
-      ['loadSummaryDelivery', 'Load Summary (Delivery)']
+      ['loadSummaryDelivery', 'Load Summary (Delivery)'],
+      ['loadSummaryYD', 'Load Summary (YD)'],
+      ['loadSummaryDeliveryFloor', 'Load Summary (Delivery Floor)']
     ]}
   ];
   

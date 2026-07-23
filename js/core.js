@@ -177,9 +177,13 @@ function applyPermissions() {
             toggleBtn('btnLoadDetailedKnitting', d.loadDetailedKnitting);
             toggleBtn('btnLoadDetailedDyeing', d.loadDetailedDyeing);
             toggleBtn('btnLoadDetailedDelivery', d.loadDetailedDelivery);
+            toggleBtn('btnLoadDetailedYD', d.loadDetailedYD);
+            toggleBtn('btnLoadDetailedDeliveryFloor', d.loadDetailedDeliveryFloor);
             toggleBtn('btnLoadSummaryKnitting', d.loadSummaryKnitting);
             toggleBtn('btnLoadSummaryDyeing', d.loadSummaryDyeing);
             toggleBtn('btnLoadSummaryDelivery', d.loadSummaryDelivery);
+            toggleBtn('btnLoadSummaryYD', d.loadSummaryYD);
+            toggleBtn('btnLoadSummaryDeliveryFloor', d.loadSummaryDeliveryFloor);
         }
 
     } else {
