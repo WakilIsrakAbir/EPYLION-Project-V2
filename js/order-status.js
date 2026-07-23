@@ -157,8 +157,9 @@
                 if (datesRes.ok) {
                     const savedPlans = await datesRes.json();
                     savedPlans.forEach(plan => {
-                        initGroup(plan.orderNo);
-                        osGroupedData[plan.orderNo].dbData = plan;
+                        if (osGroupedData[plan.orderNo]) {
+                            osGroupedData[plan.orderNo].dbData = plan;
+                        }
                     });
                 }
             } catch (e) { }

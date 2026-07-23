@@ -350,6 +350,8 @@ async function fetchAndProcessData(isSilent = false) {
             let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
             let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
             
+            initGroup(bNo);
+            
             if (groupedData[bNo]) {
                 let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
                 let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
@@ -364,10 +366,10 @@ async function fetchAndProcessData(isSilent = false) {
         try {
             if (savedPlans && savedPlans.length > 0) {
                 savedPlans.forEach(plan => {
-                    initGroup(plan.orderNo);
-                    groupedData[plan.orderNo].dbData = plan;
+                    if (groupedData[plan.orderNo]) {
+                        groupedData[plan.orderNo].dbData = plan;
 
-                    groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
+                        groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
                         groupedData[plan.orderNo].generalInfo.CompletedDate = plan[`${currentDept}CompletedDate`] || null;
                         
                         ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
@@ -381,6 +383,7 @@ async function fetchAndProcessData(isSilent = false) {
                                 });
                             }
                         });
+                    }
                 });
             }
         } catch (e) { console.error("Error fetching db dates", e); }
@@ -576,49 +579,7 @@ async function fetchAndProcessData(isSilent = false) {
                 });
             }
 
-            // FALLBACK: If mergedItemsMap is still empty but DB has items for this dept,
-            // populate from DB directly (handles case where Excel files are unavailable/404)
-            if (mergedItemsMap.size === 0 && group.dbData && group.dbData[currentDept] && Array.isArray(group.dbData[currentDept]) && group.dbData[currentDept].length > 0) {
-                const dbDepartmentItems = group.dbData[currentDept];
-                let dbOnlyOccurrence = {};
-                dbDepartmentItems.forEach(dbItem => {
-                    if (dbItem.itemData) {
-                        let baseId = dbItem.itemId || generateItemId(dbItem.itemData, currentDept);
-                        let strictId = baseId;
 
-                        if (!dbItem.itemId) {
-                            if (currentDept === 'knitting' || currentDept === 'delivery' || currentDept === 'yd') {
-                                dbOnlyOccurrence[baseId] = (dbOnlyOccurrence[baseId] || 0) + 1;
-                                strictId = dbOnlyOccurrence[baseId] > 1 ? `${baseId}_${dbOnlyOccurrence[baseId]}` : baseId;
-                            } else {
-                                if (dbOnlyOccurrence[baseId]) return;
-                                dbOnlyOccurrence[baseId] = 1;
-                            }
-                        }
-
-                        let rawB = dbItem.itemData ? (dbItem.itemData.Buyer || dbItem.itemData.BuyerName || dbItem.itemData.Customer || '') : '';
-                        let b = String(rawB).trim().toUpperCase().replace(/\s+/g, ' ');
-                        if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
-                            group.buyers.add(b);
-                        }
-
-                        mergedItemsMap.set(strictId, {
-                            itemId: strictId,
-                            itemData: dbItem.itemData,
-                            startDate: dbItem.startDate || '',
-                            endDate: dbItem.endDate || '',
-                            planType: dbItem.planType || '',
-                            limitation: dbItem.limitation || '',
-                            remarks: dbItem.remarks || '',
-                            floorStartDate: dbItem.floorStartDate || '',
-                            floorEndDate: dbItem.floorEndDate || '',
-                            floorPlanType: dbItem.floorPlanType || '',
-                            yarnDate: dbItem.yarnDate || '',
-                            source: 'DB_Only'
-                        });
-                    }
-                });
-            }
 
             group.mergedItems = Array.from(mergedItemsMap.values());
 
