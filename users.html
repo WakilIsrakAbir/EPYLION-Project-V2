@@ -15,6 +15,7 @@
     })();
     tailwind.config = { darkMode: 'class' };
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -230,7 +231,7 @@
           <button class="permission-nav active w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold bg-blue-600 text-white whitespace-nowrap" data-tab="menu" onclick="showPermissionTab('menu', this)"><i class="fa-solid fa-sitemap w-5"></i> Menu & Submenu</button>
           <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="actions" onclick="showPermissionTab('actions', this)"><i class="fa-solid fa-floppy-disk w-5"></i> Save & Actions</button>
           <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="buyers" onclick="showPermissionTab('buyers', this)"><i class="fa-solid fa-tags w-5"></i> Buyer Access</button>
-          <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="columns" onclick="showPermissionTab('columns', this)"><i class="fa-solid fa-table-columns w-5"></i> Table Columns</button>
+
           <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="downloads" onclick="showPermissionTab('downloads', this)"><i class="fa-solid fa-download w-5"></i> Downloads</button>
         </nav>
 
@@ -238,7 +239,7 @@
           <section id="permissionTab-menu" class="permission-tab space-y-4"></section>
           <section id="permissionTab-actions" class="permission-tab hidden space-y-4"></section>
           <section id="permissionTab-buyers" class="permission-tab hidden space-y-4"></section>
-          <section id="permissionTab-columns" class="permission-tab hidden space-y-4"></section>
+
           <section id="permissionTab-downloads" class="permission-tab hidden space-y-4"></section>
         </div>
       </div>
@@ -269,7 +270,7 @@
           <label class="space-y-1 sm:col-span-2"><span class="text-xs font-bold">New Password <span class="font-normal text-slate-400">(optional)</span></span><input id="editPassword" type="password" placeholder="Leave blank to keep current password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-[#11151d]" /></label>
         </div>
         <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/25 flex items-center justify-between gap-3">
-          <div><p class="font-bold text-sm">Granular Permissions</p><p class="text-xs text-slate-500">Menu, save, buyer, columns and downloads.</p></div>
+          <div><p class="font-bold text-sm">Granular Permissions</p><p class="text-xs text-slate-500">Menu, save, buyer, and downloads.</p></div>
           <button type="button" onclick="openPermissionBuilderForEditingUser()" class="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold">Edit Permissions</button>
         </div>
         <div class="flex justify-end gap-2 pt-2">

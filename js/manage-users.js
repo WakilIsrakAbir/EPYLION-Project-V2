@@ -1,36 +1,97 @@
-const BUYERS = [
-    {id:'hm', name:'H&M'}, {id:'next', name:'NEXT'}, {id:'marks', name:'M&S'}, {id:'primark', name:'Primark'},
-    {id:'cna', name:'C&A'}, {id:'zara', name:'Zara'}, {id:'target', name:'Target'}, {id:'walmart', name:'Walmart'},
-    {id:'tesco', name:'Tesco'}, {id:'matalan', name:'Matalan'}, {id:'gap', name:'GAP'}, {id:'lidl', name:'Lidl'}
-  ];
+let BUYERS = [];
+let buyersLoaded = false;
+
+  async function updateDynamicBuyers() {
+      BUYERS = [];
+      const existingIds = new Set();
+      
+      try {
+          const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+          if (res.ok) {
+              const allFiles = await res.json();
+              
+              allFiles.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+              
+              // To optimize, we only read the latest file of each category
+              const latestFilesMap = new Map();
+              allFiles.forEach(f => {
+                  if (f.savedName) {
+                      latestFilesMap.set(f.category || 'General', f);
+                  }
+              });
+              const filesToRead = Array.from(latestFilesMap.values());
+              
+              for (let file of filesToRead) {
+                  try {
+                      const encodedName = encodeURIComponent(file.savedName);
+                      const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                      if (!fRes.ok) continue;
+                      const ab = await fRes.arrayBuffer();
+                      const wb = XLSX.read(ab, { type: 'array' });
+                      let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                      
+                      sheetData.forEach(row => {
+                          let buyerVal = '';
+                          for (const k of Object.keys(row)) {
+                              const cleanK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                              if (['buyer', 'buyername', 'customer'].includes(cleanK)) {
+                                  buyerVal = row[k];
+                                  break;
+                              }
+                          }
+                          
+                          let buyer = String(buyerVal).trim();
+                          if (buyer && buyer.toUpperCase() !== 'UNDEFINED' && buyer.toUpperCase() !== 'N/A' && buyer.toUpperCase() !== 'GENERAL') {
+                              const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              if (id && !existingIds.has(id)) {
+                                  BUYERS.push({ id: id, name: buyer });
+                                  existingIds.add(id);
+                              }
+                          }
+                      });
+                  } catch(e) {
+                      console.error('Error parsing file for buyers', e);
+                  }
+              }
+          }
+      } catch(e) {
+          console.error('Error fetching files for buyers', e);
+      }
+      
+      BUYERS.sort((a, b) => a.name.localeCompare(b.name));
+      buyersLoaded = true;
+  }
   
   const MENU_GROUPS = [
     {key:'dataManagement', title:'Data Management', icon:'fa-database', items:[
-      ['view','View Data Management'], ['uploadGeneral','Upload General Data'], ['uploadYD','Upload YD Data'],
-      ['uploadKnitting','Upload Knitting Data'], ['uploadDyeing','Upload Dyeing Data'], ['uploadFinishing','Upload Finishing Data'],
-      ['uploadDelivery','Upload Delivery Data'], ['viewFiles','View Uploaded Files'], ['deleteFiles','Delete Uploaded Files'], ['wipeSystem','Wipe System Data']
+      ['view','Data Management']
     ]},
     {key:'orderManagement', title:'Order Management', icon:'fa-boxes-stacked', items:[
       ['yd','YD Plan'], ['knitting','Knitting Plan'], ['dyeing','Dyeing Plan'], ['finishing','Finishing Plan'], ['delivery','Delivery Plan']
     ]},
-    {key:'reports', title:'Reports', icon:'fa-chart-column', items:[
-      ['yd','YD Report'], ['knitting','Knitting Report'], ['dyeing','Dyeing Report'], ['finishing','Finishing Report'], ['delivery','Delivery Report'], ['orderStatus','Order Status']
+    {key:'reports', title:'Report', icon:'fa-chart-column', items:[
+      ['yd','Updated YD Report'], ['knitting','Updated Knitting Report'], ['dyeing','Updated Dyeing Report'], ['finishing','Updated Finishing Report'], ['delivery','Updated Delivery Report'], ['orderStatus','Order Status']
     ]},
-    {key:'actualTracking', title:'Plan vs Actual Tracking', icon:'fa-scale-balanced', items:[
+    {key:'actualTracking', title:'Plan Vs Actual Tracking', icon:'fa-scale-balanced', items:[
       ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery']
     ]},
-    {key:'trackingReports', title:'Tracking Reports', icon:'fa-file-waveform', items:[
+    {key:'trackingReports', title:'Tracking Report', icon:'fa-file-waveform', items:[
       ['yd','YD'], ['knitting','Knitting'], ['dyeing','Dyeing'], ['finishing','Finishing'], ['delivery','Delivery']
     ]},
     {key:'loadCalculation', title:'Load Calculation', icon:'fa-calculator', items:[
-      ['detailed','Detailed Load'], ['summary','Buyer-wise Summary'], ['knitting','Knitting Load'], ['dyeing','Dyeing Load'], ['delivery','Delivery Load']
+      ['detailed','Detailed Load Download'], ['summary','Buyer-wise Load Summary']
     ]},
     {key:'manageUsers', title:'Manage Users', icon:'fa-users-gear', items:[
-      ['view','View Users'], ['create','Create Users'], ['edit','Edit Users'], ['delete','Delete Users'], ['resetPassword','Reset Password'], ['changePermissions','Change Permissions']
+      ['view','Manage Users']
     ]}
   ];
   
   const ACTION_GROUPS = [
+    {title:'Data Upload & Management', icon:'fa-upload', items:[
+      ['uploadGeneral','Upload General Data'], ['uploadYD','Upload YD Data'],
+      ['uploadKnitting','Upload Knitting Data'], ['uploadDyeing','Upload Dyeing Data'], ['uploadFinishing','Upload Finishing Data'],
+      ['uploadDelivery','Upload Delivery Data'], ['viewFiles','View Uploaded Files'], ['deleteFiles','Delete Uploaded Files'], ['wipeSystem','Wipe System Data']
+    ]},
     {title:'Planning Save Permissions', icon:'fa-floppy-disk', items:[
       ['saveYD','Save YD Planning'], ['saveKnitting','Save Knitting Planning'], ['saveDyeing','Save Dyeing Planning'],
       ['saveFinishing','Save Finishing Planning'], ['saveDelivery','Save Delivery Planning'], ['saveActual','Save Plan vs Actual']
@@ -42,23 +103,12 @@ const BUYERS = [
     {title:'Data Editing Actions', icon:'fa-pen-to-square', items:[
       ['editDates','Edit Production Dates'], ['editActualQty','Edit Actual Quantity'], ['editRemarks','Edit Internal Remarks'],
       ['bulkUpdate','Bulk Update'], ['globalSearch','Global Booking Search']
+    ]},
+    {title:'User Management', icon:'fa-user-shield', items:[
+      ['createUsers','Create Users'], ['editUsers','Edit Users'], ['deleteUsers','Delete Users'], ['resetPassword','Reset Password'], ['changePermissions','Change Permissions']
     ]}
   ];
-  
-  const COLUMN_GROUPS = [
-    {title:'General Order Columns', items:[
-      ['bookingNo','Order / Booking No.'], ['bookingDate','Booking Date'], ['buyer','Buyer'], ['buyerTeam','Buyer Team'],
-      ['orderQty','Order Quantity'], ['status','Status'], ['bookingUnit','Booking Unit'], ['finalConfirmation','Final Confirmation']
-    ]},
-    {title:'Shipment & Planning Columns', items:[
-      ['eventDay','Event Day'], ['firstShipment','1st Shipment Date'], ['lastShipment','Last Shipment Date'],
-      ['productionDate','Production Date'], ['planQty','Plan Quantity'], ['actualQty','Actual Quantity'], ['delayDays','Delay Days']
-    ]},
-    {title:'Sensitive / Internal Columns', items:[
-      ['internalRemarks','Internal Remarks'], ['commercialInfo','Commercial Information'], ['uploadedBy','Uploaded By'],
-      ['updatedBy','Updated By'], ['createdAt','Created At'], ['updatedAt','Updated At']
-    ]}
-  ];
+
   
   const DOWNLOAD_GROUPS = [
     {title:'Table & Report Export', items:[
@@ -75,9 +125,9 @@ const BUYERS = [
   function emptyPermissions() {
     const menus = {}; MENU_GROUPS.forEach(g => { menus[g.key] = {}; g.items.forEach(([k]) => menus[g.key][k] = false); });
     const actions = {}; ACTION_GROUPS.forEach(g => g.items.forEach(([k]) => actions[k] = false));
-    const columns = {}; COLUMN_GROUPS.forEach(g => g.items.forEach(([k]) => columns[k] = false));
+
     const downloads = {}; DOWNLOAD_GROUPS.forEach(g => g.items.forEach(([k]) => downloads[k] = false));
-    return { menus, actions, buyers:{accessType:'all', buyerIds:[]}, columns, downloads };
+    return { menus, actions, buyers:{accessType:'all', buyerIds:[]}, downloads };
   }
   
   function makeTemplate(role) {
@@ -85,21 +135,22 @@ const BUYERS = [
     const setMenu = (group, values=true) => Object.keys(p.menus[group]).forEach(k => p.menus[group][k] = values);
     const setAllObj = (obj, value=true) => Object.keys(obj).forEach(k => obj[k] = value);
     if (role === 'Admin') {
-      Object.keys(p.menus).forEach(k => setMenu(k)); setAllObj(p.actions); setAllObj(p.columns); setAllObj(p.downloads); p.buyers.accessType='all';
+      Object.keys(p.menus).forEach(k => setMenu(k)); setAllObj(p.actions); setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Approver') {
       ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(setMenu);
       ['confirmPlan','tentativePlan','completeOrder','reopenOrder','changeOrderStatus','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
-      setAllObj(p.columns); setAllObj(p.downloads); p.downloads.currentTable=true; p.buyers.accessType='all';
+      setAllObj(p.downloads); p.downloads.currentTable=true; p.buyers.accessType='all';
     } else if (role === 'Planner') {
       ['orderManagement','reports','actualTracking','loadCalculation'].forEach(setMenu);
-      p.menus.dataManagement.viewFiles=true;
+      p.menus.dataManagement.view=true;
+      p.actions.viewFiles=true;
       ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActual','tentativePlan','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
-      Object.keys(p.columns).forEach(k=>p.columns[k]=true); ['commercialInfo','uploadedBy','updatedBy'].forEach(k=>p.columns[k]=false);
+
       ['currentTable','confirmedData','tentativeData','excel','print'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
     } else {
       ['reports','trackingReports'].forEach(setMenu);
       ['globalSearch'].forEach(k=>p.actions[k]=true);
-      ['bookingNo','bookingDate','buyer','buyerTeam','orderQty','status','eventDay','firstShipment','lastShipment','planQty'].forEach(k=>p.columns[k]=true);
+
       p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next'];
     }
     return p;
@@ -111,6 +162,7 @@ const BUYERS = [
   let permissionTarget = null;
   let pendingEditPermissions = null;
   let toastTimeout;
+  let liveUpdateInterval = null;
   
   function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
@@ -182,10 +234,18 @@ const BUYERS = [
   
   async function loadUsers(silent = false) {
     if (!silent) {
-      document.getElementById('usersLoadingState').classList.remove('hidden');
-      document.getElementById('usersErrorState').classList.add('hidden');
-      document.getElementById('usersGrid').classList.add('hidden');
-      document.getElementById('usersEmptyState').classList.add('hidden');
+      const root = document.getElementById('userDirectory');
+      if (root) {
+        root.innerHTML = `
+          <div class="lg:col-span-2 2xl:col-span-3 flex justify-center items-center h-40 text-slate-400">
+              <div class="relative flex justify-center items-center w-8 h-8 mr-3">
+                  <div class="absolute w-full h-full rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
+                  <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                  <div class="absolute w-5 h-5 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+              </div> Loading Directory...
+          </div>
+        `;
+      }
     }
 
     const token = localStorage.getItem('token');
@@ -205,7 +265,10 @@ const BUYERS = [
       users = rawUsers.map(u => {
         let isLive = false;
         if (u.lastActive) {
-           isLive = (now - new Date(u.lastActive).getTime()) < liveThreshold;
+           const diff = now - new Date(u.lastActive).getTime();
+           // Strict check: diff must be between -60 seconds (clock skew) and the threshold.
+           // This prevents users with future timestamps (e.g. timezone bugs) from always appearing active.
+           isLive = diff >= -60000 && diff < liveThreshold;
         }
 
         return {
@@ -214,7 +277,7 @@ const BUYERS = [
           role: u.role,
           status: u.status || 'active',
           createdAt: new Date(u.createdAt).toLocaleDateString(),
-          lastLogin: u.lastActive ? new Date(u.lastActive).toLocaleString() : 'Never',
+          lastLogin: u.lastActive ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]` : 'Never',
           isLive: isLive,
           passwordHint: u.password || 'Hidden',
           permissions: u.permissions || makeTemplate(u.role)
@@ -224,10 +287,7 @@ const BUYERS = [
       renderUsers();
       updateDashboardStats();
 
-      if (!silent) {
-        document.getElementById('usersLoadingState').classList.add('hidden');
-        document.getElementById('usersGrid').classList.remove('hidden');
-      }
+      // Loading state is automatically replaced by renderUsers()
 
       if (!liveUpdateInterval) {
         liveUpdateInterval = setInterval(() => {
@@ -238,8 +298,16 @@ const BUYERS = [
     } catch (err) {
       console.error(err);
       if (!silent) {
-        document.getElementById('usersLoadingState').classList.add('hidden');
-        document.getElementById('usersErrorState').classList.remove('hidden');
+        const root = document.getElementById('userDirectory');
+        if (root) {
+          root.innerHTML = `
+            <div class="lg:col-span-2 2xl:col-span-3 rounded-2xl border border-dashed border-red-300 bg-red-50 p-12 text-center text-red-600 dark:border-red-900/50 dark:bg-red-900/10">
+                <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i>
+                <p class="font-bold">Failed to load users.</p>
+                <p class="text-sm opacity-80 mt-1">${err.message || 'Please try again later.'}</p>
+            </div>
+          `;
+        }
       }
     }
   }
@@ -248,11 +316,11 @@ const BUYERS = [
   function flattenMenuCount(menus) { return Object.values(menus).reduce((n,g)=>n+countTrue(g),0); }
   function totalMenuCount() { return MENU_GROUPS.reduce((n,g)=>n+g.items.length,0); }
   function totalActionCount() { return ACTION_GROUPS.reduce((n,g)=>n+g.items.length,0); }
-  function totalColumnCount() { return COLUMN_GROUPS.reduce((n,g)=>n+g.items.length,0); }
+
   function totalDownloadCount() { return DOWNLOAD_GROUPS.reduce((n,g)=>n+g.items.length,0); }
   
   function permissionCounts(p) {
-    return {menu:flattenMenuCount(p.menus), action:countTrue(p.actions), column:countTrue(p.columns), download:countTrue(p.downloads)};
+    return {menu:flattenMenuCount(p.menus), action:countTrue(p.actions), download:countTrue(p.downloads)};
   }
   
   function permissionSummaryHtml(p) {
@@ -338,7 +406,7 @@ const BUYERS = [
           <div class="grid grid-cols-4 gap-2 mt-4">
             <div class="rounded-lg bg-slate-50 p-2 text-center dark:bg-[#11151d]"><p class="text-[10px] text-slate-500">Menus</p><p class="font-black text-sm">${c.menu}</p></div>
             <div class="rounded-lg bg-slate-50 p-2 text-center dark:bg-[#11151d]"><p class="text-[10px] text-slate-500">Actions</p><p class="font-black text-sm">${c.action}</p></div>
-            <div class="rounded-lg bg-slate-50 p-2 text-center dark:bg-[#11151d]"><p class="text-[10px] text-slate-500">Columns</p><p class="font-black text-sm">${c.column}</p></div>
+
             <div class="rounded-lg bg-slate-50 p-2 text-center dark:bg-[#11151d]"><p class="text-[10px] text-slate-500">Downloads</p><p class="font-black text-sm">${c.download}</p></div>
           </div>
   
@@ -502,8 +570,9 @@ const BUYERS = [
         permissionDraft=clone(u.permissions); 
         document.getElementById('permissionModalTitle').textContent=`Permissions: ${u.username}`; 
     }
-    renderPermissionBuilder(); 
+    
     document.getElementById('permissionModal').classList.remove('hidden');
+    renderPermissionBuilder(); 
   }
   
   function closePermissionBuilder(){document.getElementById('permissionModal').classList.add('hidden'); permissionDraft=null; permissionTarget=null;}
@@ -546,9 +615,17 @@ const BUYERS = [
     permissionDraft=null; permissionTarget=null;
   }
   
-  function showPermissionTab(tabId, btn) {
+  async function showPermissionTab(tabId, btn) {
       document.querySelectorAll('.permission-tab').forEach(t => t.classList.add('hidden'));
       document.getElementById(`permissionTab-${tabId}`).classList.remove('hidden');
+      
+      if (tabId === 'buyers' && !buyersLoaded) {
+          const buyersTab = document.getElementById('permissionTab-buyers');
+          buyersTab.innerHTML = `<div class="flex flex-col items-center justify-center p-10 h-full"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 text-4xl mb-4"></i><span class="font-bold text-gray-500">Extracting buyers from uploaded files...</span></div>`;
+          await updateDynamicBuyers();
+          renderBuyerPermissions();
+      }
+      
       document.querySelectorAll('.permission-nav').forEach(b => {
           b.classList.remove('active', 'bg-blue-600', 'text-white');
           b.classList.add('hover:bg-slate-200', 'dark:hover:bg-slate-800');
@@ -558,7 +635,7 @@ const BUYERS = [
   }
   
   function renderPermissionBuilder(){
-    renderMenuPermissions(); renderActionPermissions(); renderBuyerPermissions(); renderColumnPermissions(); renderDownloadPermissions();
+    renderMenuPermissions(); renderActionPermissions(); renderBuyerPermissions(); renderDownloadPermissions();
     showPermissionTab('menu', document.querySelector('.permission-nav[data-tab="menu"]'));
   }
   
@@ -599,9 +676,7 @@ const BUYERS = [
         <div class="p-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">${BUYERS.map(b=>`<label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><input data-buyer-id="${b.id}" type="checkbox" ${permissionDraft.buyers.buyerIds.includes(b.id)?'checked':''} class="w-4 h-4 accent-blue-600 buyer-checkbox"><span class="font-bold text-sm">${b.name}</span></label>`).join('')}</div>
       </div>`;
   }
-  function renderColumnPermissions(){
-    document.getElementById('permissionTab-columns').innerHTML=`<div><h3 class="font-black text-lg">Table Column Visibility</h3></div>`+COLUMN_GROUPS.map(g=>`<div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"><div class="px-4 py-3 bg-slate-50 dark:bg-[#11151d]"><h4 class="font-black text-sm">${g.title}</h4></div><div class="p-3 grid md:grid-cols-2 gap-2">${g.items.map(([k,l])=>switchRow('columns',k,l,permissionDraft.columns[k])).join('')}</div></div>`).join('');
-  }
+
   function renderDownloadPermissions(){
     document.getElementById('permissionTab-downloads').innerHTML=`<div><h3 class="font-black text-lg">Download & Export Permissions</h3></div>`+DOWNLOAD_GROUPS.map(g=>`<div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"><div class="px-4 py-3 bg-slate-50 dark:bg-[#11151d]"><h4 class="font-black text-sm">${g.title}</h4></div><div class="p-3 grid md:grid-cols-2 gap-2">${g.items.map(([k,l])=>switchRow('downloads',k,l,permissionDraft.downloads[k])).join('')}</div></div>`).join('');
   }

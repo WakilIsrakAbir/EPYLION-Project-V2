@@ -84,8 +84,12 @@ function applyPermissions() {
         if (m.dataManagement && m.dataManagement.view) sidebarDataManagement?.classList.remove('hidden');
         else sidebarDataManagement?.classList.add('hidden');
 
+        const hasAny = (obj) => obj && Object.values(obj).some(v => v);
+
         // Toggle Order Management Submenus
         if (m.orderManagement) {
+            const orderMenuEl = document.getElementById('orderMenu');
+            if (orderMenuEl) hasAny(m.orderManagement) ? orderMenuEl.parentElement.classList.remove('hidden') : orderMenuEl.parentElement.classList.add('hidden');
             ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-manage`);
                 if (el) m.orderManagement[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
@@ -94,6 +98,8 @@ function applyPermissions() {
         
         // Toggle Reports Submenus
         if (m.reports) {
+            const reportMenuEl = document.getElementById('reportMenu');
+            if (reportMenuEl) hasAny(m.reports) ? reportMenuEl.parentElement.classList.remove('hidden') : reportMenuEl.parentElement.classList.add('hidden');
             ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-report`);
                 if (el) m.reports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
@@ -104,6 +110,8 @@ function applyPermissions() {
 
         // Toggle Actual Tracking
         if (m.actualTracking) {
+            const actualMenuEl = document.getElementById('actualMenu');
+            if (actualMenuEl) hasAny(m.actualTracking) ? actualMenuEl.parentElement.classList.remove('hidden') : actualMenuEl.parentElement.classList.add('hidden');
             ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-actual`);
                 if (el) m.actualTracking[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
@@ -112,6 +120,8 @@ function applyPermissions() {
 
         // Toggle Tracking Reports
         if (m.trackingReports) {
+            const trackingReportMenuEl = document.getElementById('submenu-actual-report');
+            if (trackingReportMenuEl) hasAny(m.trackingReports) ? trackingReportMenuEl.parentElement.classList.remove('hidden') : trackingReportMenuEl.parentElement.classList.add('hidden');
             ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
                 const el = document.getElementById(`menu-${k}-actual-report`);
                 if (el) m.trackingReports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
@@ -120,6 +130,8 @@ function applyPermissions() {
 
         // Toggle Load Calculation
         if (m.loadCalculation) {
+            const loadCalcMenuEl = document.getElementById('submenu-load-calc');
+            if (loadCalcMenuEl) hasAny(m.loadCalculation) ? loadCalcMenuEl.parentElement.classList.remove('hidden') : loadCalcMenuEl.parentElement.classList.add('hidden');
             const lDetailed = document.getElementById('menu-load-detailed');
             if (lDetailed) m.loadCalculation.detailed ? lDetailed.parentElement.classList.remove('hidden') : lDetailed.parentElement.classList.add('hidden');
             const lSummary = document.getElementById('menu-load-summary');
@@ -128,8 +140,9 @@ function applyPermissions() {
 
         // Hide upload area if not allowed to upload anything
         let canUpload = false;
-        if (m.dataManagement) {
-            if (m.dataManagement.uploadGeneral || m.dataManagement.uploadYD || m.dataManagement.uploadKnitting || m.dataManagement.uploadDyeing || m.dataManagement.uploadFinishing || m.dataManagement.uploadDelivery) {
+        if (permissions.actions) {
+            const a = permissions.actions;
+            if (a.uploadGeneral || a.uploadYD || a.uploadKnitting || a.uploadDyeing || a.uploadFinishing || a.uploadDelivery) {
                 canUpload = true;
             }
         }
