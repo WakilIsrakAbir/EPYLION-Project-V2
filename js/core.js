@@ -5,8 +5,9 @@ function initDashboard() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; return; }
     document.getElementById('displayUsername').innerText = `${localStorage.getItem('username')} (${localStorage.getItem('role')})`;
-    applyPermissions(localStorage.getItem('role'));
+    applyPermissions();
     loadUploadedFiles();
+    startHeartbeat();
 
     const savedState = localStorage.getItem('activePage');
     if (savedState) {
@@ -58,16 +59,107 @@ function setActiveSidebarMenu(activeId) {
     }
 }
 
-function applyPermissions(role) {
+function applyPermissions() {
+    const role = localStorage.getItem('role');
+    const permsStr = localStorage.getItem('permissions');
+    let permissions = null;
+    
+    if (permsStr) {
+        try {
+            permissions = JSON.parse(permsStr);
+        } catch(e) {}
+    }
+
+    const uploadArea = document.getElementById('uploadArea');
     const sidebarManageUsers = document.getElementById('sidebarManageUsers');
     const sidebarDataManagement = document.getElementById('sidebarDataManagement');
-    if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
-    else { if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden'); }
-    if (role === 'Viewer' || role === 'Approver') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
-    else { if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden'); }
-    const uploadArea = document.getElementById('uploadArea');
-    if (role === 'Viewer') { if (uploadArea) uploadArea.style.display = 'none'; }
-    else { if (uploadArea) uploadArea.style.display = 'flex'; }
+
+    if (permissions && permissions.menus) {
+        const m = permissions.menus;
+
+        // Toggle Main Menus
+        if (m.manageUsers && m.manageUsers.view) sidebarManageUsers?.classList.remove('hidden');
+        else sidebarManageUsers?.classList.add('hidden');
+
+        if (m.dataManagement && m.dataManagement.view) sidebarDataManagement?.classList.remove('hidden');
+        else sidebarDataManagement?.classList.add('hidden');
+
+        // Toggle Order Management Submenus
+        if (m.orderManagement) {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+                const el = document.getElementById(`menu-${k}-manage`);
+                if (el) m.orderManagement[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
+            });
+        }
+        
+        // Toggle Reports Submenus
+        if (m.reports) {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+                const el = document.getElementById(`menu-${k}-report`);
+                if (el) m.reports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
+            });
+            const os = document.getElementById('menu-order-status');
+            if (os) m.reports.orderStatus ? os.parentElement.classList.remove('hidden') : os.parentElement.classList.add('hidden');
+        }
+
+        // Toggle Actual Tracking
+        if (m.actualTracking) {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+                const el = document.getElementById(`menu-${k}-actual`);
+                if (el) m.actualTracking[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
+            });
+        }
+
+        // Toggle Tracking Reports
+        if (m.trackingReports) {
+            ['yd', 'knitting', 'dyeing', 'finishing', 'delivery'].forEach(k => {
+                const el = document.getElementById(`menu-${k}-actual-report`);
+                if (el) m.trackingReports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
+            });
+        }
+
+        // Toggle Load Calculation
+        if (m.loadCalculation) {
+            const lDetailed = document.getElementById('menu-load-detailed');
+            if (lDetailed) m.loadCalculation.detailed ? lDetailed.parentElement.classList.remove('hidden') : lDetailed.parentElement.classList.add('hidden');
+            const lSummary = document.getElementById('menu-load-summary');
+            if (lSummary) m.loadCalculation.summary ? lSummary.parentElement.classList.remove('hidden') : lSummary.parentElement.classList.add('hidden');
+        }
+
+        // Hide upload area if not allowed to upload anything
+        let canUpload = false;
+        if (m.dataManagement) {
+            if (m.dataManagement.uploadGeneral || m.dataManagement.uploadYD || m.dataManagement.uploadKnitting || m.dataManagement.uploadDyeing || m.dataManagement.uploadFinishing || m.dataManagement.uploadDelivery) {
+                canUpload = true;
+            }
+        }
+        if (uploadArea) uploadArea.style.display = canUpload ? 'flex' : 'none';
+
+    } else {
+        // Fallback to legacy role checks
+        if (role === 'Admin') { if (sidebarManageUsers) sidebarManageUsers.classList.remove('hidden'); }
+        else { if (sidebarManageUsers) sidebarManageUsers.classList.add('hidden'); }
+        if (role === 'Viewer' || role === 'Approver') { if (sidebarDataManagement) sidebarDataManagement.classList.add('hidden'); }
+        else { if (sidebarDataManagement) sidebarDataManagement.classList.remove('hidden'); }
+        if (role === 'Viewer') { if (uploadArea) uploadArea.style.display = 'none'; }
+        else { if (uploadArea) uploadArea.style.display = 'flex'; }
+    }
+}
+
+function startHeartbeat() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const sendHeartbeat = () => {
+        fetch('https://abir-backend-api.onrender.com/api/auth/heartbeat', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(err => console.log('Heartbeat failed', err));
+    };
+    
+    // Send immediately, then every 60 seconds
+    sendHeartbeat();
+    setInterval(sendHeartbeat, 60000);
 }
 
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }

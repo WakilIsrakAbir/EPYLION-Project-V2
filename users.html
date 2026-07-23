@@ -1,327 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - Abir Group</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Prevent flash of wrong theme -->
-    <script>
-        (function() {
-            var t = localStorage.getItem('theme-preference');
-            if (t !== 'light') document.documentElement.classList.add('dark');
-        })();
-    </script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Users & Permissions - Textile Planning Solution</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    (function () {
+      const saved = localStorage.getItem('theme-preference');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 7px; height: 7px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    .permission-card { transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .permission-card:hover { transform: translateY(-1px); }
+    .toggle-checkbox:checked { right: 0; border-color: #2563eb; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #2563eb; }
+    .switch { position: relative; display: inline-flex; width: 42px; height: 24px; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px; cursor: pointer; transition: .2s; }
+    .slider:before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 999px; box-shadow: 0 1px 3px rgba(15,23,42,.25); transition: .2s; }
+    .switch input:checked + .slider { background: #2563eb; }
+    .switch input:checked + .slider:before { transform: translateX(18px); }
+    .dark .slider { background: #475569; }
+    .modal-backdrop { backdrop-filter: blur(5px); }
+    .role-pill[data-role="Admin"] { background:#fee2e2; color:#b91c1c; }
+    .role-pill[data-role="Approver"] { background:#f3e8ff; color:#7e22ce; }
+    .role-pill[data-role="Planner"] { background:#dbeafe; color:#1d4ed8; }
+    .role-pill[data-role="Viewer"] { background:#e2e8f0; color:#475569; }
+    .dark .role-pill[data-role="Admin"] { background:rgba(185,28,28,.22); color:#fca5a5; }
+    .dark .role-pill[data-role="Approver"] { background:rgba(126,34,206,.22); color:#d8b4fe; }
+    .dark .role-pill[data-role="Planner"] { background:rgba(29,78,216,.22); color:#93c5fd; }
+    .dark .role-pill[data-role="Viewer"] { background:rgba(71,85,105,.35); color:#cbd5e1; }
+    .fade-in { animation: fadeIn .22s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: translateY(0); } }
+    @media print {
+      .no-print { display:none !important; }
+      body { background:white !important; }
+    }
+  </style>
 </head>
+<body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-[#0f1117] dark:text-slate-100" onload="checkAdminAndLoadUsers()">
+  <div id="toast" class="fixed top-5 right-5 z-[90] translate-x-[140%] transition-transform duration-300 rounded-xl bg-slate-900 text-white px-4 py-3 shadow-2xl flex items-center gap-3 max-w-sm">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMessage" class="text-sm font-semibold">Saved</span>
+  </div>
 
-<body class="bg-gray-50 dark:bg-[#151921] font-sans min-h-screen flex flex-col" onload="checkAdminAndLoadUsers()">
-
-    <div id="toast"
-        class="fixed top-5 right-5 bg-gray-800 dark:bg-gray-700 text-white px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3">
-        <i class="fas fa-info-circle text-blue-400"></i>
-        <span id="toastMessage">Action triggered</span>
+  <header class="no-print sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-[#151921]/95">
+    <div class="mx-auto max-w-[1600px] px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <a href="index.html" class="w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800 flex items-center justify-center" title="Back to Dashboard">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-extrabold text-lg md:text-xl truncate">User & Permission Management</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Textile Planning Solution</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800 flex items-center justify-center" title="Toggle theme">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+        <div class="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700 ml-2">
+          <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center justify-center font-bold" id="headerInitials">A</div>
+          <div class="leading-tight">
+            <p class="text-xs font-bold" id="displayUsername">admin</p>
+            <p class="text-[10px] text-slate-500" id="displayRole">Admin</p>
+          </div>
+        </div>
+        <button onclick="logout()" class="ml-2 w-9 h-9 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 flex items-center justify-center" title="Logout">
+            <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
+      </div>
     </div>
+  </header>
 
-    <nav class="bg-gray-900 dark:bg-[#0f172a] text-white p-4 flex justify-between items-center shadow-lg sticky top-0 z-40">
-        <div class="flex items-center gap-4">
-            <h1 class="text-xl font-bold tracking-wide"><i class="fas fa-users-cog text-blue-400 mr-2"></i> User
-                Directory</h1>
-            <a href="index.html"
-                class="text-xs font-semibold bg-gray-700 px-3 py-1.5 rounded hover:bg-gray-600 transition flex items-center gap-1">
-                <i class="fas fa-arrow-left"></i> Dashboard
-            </a>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
-                <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs"><i
-                        class="fas fa-user"></i></div>
-                <span class="text-xs font-medium text-gray-200" id="displayUsername">Loading...</span>
+  <main class="mx-auto max-w-[1600px] p-4 md:p-6 space-y-5">
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+        <p class="text-xs text-slate-500">Total Users</p><p id="statTotal" class="text-2xl font-black mt-1">0</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+        <p class="text-xs text-slate-500">Active</p><p id="statActive" class="text-2xl font-black text-emerald-600 mt-1">0</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+        <p class="text-xs text-slate-500">Admins</p><p id="statAdmins" class="text-2xl font-black text-red-600 mt-1">0</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+        <p class="text-xs text-slate-500">Custom Access</p><p id="statCustom" class="text-2xl font-black text-blue-600 mt-1">0</p>
+      </div>
+      <div class="col-span-2 lg:col-span-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+        <p class="text-xs text-slate-500">Restricted Buyers</p><p id="statBuyerRestricted" class="text-2xl font-black text-amber-600 mt-1">0</p>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-[440px_minmax(0,1fr)] gap-5 items-start">
+      <aside class="xl:sticky xl:top-[85px] rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-[#181c25]">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/25 dark:to-[#181c25]">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="font-extrabold text-lg">Create New User</h2>
+              <p class="text-xs text-slate-500 mt-1">Define user-specific access before account creation.</p>
             </div>
-            <button onclick="logout()" class="text-red-400 hover:text-red-500 transition" title="Logout">
-                <i class="fas fa-sign-out-alt text-lg"></i>
+            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">GRANULAR</span>
+          </div>
+        </div>
+
+        <form id="createUserForm" class="p-5 space-y-5" onsubmit="createUser(event)">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="space-y-1 sm:col-span-2">
+              <span class="text-xs font-bold">Username</span>
+              <input id="createUsername" required placeholder="e.g. knitting_planner" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-[#11151d]" />
+            </label>
+            <label class="space-y-1">
+              <span class="text-xs font-bold">Password</span>
+              <div class="relative">
+                <input id="createPassword" required type="password" placeholder="Minimum 6 characters" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pr-10 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-[#11151d]" />
+                <button type="button" onclick="togglePassword('createPassword', this)" class="absolute right-3 top-2.5 text-slate-400"><i class="fa-regular fa-eye"></i></button>
+              </div>
+            </label>
+            <label class="space-y-1">
+              <span class="text-xs font-bold">Account Status</span>
+              <select id="createStatus" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </label>
+            <label class="space-y-1">
+              <span class="text-xs font-bold">Role</span>
+              <select id="createRole" onchange="applyTemplateFromRole('create')" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]">
+                <option>Viewer</option><option>Planner</option><option>Approver</option><option>Admin</option>
+              </select>
+            </label>
+            <label class="space-y-1">
+              <span class="text-xs font-bold">Permission Template</span>
+              <select id="createTemplate" onchange="applySelectedTemplate('create')" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]">
+                <option value="Viewer">Viewer Default</option>
+                <option value="Planner">Planner Default</option>
+                <option value="Approver">Approver Default</option>
+                <option value="Admin">Admin Default</option>
+                <option value="Custom">Custom / Keep Current</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <div>
+              <h3 class="font-bold text-sm">Permission Configuration</h3>
+              <p class="text-[11px] text-slate-500">Configure all access now or edit later.</p>
+            </div>
+            <button type="button" onclick="openPermissionBuilder('create')" class="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700">
+              <i class="fa-solid fa-sliders mr-1"></i> Configure
             </button>
-        </div>
-    </nav>
+          </div>
 
-    <div class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 w-full flex-1">
+          <div id="createPermissionSummary" class="rounded-xl bg-slate-50 border border-slate-200 p-3 text-xs dark:bg-[#11151d] dark:border-slate-700"></div>
 
-        <div class="lg:col-span-1">
-            <div class="bg-white dark:bg-[#1e2330] p-6 rounded-xl shadow-sm border border-gray-200 dark:border-[#2a3346] sticky top-24">
-                <div class="text-center mb-6">
-                    <div
-                        class="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xl mx-auto mb-3 shadow-inner">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200">Create Account</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Add a new employee to the system</p>
-                </div>
+          <button type="submit" id="createBtn" class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 font-extrabold shadow-lg shadow-blue-600/20 transition flex items-center justify-center">
+            <i class="fa-solid fa-user-plus mr-2"></i> Create User
+          </button>
+        </form>
+      </aside>
 
-                <form id="createUserForm" onsubmit="handleCreateUser(event)" class="space-y-4">
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wide">Username</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                            <input type="text" id="newUsername"
-                                class="w-full border border-gray-300 dark:border-[#2a3346] rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition bg-gray-50 dark:bg-[#151921] dark:text-gray-200 focus:bg-white dark:focus:bg-[#1e2330]"
-                                placeholder="e.g. abir_planner" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wide">Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                            <input type="text" id="newPassword"
-                                class="w-full border border-gray-300 dark:border-[#2a3346] rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition bg-gray-50 dark:bg-[#151921] dark:text-gray-200 focus:bg-white dark:focus:bg-[#1e2330]"
-                                placeholder="Set a default password" required>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1"><i class="fas fa-info-circle"></i> Save this password
-                            to share with the user.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wide">Role
-                            Assignment</label>
-                        <div class="relative">
-                            <i class="fas fa-user-tag absolute left-3 top-2.5 text-gray-400 text-sm z-10"></i>
-                            <select id="newRole"
-                                class="w-full border border-gray-300 dark:border-[#2a3346] rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition bg-gray-50 dark:bg-[#151921] dark:text-gray-200 focus:bg-white dark:focus:bg-[#1e2330] appearance-none cursor-pointer relative z-0">
-                                <option value="Viewer">Viewer (Read Only)</option>
-                                <option value="Planner">Planner (Edit Data)</option>
-                                <option value="Approver">Approver (Admin without Data Mgmt)</option>
-                                <option value="Admin">Admin (Full Access)</option>
-                            </select>
-                            <i
-                                class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 text-xs pointer-events-none z-10"></i>
-                        </div>
-                    </div>
-                    <button type="submit" id="createBtn"
-                        class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-md shadow-md hover:bg-blue-700 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2">
-                        <i class="fas fa-plus-circle"></i> Create User
-                    </button>
-                </form>
+      <section class="min-w-0 space-y-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#181c25]">
+          <div class="flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
+            <div>
+              <h2 class="font-extrabold text-lg">User Directory</h2>
+              <p class="text-xs text-slate-500">Edit permissions, status, password, role and buyer access.</p>
             </div>
+            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+              <div class="relative flex-1 lg:w-64">
+                <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                <input id="userSearch" oninput="renderUsers()" placeholder="Search username or role..." class="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]" />
+              </div>
+              <select id="roleFilter" onchange="renderUsers()" class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]">
+                <option value="all">All Roles</option><option>Admin</option><option>Approver</option><option>Planner</option><option>Viewer</option>
+              </select>
+              <select id="statusFilter" onchange="renderUsers()" class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#11151d]">
+                <option value="all">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div class="lg:col-span-3 space-y-8" id="userDirectoryContainer">
-            <div class="flex justify-center items-center h-40 text-gray-400">
+        <div id="userDirectory" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 2xl:col-span-3 flex justify-center items-center h-40 text-slate-400">
                 <div class="relative flex justify-center items-center w-8 h-8 mr-3">
-                    <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                    <div class="absolute w-full h-full rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
                     <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
                     <div class="absolute w-5 h-5 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
                 </div> Loading Directory...
             </div>
         </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Permission Builder Modal -->
+  <div id="permissionModal" class="hidden fixed inset-0 z-[70] bg-slate-950/65 modal-backdrop p-2 md:p-5">
+    <div class="mx-auto h-full max-w-7xl rounded-2xl bg-white shadow-2xl dark:bg-[#151921] flex flex-col overflow-hidden">
+      <div class="no-print px-4 md:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+        <div>
+          <h2 id="permissionModalTitle" class="font-black text-lg">Configure Permissions</h2>
+          <p class="text-xs text-slate-500">Backend must enforce these permissions during execution.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="setAllPermissions(true)" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 text-xs font-bold hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/30">Select All</button>
+          <button onclick="setAllPermissions(false)" class="hidden sm:inline-flex px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Clear All</button>
+          <button onclick="closePermissionBuilder()" class="w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+      </div>
+
+      <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
+        <nav class="no-print border-r border-slate-200 dark:border-slate-800 p-3 overflow-x-auto md:overflow-y-auto custom-scrollbar flex md:block gap-2 bg-slate-50 dark:bg-[#11151d]">
+          <button class="permission-nav active w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold bg-blue-600 text-white whitespace-nowrap" data-tab="menu" onclick="showPermissionTab('menu', this)"><i class="fa-solid fa-sitemap w-5"></i> Menu & Submenu</button>
+          <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="actions" onclick="showPermissionTab('actions', this)"><i class="fa-solid fa-floppy-disk w-5"></i> Save & Actions</button>
+          <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="buyers" onclick="showPermissionTab('buyers', this)"><i class="fa-solid fa-tags w-5"></i> Buyer Access</button>
+          <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="columns" onclick="showPermissionTab('columns', this)"><i class="fa-solid fa-table-columns w-5"></i> Table Columns</button>
+          <button class="permission-nav w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 whitespace-nowrap" data-tab="downloads" onclick="showPermissionTab('downloads', this)"><i class="fa-solid fa-download w-5"></i> Downloads</button>
+        </nav>
+
+        <div class="overflow-y-auto custom-scrollbar p-4 md:p-6 bg-white dark:bg-[#151921]">
+          <section id="permissionTab-menu" class="permission-tab space-y-4"></section>
+          <section id="permissionTab-actions" class="permission-tab hidden space-y-4"></section>
+          <section id="permissionTab-buyers" class="permission-tab hidden space-y-4"></section>
+          <section id="permissionTab-columns" class="permission-tab hidden space-y-4"></section>
+          <section id="permissionTab-downloads" class="permission-tab hidden space-y-4"></section>
+        </div>
+      </div>
+
+      <div class="no-print px-4 md:px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between gap-3 bg-slate-50 dark:bg-[#11151d]">
+        <p class="text-xs text-slate-500 self-center"><i class="fa-solid fa-shield-halved mr-1"></i>Ensure to save these permissions.</p>
+        <div class="flex gap-2">
+          <button onclick="closePermissionBuilder()" class="flex-1 sm:flex-none px-5 py-2.5 rounded-lg border border-slate-300 font-bold text-sm dark:border-slate-700">Cancel</button>
+          <button onclick="savePermissionBuilder()" class="flex-1 sm:flex-none px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm"><i class="fa-solid fa-check mr-1"></i>Apply Permissions</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        let toastTimeout;
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = msg;
-            t.classList.remove('opacity-0', 'pointer-events-none');
-            if (isError) {
-                t.classList.replace('bg-gray-800', 'bg-red-600');
-            } else {
-                t.classList.replace('bg-red-600', 'bg-gray-800');
-            }
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 3000);
-        }
+  <!-- Edit User Modal -->
+  <div id="editUserModal" class="hidden fixed inset-0 z-[60] bg-slate-950/65 modal-backdrop p-3 md:p-6">
+    <div class="mx-auto max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-[#181c25] overflow-hidden max-h-full flex flex-col">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div><h2 class="font-black text-lg">Edit User</h2><p id="editUserSubtitle" class="text-xs text-slate-500"></p></div>
+        <button onclick="closeEditUserModal()" class="w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="saveUserProfile(event)" class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+        <input id="editUserId" type="hidden" />
+        <div class="grid sm:grid-cols-2 gap-3">
+          <label class="space-y-1 sm:col-span-2"><span class="text-xs font-bold">Username</span><input id="editUsername" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-[#11151d]" /></label>
+          <label class="space-y-1"><span class="text-xs font-bold">Role</span><select id="editRole" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-[#11151d]"><option>Viewer</option><option>Planner</option><option>Approver</option><option>Admin</option></select></label>
+          <label class="space-y-1"><span class="text-xs font-bold">Status</span><select id="editStatus" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-[#11151d]"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+          <label class="space-y-1 sm:col-span-2"><span class="text-xs font-bold">New Password <span class="font-normal text-slate-400">(optional)</span></span><input id="editPassword" type="password" placeholder="Leave blank to keep current password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-[#11151d]" /></label>
+        </div>
+        <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/25 flex items-center justify-between gap-3">
+          <div><p class="font-bold text-sm">Granular Permissions</p><p class="text-xs text-slate-500">Menu, save, buyer, columns and downloads.</p></div>
+          <button type="button" onclick="openPermissionBuilderForEditingUser()" class="px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold">Edit Permissions</button>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditUserModal()" class="px-4 py-2.5 rounded-lg border border-slate-300 font-bold text-sm dark:border-slate-700">Cancel</button>
+          <button type="submit" id="editBtn" class="px-4 py-2.5 rounded-lg bg-blue-600 text-white font-bold text-sm flex items-center justify-center min-w-[120px]">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        function checkAdminAndLoadUsers() {
-            const token = localStorage.getItem('token');
-            const role = localStorage.getItem('role');
-            const username = localStorage.getItem('username');
-
-            if (!token) { window.location.href = 'login.html'; return; }
-            if (role !== 'Admin') {
-                alert('Access Denied! Only Admins can manage users.');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            document.getElementById('displayUsername').innerText = `${username} (${role})`;
-            loadUsers();
-        }
-
-        async function loadUsers() {
-            try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/auth/users');
-                const users = await response.json();
-
-                const admins = users.filter(u => u.role === 'Admin');
-                const approvers = users.filter(u => u.role === 'Approver');
-                const planners = users.filter(u => u.role === 'Planner');
-                const viewers = users.filter(u => u.role === 'Viewer');
-
-                const container = document.getElementById('userDirectoryContainer');
-                container.innerHTML = '';
-
-                if (admins.length > 0) container.innerHTML += renderUserSection('Admin Management Team', admins, 'text-red-600', 'bg-red-50', 'border-red-200', 'fa-user-shield');
-                if (approvers.length > 0) container.innerHTML += renderUserSection('Approvers', approvers, 'text-purple-600', 'bg-purple-50', 'border-purple-200', 'fa-user-check');
-                if (planners.length > 0) container.innerHTML += renderUserSection('Planning & Operation Team', planners, 'text-blue-600', 'bg-blue-50', 'border-blue-200', 'fa-user-edit');
-                if (viewers.length > 0) container.innerHTML += renderUserSection('Viewers & Observers', viewers, 'text-gray-600', 'bg-gray-100', 'border-gray-200', 'fa-eye');
-
-                if (users.length === 0) {
-                    container.innerHTML = `<div class="bg-white p-10 text-center rounded-xl shadow-sm border border-gray-200 text-gray-500"><i class="fas fa-users-slash text-4xl mb-3"></i><p>No users found in the system.</p></div>`;
-                }
-
-            } catch (error) {
-                console.error('Error fetching users:', error);
-                showToast("Failed to load users from server.", true);
-            }
-        }
-
-        function renderUserSection(title, usersList, textColorClass, bgColorClass, borderColorClass, iconClass) {
-            const iconHtml = `<div class="w-8 h-8 rounded-lg ${bgColorClass} ${textColorClass} flex items-center justify-center text-sm shadow-sm border ${borderColorClass}"><i class="fas ${iconClass}"></i></div>`;
-            let html = `
-                <div class="flex items-center gap-2 mb-4 mt-2">
-                    ${iconHtml}
-                    <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">${title}</h2>
-                    <span class="bg-gray-100 dark:bg-[#2a3346] text-gray-500 dark:text-gray-300 text-xs font-bold px-2 py-0.5 rounded-full">${usersList.length}</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            `;
-
-            usersList.forEach(user => {
-                const date = new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                const displayPass = user.password || user.plainPassword || "Hidden (Hashed)";
-                const isHidden = displayPass === "Hidden (Hashed)";
-
-                html += `
-                <div class="bg-white dark:bg-[#1e2330] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 dark:border-[#2a3346] overflow-hidden flex flex-col relative group">
-                    <div class="p-4 flex-1">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a3346] flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-lg">
-                                    ${user.username.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[130px]" title="${user.username}">${user.username}</h3>
-                                    <p class="text-[10px] text-gray-500 dark:text-gray-400"><i class="far fa-calendar-alt"></i> Joined: ${date}</p>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded-full ${bgColorClass} ${textColorClass} border ${borderColorClass}">
-                                ${user.role}
-                            </span>
-                        </div>
-                        
-                        <div class="bg-gray-50 dark:bg-[#151921] p-2.5 rounded border border-gray-100 dark:border-[#2a3346] mt-2 relative">
-                            <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">User Password</p>
-                            <div class="flex items-center justify-between">
-                                <code class="text-xs font-mono text-gray-800 dark:text-gray-300 tracking-wide">${displayPass}</code>
-                                ${!isHidden ? `<button onclick="copyToClipboard('${displayPass}')" class="text-gray-400 hover:text-blue-500 transition p-1" title="Copy Password"><i class="far fa-copy"></i></button>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button onclick="deleteUser('${user._id}', '${user.username}')" class="absolute top-3 right-3 bg-red-100 text-red-500 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-500 hover:text-white shadow-sm" title="Delete User">
-                        <i class="fas fa-trash-alt text-sm"></i>
-                    </button>
-                </div>
-                `;
-            });
-
-            html += `</div></div>`;
-            return html;
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Password copied to clipboard!");
-            }).catch(err => {
-                showToast("Failed to copy!", true);
-            });
-        }
-
-        async function handleCreateUser(event) {
-            event.preventDefault();
-            const username = document.getElementById('newUsername').value;
-            const password = document.getElementById('newPassword').value;
-            const role = document.getElementById('newRole').value;
-            const btn = document.getElementById('createBtn');
-
-            btn.disabled = true;
-            btn.innerHTML = '<div class="inline-flex relative justify-center items-center w-4 h-4 mr-2 align-middle"><div class="absolute w-full h-full rounded-full border-2 border-white/30"></div><div class="absolute w-full h-full rounded-full border-2 border-transparent border-t-white border-r-white animate-spin"></div><div class="absolute w-2 h-2 rounded-full border-2 border-transparent border-b-white border-l-white animate-[spin_1.5s_linear_infinite_reverse]"></div></div> Creating...';
-
-            try {
-                const response = await fetch('https://abir-backend-api.onrender.com/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, role })
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    showToast('User Created Successfully!');
-                    document.getElementById('createUserForm').reset();
-                    loadUsers();
-                } else {
-                    showToast(data.message || 'Failed to create user.', true);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast("Server error during creation.", true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-plus-circle"></i> Create User';
-            }
-        }
-
-        async function deleteUser(userId, username) {
-            if (confirm(`Are you absolutely sure you want to delete '${username}'? This action cannot be undone.`)) {
-                try {
-                    const response = await fetch(`https://abir-backend-api.onrender.com/api/auth/user/${userId}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (response.ok) {
-                        showToast('User deleted successfully!');
-                        loadUsers();
-                    } else {
-                        showToast('Failed to delete user.', true);
-                    }
-                } catch (error) {
-                    console.error('Error deleting user:', error);
-                    showToast('Server error during deletion.', true);
-                }
-            }
-        }
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
-    </script>
+  <script src="js/manage-users.js"></script>
 </body>
-
 </html>

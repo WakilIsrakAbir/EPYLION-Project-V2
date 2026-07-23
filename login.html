@@ -220,6 +220,13 @@
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.user.username || u);
                     localStorage.setItem('role', data.user.role);
+                    
+                    if (data.user.permissions) {
+                        localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
+                    }
+                    if (data.user.status) {
+                        localStorage.setItem('status', data.user.status);
+                    }
 
                     showToast("Login Successful! Redirecting...");
                     setTimeout(() => {
