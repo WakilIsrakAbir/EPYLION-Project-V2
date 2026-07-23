@@ -82,16 +82,23 @@ function showLoadCalculation(menuName) {
     setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
     
     // fetch and render
-    fetchLoadCalculationData().then(() => {
-        if (document.getElementById('loadStartMonth').options.length === 0) {
-            initLoadMonthSelector();
-        }
-        if (menuName === 'summary') {
-            setSummaryDepartment(activeSummaryDepartment);
-        } else {
-            refreshCurrentView();
-        }
-    });
+    const loadingData = document.getElementById('loadingData');
+    if (loadingData) loadingData.classList.remove('hidden');
+
+    setTimeout(() => {
+        fetchLoadCalculationData().then(() => {
+            if (document.getElementById('loadStartMonth').options.length === 0) {
+                initLoadMonthSelector();
+            }
+            if (menuName === 'summary') {
+                return setSummaryDepartment(activeSummaryDepartment);
+            } else {
+                return refreshCurrentView();
+            }
+        }).finally(() => {
+            if (loadingData) loadingData.classList.add('hidden');
+        });
+    }, 50);
 }
 
 async function fetchLoadCalculationData() {
@@ -359,14 +366,29 @@ function setSummaryDepartment(department) {
     if(activeBtn) {
         activeBtn.className = `department-tab px-4 py-2 rounded border text-xs font-bold active-${department}`;
     }
-    refreshCurrentView();
+    return refreshCurrentView();
 }
 
 function refreshCurrentView() {
-    if (activeMainMenu === 'summary') {
-        const data = buildSummaryData(activeSummaryDepartment);
-        renderSummaryTable(data);
-    }
+    return new Promise(resolve => {
+        const loadingData = document.getElementById('loadingData');
+        if (loadingData) loadingData.classList.remove('hidden');
+
+        setTimeout(() => {
+            try {
+                if (activeMainMenu === 'summary') {
+                    const data = buildSummaryData(activeSummaryDepartment);
+                    renderSummaryTable(data);
+                }
+            } catch (err) {
+                document.getElementById('summaryPreviewTable').innerHTML = `<tr><td class="p-4 text-red-500 font-bold border">ERROR: ${err.message}<br/>${err.stack}</td></tr>`;
+                console.error(err);
+            } finally {
+                if (loadingData) loadingData.classList.add('hidden');
+                resolve();
+            }
+        }, 50);
+    });
 }
 
 function renderSummaryTable(data) {
