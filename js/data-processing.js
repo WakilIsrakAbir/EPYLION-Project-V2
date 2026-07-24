@@ -246,26 +246,28 @@ async function fetchAndProcessData(isSilent = false) {
         const hasDeptFile = deptFiles.length > 0;
 
         const readFiles = async (fileList) => {
-            let raw = [];
-            for (let i = 0; i < fileList.length; i++) {
-                let file = fileList[i];
+            if (!fileList || fileList.length === 0) return [];
+            const results = await Promise.all(fileList.map(async (file, i) => {
                 try {
                     const encodedName = encodeURIComponent(file.savedName);
                     const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`);
                     if (!fRes.ok) {
                         console.error(`Failed to fetch file: ${file.originalName}`);
-                        continue;
+                        return [];
                     }
                     const ab = await fRes.arrayBuffer();
                     const wb = XLSX.read(ab, { type: 'array' });
                     let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                     sheetData.forEach(row => {
                         row._fileIndex = i;
-                        raw.push(row);
                     });
-                } catch (e) { console.error("File read err:", e); }
-            }
-            return raw;
+                    return sheetData;
+                } catch (e) {
+                    console.error("File read err:", e);
+                    return [];
+                }
+            }));
+            return results.flat();
         };
 
         let generalRawData = [];

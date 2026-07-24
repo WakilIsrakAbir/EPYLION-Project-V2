@@ -75,22 +75,24 @@
             const latestFiles = Array.from(latestFilesMap.values());
 
             const readFiles = async (fileList) => {
-                let raw = [];
-                for (let i = 0; i < fileList.length; i++) {
-                    let file = fileList[i];
+                if (!fileList || fileList.length === 0) return [];
+                const results = await Promise.all(fileList.map(async (file, i) => {
                     try {
-                        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
-                        if (!fRes.ok) continue;
+                        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
+                        if (!fRes.ok) return [];
                         const ab = await fRes.arrayBuffer();
                         const wb = XLSX.read(ab, { type: 'array' });
                         let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                         sheetData.forEach(row => {
-                            row._fileIndex = i; 
-                            raw.push(row);
+                            row._fileIndex = i;
                         });
-                    } catch (e) { console.error("File read err:", e); }
-                }
-                return raw;
+                        return sheetData;
+                    } catch (e) {
+                        console.error("File read err:", e);
+                        return [];
+                    }
+                }));
+                return results.flat();
             };
 
             const currentOSFilesStr = JSON.stringify(latestFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
@@ -279,17 +281,8 @@
         btnContainer.appendChild(nextBtn);
     }
 
-    window.viewOSDetails = async function(encodedBookingNo) {
+    window.viewOSDetails = function(encodedBookingNo) {
         const bookingNo = decodeURIComponent(encodedBookingNo);
-        
-        const l = document.getElementById('osLoadingSpinner');
-        if (l) l.classList.remove('hidden');
-        try {
-            await fetchAllDataForOS();
-        } catch (e) {
-            console.error("Failed to fetch latest OS data on JIT sync:", e);
-        }
-        if (l) l.classList.add('hidden');
 
         const orderData = osGroupedData[bookingNo];
         if (!orderData) return;
