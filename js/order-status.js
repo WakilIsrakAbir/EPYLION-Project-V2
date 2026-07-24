@@ -112,10 +112,11 @@
                     osGroupedData[bNoStr] = {
                         bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
                         buyers: new Set(),
+                        generalInfo: {},
                         excelItems: [],
                         mergedItems: [],
-                        dbData: null,
-                        status: 'N/A'
+                        mergeMap: new Map(),
+                        dbData: null
                     };
                 }
             };
@@ -137,14 +138,16 @@
                 let constr = getColData(row, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
 
                 if (color || constr) {
-                    let existingItem = osGroupedData[bNo].mergedItems.find(m => {
-                        let eColor = getColData(m.itemData, ['Color', 'Colour', 'Fab Color']);
-                        let eConstr = getColData(m.itemData, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
-                        return String(eColor).trim().toLowerCase() === String(color).trim().toLowerCase() &&
-                            String(eConstr).trim().toLowerCase() === String(constr).trim().toLowerCase();
-                    });
+                    let colorKey = String(color || '').trim().toLowerCase();
+                    let constrKey = String(constr || '').trim().toLowerCase();
+                    let key = `${colorKey}_||_${constrKey}`;
+                    
+                    let existingItem = osGroupedData[bNo].mergeMap.get(key);
+                    
                     if (!existingItem) {
-                        osGroupedData[bNo].mergedItems.push({ itemData: { ...row } });
+                        let newItem = { itemData: { ...row } };
+                        osGroupedData[bNo].mergedItems.push(newItem);
+                        osGroupedData[bNo].mergeMap.set(key, newItem);
                     }
                     else {
                         Object.keys(row).forEach(k => {
@@ -176,8 +179,11 @@
                 }
             } catch (e) { }
 
+            let preloadedPerms = null;
+            try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+
             Object.keys(osGroupedData).forEach(bNo => {
-                if (!hasBuyerPermission(osGroupedData[bNo].buyers)) {
+                if (!hasBuyerPermission(osGroupedData[bNo].buyers, preloadedPerms)) {
                     delete osGroupedData[bNo];
                 }
             });

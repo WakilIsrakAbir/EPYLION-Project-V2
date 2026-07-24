@@ -37,9 +37,11 @@ function formatDateDisplay(dateStr) {
         return val;
     }
 
-    function hasBuyerPermission(buyersSetOrArray) {
-        let userPerms = null;
-        try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+    function hasBuyerPermission(buyersSetOrArray, preloadedPerms = null) {
+        let userPerms = preloadedPerms;
+        if (!userPerms) {
+            try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+        }
         const type = userPerms?.buyers?.accessType || 'all';
         const ids = userPerms?.buyers?.buyerIds || [];
         

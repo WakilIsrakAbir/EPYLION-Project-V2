@@ -185,6 +185,9 @@ async function fetchActualTrackingData() {
             }
         }
 
+        let preloadedPerms = null;
+        try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+
         // Process saved plans - find orders with confirmed items in the target department
         savedPlans.forEach(plan => {
             const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
@@ -261,7 +264,7 @@ async function fetchActualTrackingData() {
                 extBal = deptExtMap[plan.orderNo].bal;
             }
 
-            if (!hasBuyerPermission(displayBuyer.split(','))) return;
+            if (!hasBuyerPermission(displayBuyer.split(','), preloadedPerms)) return;
 
             actualTrackingData.push({
                 orderNo: plan.orderNo,

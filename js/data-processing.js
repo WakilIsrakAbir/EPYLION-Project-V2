@@ -3,9 +3,9 @@
 // ==========================================================
 // ==========================================================
 let cachedGeneralFilesStr = "";
-let cachedDeptFilesStr = "";
+let cachedDeptFilesStr = {};
 let cachedGeneralRawData = [];
-let cachedDeptRawData = [];
+let cachedDeptRawData = {};
 
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
@@ -286,12 +286,12 @@ async function fetchAndProcessData(isSilent = false) {
         }
 
         let deptRawData = [];
-        if (currentDeptFilesStr === cachedDeptFilesStr && cachedDeptRawData.length > 0) {
-            deptRawData = cachedDeptRawData;
+        if (currentDeptFilesStr === cachedDeptFilesStr[currentDept] && cachedDeptRawData[currentDept] && cachedDeptRawData[currentDept].length > 0) {
+            deptRawData = cachedDeptRawData[currentDept];
         } else {
             deptRawData = await readFiles(deptFiles);
-            cachedDeptRawData = deptRawData;
-            cachedDeptFilesStr = currentDeptFilesStr;
+            cachedDeptRawData[currentDept] = deptRawData;
+            cachedDeptFilesStr[currentDept] = currentDeptFilesStr;
         }
 
         groupedData = {};
@@ -412,9 +412,12 @@ async function fetchAndProcessData(isSilent = false) {
             }
         } catch (e) { console.error("Error fetching db dates", e); }
 
+        let preloadedPerms = null;
+        try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
+
         // Apply Buyer Permissions globally
         Object.keys(groupedData).forEach(bNo => {
-            if (!hasBuyerPermission(groupedData[bNo].buyers)) {
+            if (!hasBuyerPermission(groupedData[bNo].buyers, preloadedPerms)) {
                 delete groupedData[bNo];
             }
         });
@@ -451,6 +454,15 @@ async function fetchAndProcessData(isSilent = false) {
 
                 let excelOccurrence = {};
                 let currentFileIndex = -1;
+
+                let dyeingColorMap = new Map();
+                if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
+                    group.dbData.dyeing.forEach(d => {
+                        if (d.itemData && d.itemData.Color) {
+                            dyeingColorMap.set(String(d.itemData.Color).trim().toLowerCase(), d);
+                        }
+                    });
+                }
 
                 group.excelItems.forEach(exItem => {
                     if (exItem._fileIndex !== currentFileIndex) {
@@ -581,9 +593,9 @@ async function fetchAndProcessData(isSilent = false) {
                         });
                     } else {
                         let recoveredDbItem = null;
-                        if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
+                        if (currentDept === 'dyeing') {
                             const myColor = String(dynamicItemData.Color || '').trim().toLowerCase();
-                            recoveredDbItem = group.dbData.dyeing.find(d => d.itemData && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
+                            recoveredDbItem = dyeingColorMap.get(myColor);
                         }
 
                         if (recoveredDbItem) {
