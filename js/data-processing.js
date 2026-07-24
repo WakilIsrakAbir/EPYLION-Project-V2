@@ -216,7 +216,7 @@ async function fetchAndProcessData(isSilent = false) {
     const currentDept = activeTabId.replace('_report', '');
 
     try {
-        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; });
+        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; });
 
         let allFiles = [];
         if (res && res.ok) {
@@ -251,7 +251,7 @@ async function fetchAndProcessData(isSilent = false) {
                 let file = fileList[i];
                 try {
                     const encodedName = encodeURIComponent(file.savedName);
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`);
                     if (!fRes.ok) {
                         console.error(`Failed to fetch file: ${file.originalName}`);
                         continue;
