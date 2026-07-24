@@ -92,8 +92,9 @@ async function loadActualTracking(deptKey) {
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
-        // Fetch all saved plan data from DB
-        const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
+        // Fetch saved plan data from DB for this specific department
+        const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
+        const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/dept-dates/${dbDeptKey}?t=${Date.now()}`);
         if (!datesRes.ok) return;
         const savedPlans = await datesRes.json();
 

@@ -256,6 +256,8 @@ function showDataManagementView() {
     activeTabId = 'dataManagement';
     hideAllCoreViews();
     document.getElementById('dataManagementView').classList.remove('hidden');
+    const loadingData = document.getElementById('loadingData');
+    if (loadingData) loadingData.classList.add('hidden');
     renderTabs();
     closeSidebarMobile();
     setActiveSidebarMenu('menu-data-mgmt');

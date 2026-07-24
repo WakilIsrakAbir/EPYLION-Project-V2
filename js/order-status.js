@@ -168,14 +168,21 @@
             });
 
             try {
-                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
-                if (datesRes.ok) {
-                    const savedPlans = await datesRes.json();
-                    savedPlans.forEach(plan => {
-                        if (osGroupedData[plan.orderNo]) {
-                            osGroupedData[plan.orderNo].dbData = plan;
-                        }
+                const orderNos = Object.keys(osGroupedData);
+                if (orderNos.length > 0) {
+                    const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderNos: orderNos })
                     });
+                    if (datesRes.ok) {
+                        const savedPlans = await datesRes.json();
+                        savedPlans.forEach(plan => {
+                            if (osGroupedData[plan.orderNo]) {
+                                osGroupedData[plan.orderNo].dbData = plan;
+                            }
+                        });
+                    }
                 }
             } catch (e) { }
 
