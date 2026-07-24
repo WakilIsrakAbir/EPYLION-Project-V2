@@ -216,19 +216,11 @@ async function fetchAndProcessData(isSilent = false) {
     const currentDept = activeTabId.replace('_report', '');
 
     try {
-        const [res, datesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; }),
-            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`).catch(e => { console.error(e); return null; })
-        ]);
+        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; });
 
         let allFiles = [];
         if (res && res.ok) {
             allFiles = await res.json();
-        }
-
-        let savedPlans = [];
-        if (datesRes && datesRes.ok) {
-            savedPlans = await datesRes.json();
         }
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
@@ -388,6 +380,21 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         try {
+            let savedPlans = [];
+            const orderNos = Object.keys(groupedData);
+            
+            if (orderNos.length > 0) {
+                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderNos: orderNos })
+                });
+                
+                if (datesRes && datesRes.ok) {
+                    savedPlans = await datesRes.json();
+                }
+            }
+
             if (savedPlans && savedPlans.length > 0) {
                 savedPlans.forEach(plan => {
                     if (groupedData[plan.orderNo]) {
