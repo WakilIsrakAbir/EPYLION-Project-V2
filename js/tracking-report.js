@@ -59,7 +59,8 @@ async function downloadTrackingReport(statusType, formatType) {
     const previousDeptKey = actualDeptKey;
     actualDeptKey = reportActualDeptKey;
     
-    await fetchActualTrackingData();
+    // Fetch ALL tracking data for report (no pagination limit)
+    await fetchAllActualTrackingDataForReport();
     
     let dataToExport = actualTrackingData.filter(d => {
         if (statusType === 'Pending') {

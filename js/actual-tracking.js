@@ -171,6 +171,74 @@ async function fetchActualTrackingData() {
     }
 }
 
+// Fetch ALL tracking data without pagination (for report generation)
+async function fetchAllActualTrackingDataForReport() {
+    actualTrackingData = [];
+    try {
+        const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
+
+        // No pagination — fetch all for report
+        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?limit=5000`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const { planDocs, orderMap } = data;
+
+        planDocs.forEach(plan => {
+            const deptItems = plan[dbDeptKey];
+
+            let startDates = [], endDates = [];
+            let planStart = '';
+            let planEnd = '';
+
+            if (deptItems && Array.isArray(deptItems) && deptItems.length > 0) {
+                if (actualDeptKey === 'deliveryfloor') {
+                    const floorItems = deptItems.filter(item => item.floorPlanType === 'Confirm' || item.floorPlanType === 'Tentative');
+                    if (floorItems.length > 0) {
+                        startDates = floorItems.map(item => item.floorStartDate).filter(d => d && d !== '' && d !== '-');
+                        endDates = floorItems.map(item => item.floorEndDate).filter(d => d && d !== '' && d !== '-');
+                    }
+                } else {
+                    startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
+                    endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
+                }
+
+                if (startDates.length > 0) { startDates.sort(); planStart = startDates[0]; }
+                if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
+            }
+
+            const actualKey = actualDeptKey + 'Actual';
+            let actualStart = '', actualEnd = '', failReason = '', relatedDept = '';
+            if (plan[actualKey]) {
+                actualStart = plan[actualKey].actualStart || '';
+                actualEnd = plan[actualKey].actualEnd || '';
+                failReason = plan[actualKey].failReason || plan[actualKey].remarks || '';
+                relatedDept = plan[actualKey].relatedDept || '';
+            }
+
+            const orderInfo = orderMap[plan.orderNo] || {};
+            let displayBuyer = orderInfo.buyer || 'N/A';
+            let bookingDate = orderInfo.bookingDate ? formatDateDisplay(orderInfo.bookingDate) : 'N/A';
+
+            actualTrackingData.push({
+                orderNo: plan.orderNo,
+                buyer: displayBuyer,
+                bookingDate: bookingDate,
+                planStart: planStart,
+                planEnd: planEnd,
+                actualStart: actualStart,
+                actualEnd: actualEnd,
+                failReason: failReason,
+                relatedDept: relatedDept,
+                extProd: '',
+                extBal: ''
+            });
+        });
+    } catch (e) {
+        console.error('Error fetching all tracking data for report:', e);
+    }
+}
+
 function filterActualByColumn(colIndex, val) {
     actualColFilters[colIndex] = String(val).toLowerCase().trim();
     actualCurrentPage = 1;
