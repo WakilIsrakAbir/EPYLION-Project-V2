@@ -5,7 +5,9 @@
     let osCurrentPage = 1;
     let osRowsPerPage = 10;
     let osSearchQuery = '';
-    let osGroupedData = {}; 
+    let osGroupedData = {};
+    let osTotalFromServer = 0;
+    let osTotalPagesFromServer = 0;
 
     async function showOrderStatus() {
         localStorage.setItem('activePage', JSON.stringify({ page: 'orderStatus' }));
@@ -63,12 +65,16 @@
 
     async function fetchAllDataForOS() {
         try {
-            // Fetch ALL orders (no dept/status filter) for Order Status page
-            const res = await fetch(`${API_BASE}/api/orders/all-list?limit=200`);
+            // Fetch orders with server-side pagination
+            const search = osSearchQuery || '';
+            const res = await fetch(`${API_BASE}/api/orders/all-list?page=${osCurrentPage}&limit=${osRowsPerPage}&search=${encodeURIComponent(search)}`);
             if (!res.ok) return;
             const data = await res.json();
 
             osGroupedData = {};
+            osTotalFromServer = data.total || 0;
+            osTotalPagesFromServer = data.totalPages || 0;
+
             data.orders.forEach(order => {
                 osGroupedData[order.orderNo] = {
                     bookingNo: order.orderNo,
@@ -80,13 +86,6 @@
                 };
             });
 
-            // Apply buyer permissions
-            Object.keys(osGroupedData).forEach(bNo => {
-                if (!hasBuyerPermission(osGroupedData[bNo].buyers)) {
-                    delete osGroupedData[bNo];
-                }
-            });
-
         } catch (error) {
             console.error("Error fetching OS data:", error);
         }
@@ -95,13 +94,13 @@
     function filterOSList() {
         osSearchQuery = document.getElementById('osSearchInput').value.trim().toLowerCase();
         osCurrentPage = 1;
-        renderOrderStatusTable();
+        refreshOSPage();
     }
 
     function changeOSRowsPerPage() {
         osRowsPerPage = parseInt(document.getElementById('osRowsPerPage').value);
         osCurrentPage = 1;
-        renderOrderStatusTable();
+        refreshOSPage();
     }
 
     function renderOrderStatusTable() {
@@ -109,37 +108,20 @@
         if (!tbody) return;
 
         if (!osGroupedData || Object.keys(osGroupedData).length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-gray-500"><i class="fas fa-folder-open text-3xl mb-3 block text-gray-300"></i> No orders found. Please upload data.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-gray-500"><i class="fas fa-folder-open text-3xl mb-3 block text-gray-300"></i> No orders found.</td></tr>`;
             document.getElementById('osPageInfo').innerText = "Showing 0-0 of 0";
             document.getElementById('osPageButtons').innerHTML = '';
             return;
         }
 
+        // Data is already paginated from server — just render it
         let dataList = Object.values(osGroupedData);
-        if (osSearchQuery !== '') {
-            dataList = dataList.filter(d => {
-                const bNoMatch = String(d.bookingNo).toLowerCase().includes(osSearchQuery);
-                const buyersArr = Array.from(d.buyers || []).map(b => b.toLowerCase());
-                const buyerMatch = buyersArr.some(b => b.includes(osSearchQuery));
-                return bNoMatch || buyerMatch;
-            });
-        }
-
-        const total = dataList.length;
-        if (total === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-gray-500">No matching orders found.</td></tr>`;
-            document.getElementById('osPageInfo').innerText = "Showing 0-0 of 0";
-            document.getElementById('osPageButtons').innerHTML = '';
-            return;
-        }
-
-        const totalPages = Math.ceil(total / osRowsPerPage);
-        if (osCurrentPage > totalPages) osCurrentPage = totalPages;
+        const total = osTotalFromServer;
+        const totalPages = osTotalPagesFromServer;
         const start = (osCurrentPage - 1) * osRowsPerPage;
-        const pagedData = dataList.slice(start, start + osRowsPerPage);
 
         let html = '';
-        pagedData.forEach(d => {
+        dataList.forEach(d => {
             const displayBuyer = d.buyers && d.buyers.size > 0 ? Array.from(d.buyers).join(', ') : 'Unknown';
             html += `
                 <tr class="hover:bg-blue-50 dark:hover:bg-[#1e2330] border-b border-gray-100 dark:border-[#2a3346] transition-colors">
@@ -153,22 +135,31 @@
         });
         tbody.innerHTML = html;
 
-        document.getElementById('osPageInfo').innerText = `Showing ${start + 1}-${Math.min(start + osRowsPerPage, total)} of ${total}`;
+        document.getElementById('osPageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1}-${Math.min(start + osRowsPerPage, total)} of ${total}`;
         const btnContainer = document.getElementById('osPageButtons');
         btnContainer.innerHTML = '';
 
         const prevBtn = document.createElement('button');
         prevBtn.className = `px-3 py-1 border border-gray-300 rounded ${osCurrentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`;
         prevBtn.innerHTML = '<i class="fas fa-chevron-left text-[10px]"></i>';
-        prevBtn.onclick = () => { if (osCurrentPage > 1) { osCurrentPage--; renderOrderStatusTable(); } };
+        prevBtn.onclick = () => { if (osCurrentPage > 1) { osCurrentPage--; refreshOSPage(); } };
 
         const nextBtn = document.createElement('button');
         nextBtn.className = `px-3 py-1 border border-gray-300 rounded ${osCurrentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white hover:bg-gray-50'}`;
         nextBtn.innerHTML = '<i class="fas fa-chevron-right text-[10px]"></i>';
-        nextBtn.onclick = () => { if (osCurrentPage < totalPages) { osCurrentPage++; renderOrderStatusTable(); } };
+        nextBtn.onclick = () => { if (osCurrentPage < totalPages) { osCurrentPage++; refreshOSPage(); } };
 
         btnContainer.appendChild(prevBtn);
         btnContainer.appendChild(nextBtn);
+    }
+
+    // Server-side pagination helper — re-fetches from API
+    async function refreshOSPage() {
+        const osLoader = document.getElementById('osLoadingSpinner');
+        if (osLoader) osLoader.classList.remove('hidden');
+        await fetchAllDataForOS();
+        if (osLoader) osLoader.classList.add('hidden');
+        renderOrderStatusTable();
     }
 
     async function viewOSDetails(encodedBookingNo) {
