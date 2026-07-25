@@ -129,7 +129,7 @@ async function fetchActualTrackingData() {
             let bookingDate = orderInfo.bookingDate ? formatDateDisplay(orderInfo.bookingDate) : 'N/A';
 
             // Fallback: get buyer from dept items
-            if (displayBuyer === 'N/A' || !displayBuyer) {
+            if ((displayBuyer === 'N/A' || !displayBuyer) && deptItems && deptItems.length > 0) {
                 let buyersFromItems = new Set();
                 deptItems.forEach(item => {
                     if (item.itemData && item.itemData.Buyer) {
