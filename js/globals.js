@@ -26,4 +26,7 @@ let actualActiveTab = 'Pending'; // 'Pending' or 'Complete'
 let actualActiveBuyer = ''; // '' means all buyers
 let actualFilterStart = ''; // date range filter start
 let actualFilterEnd = ''; // date range filter end
+let actualTotalFromServer = 0;
+let actualTotalPagesFromServer = 0;
+let actualBuyersFromServer = [];
 

@@ -79,14 +79,25 @@ async function fetchActualTrackingData() {
     try {
         const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
 
-        // Use new paginated tracking API — no more Excel download!
-        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}`);
+        // Server-side paginated tracking API
+        const params = new URLSearchParams({
+            page: actualCurrentPage,
+            limit: actualRowsPerPage
+        });
+        if (actualActiveBuyer) params.set('buyer', actualActiveBuyer);
+
+        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?${params}`);
         if (!res.ok) return;
         const data = await res.json();
 
-        const { planDocs, orderMap } = data;
+        const { planDocs, orderMap, total, totalPages, buyers } = data;
 
-        // Process saved plans
+        // Store server pagination info
+        actualTotalFromServer = total || 0;
+        actualTotalPagesFromServer = totalPages || 0;
+        actualBuyersFromServer = buyers || [];
+
+        // Process plan docs into tracking data
         planDocs.forEach(plan => {
             const deptItems = plan[dbDeptKey];
 
@@ -110,7 +121,6 @@ async function fetchActualTrackingData() {
                 if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
             }
 
-            // Get saved actual data
             const actualKey = actualDeptKey + 'Actual';
             let actualStart = '';
             let actualEnd = '';
@@ -123,12 +133,10 @@ async function fetchActualTrackingData() {
                 relatedDept = plan[actualKey].relatedDept || '';
             }
 
-            // Get buyer and booking date from Order collection
             const orderInfo = orderMap[plan.orderNo] || {};
             let displayBuyer = orderInfo.buyer || 'N/A';
             let bookingDate = orderInfo.bookingDate ? formatDateDisplay(orderInfo.bookingDate) : 'N/A';
 
-            // Fallback: get buyer from dept items
             if ((displayBuyer === 'N/A' || !displayBuyer) && deptItems && deptItems.length > 0) {
                 let buyersFromItems = new Set();
                 deptItems.forEach(item => {
@@ -140,16 +148,8 @@ async function fetchActualTrackingData() {
                 if (buyersFromItems.size > 0) displayBuyer = Array.from(buyersFromItems).join(', ');
             }
 
-            // Get ext prod/bal from Order items
             let extProd = '';
             let extBal = '';
-            const orderDoc = orderMap[plan.orderNo];
-            if (orderDoc) {
-                // These will be calculated from the Order.{dept}Items if needed
-                // For now leave empty — the data is in the order items
-            }
-
-            if (!hasBuyerPermission(displayBuyer.split(','))) return;
 
             actualTrackingData.push({
                 orderNo: plan.orderNo,
@@ -191,13 +191,7 @@ function switchActualTab(tab) {
 
 function renderActualBuyerFilter() {
     const container = document.getElementById('actualBuyerFilterContainer');
-    const buyerSet = new Set();
-    actualTrackingData.forEach(d => {
-        if (d.buyer && d.buyer !== 'N/A') {
-            d.buyer.split(',').forEach(b => buyerSet.add(b.trim()));
-        }
-    });
-    const buyers = Array.from(buyerSet).sort();
+    const buyers = actualBuyersFromServer || [];
     if (buyers.length === 0) { container.innerHTML = ''; return; }
 
     let html = '';
@@ -213,6 +207,15 @@ function renderActualBuyerFilter() {
 function setActualBuyerFilter(buyer) {
     actualActiveBuyer = buyer;
     actualCurrentPage = 1;
+    refreshActualTracking();
+}
+
+// Server-side refresh — re-fetch from API
+async function refreshActualTracking() {
+    const loader = document.getElementById('actualLoadingSpinner');
+    if (loader) loader.classList.remove('hidden');
+    await fetchActualTrackingData();
+    if (loader) loader.classList.add('hidden');
     renderActualBuyerFilter();
     renderActualTable();
 }
@@ -322,11 +325,10 @@ function renderActualTable() {
 
     paginationControls.classList.remove('hidden');
 
-    const totalPages = Math.ceil(data.length / actualRowsPerPage);
-    if (actualCurrentPage > totalPages) actualCurrentPage = totalPages;
-    if (actualCurrentPage < 1) actualCurrentPage = 1;
+    // Use server-side total for pagination (data is already the current page)
+    const totalPages = actualTotalPagesFromServer || 1;
     const start = (actualCurrentPage - 1) * actualRowsPerPage;
-    const pagedData = data.slice(start, start + actualRowsPerPage);
+    const pagedData = data; // Already paginated from server
 
     let html = '';
     pagedData.forEach((d, idx) => {
@@ -391,8 +393,7 @@ function renderActualTable() {
     });
     tbody.innerHTML = html;
 
-    // Update pagination
-    updateActualPaginationUI(start, start + pagedData.length, data.length, totalPages);
+    updateActualPaginationUI(start, start + pagedData.length, actualTotalFromServer, totalPages);
 }
 
 function updateActualResult(inputEl) {
@@ -462,12 +463,12 @@ function updateActualPaginationUI(start, end, total, totalPages) {
     const prev = document.createElement('button');
     prev.className = `px-3 py-1.5 border border-gray-300 rounded font-medium text-xs transition-colors ${actualCurrentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`;
     prev.innerHTML = '<i class="fas fa-chevron-left mr-1 text-[10px]"></i> Prev';
-    prev.onclick = () => { if (actualCurrentPage > 1) { actualCurrentPage--; renderActualTable(); } };
+    prev.onclick = () => { if (actualCurrentPage > 1) { actualCurrentPage--; refreshActualTracking(); } };
 
     const next = document.createElement('button');
     next.className = `px-3 py-1.5 border border-gray-300 rounded font-medium text-xs transition-colors ${actualCurrentPage === totalPages || totalPages === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`;
     next.innerHTML = 'Next <i class="fas fa-chevron-right ml-1 text-[10px]"></i>';
-    next.onclick = () => { if (actualCurrentPage < totalPages) { actualCurrentPage++; renderActualTable(); } };
+    next.onclick = () => { if (actualCurrentPage < totalPages) { actualCurrentPage++; refreshActualTracking(); } };
 
     btnContainer.appendChild(prev);
     const pageText = document.createElement('span');
@@ -480,7 +481,7 @@ function updateActualPaginationUI(start, end, total, totalPages) {
 function changeActualRowsPerPage() {
     actualRowsPerPage = parseInt(document.getElementById('actualRowsPerPage').value);
     actualCurrentPage = 1;
-    renderActualTable();
+    refreshActualTracking();
 }
 
 async function saveActualData() {
