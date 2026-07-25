@@ -6,6 +6,51 @@ let cachedGeneralFilesStr = "";
 let cachedDeptFilesStr = {};
 let cachedGeneralRawData = [];
 let cachedDeptRawData = {};
+let cachedGroupedData = {};
+let cachedGlobalBuyersList = {};
+
+// Global in-memory cache for parsed Excel file JSON data
+window.parsedFileCacheMap = window.parsedFileCacheMap || new Map();
+
+/**
+ * Universal helper to fetch and parse an Excel spreadsheet from GridFS into JSON.
+ * Caches results in window.parsedFileCacheMap keyed by file.savedName.
+ * If file is already cached, returns cached JSON immediately (0 ms, 0 network bytes).
+ */
+async function fetchAndParseFile(file) {
+    if (!file || !file.savedName) return [];
+    const cacheKey = file.savedName;
+
+    if (window.parsedFileCacheMap.has(cacheKey)) {
+        return window.parsedFileCacheMap.get(cacheKey);
+    }
+
+    try {
+        const encodedName = encodeURIComponent(file.savedName);
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 20000) : null;
+
+        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`, {
+            signal: controller ? controller.signal : undefined
+        });
+        if (timeoutId) clearTimeout(timeoutId);
+
+        if (!fRes.ok) {
+            console.error(`Failed to fetch file: ${file.originalName || file.savedName}`);
+            return [];
+        }
+
+        const ab = await fRes.arrayBuffer();
+        const wb = XLSX.read(ab, { type: 'array' });
+        const sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+
+        window.parsedFileCacheMap.set(cacheKey, sheetData);
+        return sheetData;
+    } catch (e) {
+        console.error("fetchAndParseFile error:", file.originalName || file.savedName, e);
+        return [];
+    }
+}
 
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
@@ -214,6 +259,9 @@ async function fetchAndProcessData(isSilent = false) {
     }
 
     const currentDept = activeTabId.replace('_report', '');
+    const datesPromise = fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?dept=${currentDept}`)
+        .then(r => r.ok ? r.json() : [])
+        .catch(e => []);
 
     try {
         const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; });
@@ -243,29 +291,31 @@ async function fetchAndProcessData(isSilent = false) {
         const currentGeneralFilesStr = JSON.stringify(generalFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
         const currentDeptFilesStr = JSON.stringify(deptFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
 
+        if (
+            currentGeneralFilesStr === cachedGeneralFilesStr &&
+            currentDeptFilesStr === cachedDeptFilesStr[currentDept] &&
+            cachedGroupedData[currentDept] &&
+            cachedGlobalBuyersList[currentDept]
+        ) {
+            groupedData = cachedGroupedData[currentDept];
+            globalBuyersList = cachedGlobalBuyersList[currentDept];
+            if (!isReportMode) {
+                renderBuyerTabs(Array.from(globalBuyersList));
+                currentPage = 1;
+                renderMainTable();
+            }
+            const loadingEl = document.getElementById('loadingData');
+            if (loadingEl) loadingEl.classList.add('hidden');
+            return;
+        }
+
         const hasDeptFile = deptFiles.length > 0;
 
         const readFiles = async (fileList) => {
             if (!fileList || fileList.length === 0) return [];
             const results = await Promise.all(fileList.map(async (file, i) => {
-                try {
-                    const encodedName = encodeURIComponent(file.savedName);
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`);
-                    if (!fRes.ok) {
-                        console.error(`Failed to fetch file: ${file.originalName}`);
-                        return [];
-                    }
-                    const ab = await fRes.arrayBuffer();
-                    const wb = XLSX.read(ab, { type: 'array' });
-                    let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                    sheetData.forEach(row => {
-                        row._fileIndex = i;
-                    });
-                    return sheetData;
-                } catch (e) {
-                    console.error("File read err:", e);
-                    return [];
-                }
+                const sheetData = await fetchAndParseFile(file);
+                return sheetData.map(row => ({ ...row, _fileIndex: i }));
             }));
             return results.flat();
         };
@@ -382,20 +432,8 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         try {
-            let savedPlans = [];
-            const orderNos = Object.keys(groupedData);
-            
-            if (orderNos.length > 0) {
-                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderNos: orderNos })
-                });
-                
-                if (datesRes && datesRes.ok) {
-                    savedPlans = await datesRes.json();
-                }
-            }
+            let savedPlans = await datesPromise;
+            if (!savedPlans || !Array.isArray(savedPlans)) savedPlans = [];
 
             if (savedPlans && savedPlans.length > 0) {
                 savedPlans.forEach(plan => {
@@ -735,6 +773,9 @@ async function fetchAndProcessData(isSilent = false) {
             renderMainTable();
         }
 
+        cachedGroupedData[currentDept] = groupedData;
+        cachedGlobalBuyersList[currentDept] = globalBuyersList;
+
         if (!isSilent) {
             document.getElementById('loadingData').classList.add('hidden');
         }
@@ -742,9 +783,9 @@ async function fetchAndProcessData(isSilent = false) {
         document.getElementById('loadingData').classList.add('hidden');
     } catch (e) {
         console.error("Error processing data:", e);
-        if (!isSilent) {
-            document.getElementById('loadingData').classList.add('hidden');
-        }
+    } finally {
+        const loadingEl = document.getElementById('loadingData');
+        if (loadingEl) loadingEl.classList.add('hidden');
     }
 }
 

@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // FILE UPLOAD: Upload, List, Delete Files
 // ==========================================================
 async function handleExcelUpload() {
@@ -13,6 +13,8 @@ async function handleExcelUpload() {
     try {
         const res = await fetch('https://abir-backend-api.onrender.com/api/files/upload', { method: 'POST', body: fd });
         if (res.ok) {
+            if (window.parsedFileCacheMap) window.parsedFileCacheMap.clear();
+            cachedGeneralFilesStr = ""; cachedDeptFilesStr = {}; cachedGeneralRawData = []; cachedDeptRawData = {}; cachedGroupedData = {}; cachedGlobalBuyersList = {};
             showToast("Upload Success!");
             document.getElementById('excelFile').value = '';
             loadUploadedFiles();
@@ -74,6 +76,8 @@ async function deleteFileGroup(originalName, category) {
             for (let f of filesToDelete) {
                 await fetch(`https://abir-backend-api.onrender.com/api/files/${f._id}`, { method: 'DELETE' });
             }
+            if (window.parsedFileCacheMap) window.parsedFileCacheMap.clear();
+            cachedGeneralFilesStr = ""; cachedDeptFilesStr = {}; cachedGeneralRawData = []; cachedDeptRawData = {}; cachedGroupedData = {}; cachedGlobalBuyersList = {};
             showToast("All versions deleted!");
             loadUploadedFiles();
             if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();

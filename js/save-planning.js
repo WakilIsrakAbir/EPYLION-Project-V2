@@ -248,6 +248,7 @@ async function saveFabricPlanning() {
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
+                cachedGroupedData = {}; cachedGlobalBuyersList = {};
                 showToast(`${bookingNo} Saved Successfully!`);
                 if (!existingData.dbData) existingData.dbData = {};
                 existingData.dbData[currentDept] = fabricItemsArr;

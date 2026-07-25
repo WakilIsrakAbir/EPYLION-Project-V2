@@ -21,38 +21,28 @@ let buyersLoaded = false;
               });
               const filesToRead = Array.from(latestFilesMap.values());
               
-              for (let file of filesToRead) {
-                  try {
-                      const encodedName = encodeURIComponent(file.savedName);
-                      const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
-                      if (!fRes.ok) continue;
-                      const ab = await fRes.arrayBuffer();
-                      const wb = XLSX.read(ab, { type: 'array' });
-                      let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+              const sheetResults = await Promise.all(filesToRead.map(file => fetchAndParseFile(file)));
+              sheetResults.forEach(sheetData => {
+                  sheetData.forEach(row => {
+                      let buyerVal = '';
+                      for (const k of Object.keys(row)) {
+                          const cleanK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                          if (['buyer', 'buyername', 'customer'].includes(cleanK)) {
+                              buyerVal = row[k];
+                              break;
+                          }
+                      }
                       
-                      sheetData.forEach(row => {
-                          let buyerVal = '';
-                          for (const k of Object.keys(row)) {
-                              const cleanK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                              if (['buyer', 'buyername', 'customer'].includes(cleanK)) {
-                                  buyerVal = row[k];
-                                  break;
-                              }
+                      let buyer = String(buyerVal).trim();
+                      if (buyer && buyer.toUpperCase() !== 'UNDEFINED' && buyer.toUpperCase() !== 'N/A' && buyer.toUpperCase() !== 'GENERAL') {
+                          const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, '');
+                          if (id && !existingIds.has(id)) {
+                              BUYERS.push({ id: id, name: buyer });
+                              existingIds.add(id);
                           }
-                          
-                          let buyer = String(buyerVal).trim();
-                          if (buyer && buyer.toUpperCase() !== 'UNDEFINED' && buyer.toUpperCase() !== 'N/A' && buyer.toUpperCase() !== 'GENERAL') {
-                              const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, '');
-                              if (id && !existingIds.has(id)) {
-                                  BUYERS.push({ id: id, name: buyer });
-                                  existingIds.add(id);
-                              }
-                          }
-                      });
-                  } catch(e) {
-                      console.error('Error parsing file for buyers', e);
-                  }
-              }
+                      }
+                  });
+              });
           }
       } catch(e) {
           console.error('Error fetching files for buyers', e);

@@ -64,6 +64,10 @@
         };
 
     async function fetchAllDataForOS() {
+        const datesPromise = fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`)
+            .then(r => r.ok ? r.json() : [])
+            .catch(e => []);
+
         try {
             const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
             if (!res.ok) return;
@@ -77,20 +81,8 @@
             const readFiles = async (fileList) => {
                 if (!fileList || fileList.length === 0) return [];
                 const results = await Promise.all(fileList.map(async (file, i) => {
-                    try {
-                        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}`);
-                        if (!fRes.ok) return [];
-                        const ab = await fRes.arrayBuffer();
-                        const wb = XLSX.read(ab, { type: 'array' });
-                        let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                        sheetData.forEach(row => {
-                            row._fileIndex = i;
-                        });
-                        return sheetData;
-                    } catch (e) {
-                        console.error("File read err:", e);
-                        return [];
-                    }
+                    const sheetData = await fetchAndParseFile(file);
+                    return sheetData.map(row => ({ ...row, _fileIndex: i }));
                 }));
                 return results.flat();
             };
@@ -170,21 +162,13 @@
             });
 
             try {
-                const orderNos = Object.keys(osGroupedData);
-                if (orderNos.length > 0) {
-                    const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderNos: orderNos })
+                const savedPlans = await datesPromise;
+                if (savedPlans && savedPlans.length > 0) {
+                    savedPlans.forEach(plan => {
+                        if (osGroupedData[plan.orderNo]) {
+                            osGroupedData[plan.orderNo].dbData = plan;
+                        }
                     });
-                    if (datesRes.ok) {
-                        const savedPlans = await datesRes.json();
-                        savedPlans.forEach(plan => {
-                            if (osGroupedData[plan.orderNo]) {
-                                osGroupedData[plan.orderNo].dbData = plan;
-                            }
-                        });
-                    }
                 }
             } catch (e) { }
 

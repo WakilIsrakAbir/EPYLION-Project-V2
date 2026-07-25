@@ -2,13 +2,20 @@
 // UTILS: Helper Functions
 // ==========================================================
 function getColData(row, keys) {
-    for (let k of keys) {
-        let norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!row) return '';
+    if (!row._normMap) {
+        row._normMap = {};
         for (let rk in row) {
-            if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) {
-                let val = row[rk];
-                return (val === undefined || val === null) ? '' : val;
-            }
+            if (rk.startsWith('_')) continue;
+            let normRK = rk.toLowerCase().replace(/[^a-z0-9]/g, '');
+            row._normMap[normRK] = row[rk];
+        }
+    }
+    for (let k of keys) {
+        let normK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        let val = row._normMap[normK];
+        if (val !== undefined && val !== null) {
+            return val;
         }
     }
     return '';
