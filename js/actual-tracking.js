@@ -178,7 +178,7 @@ async function fetchAllActualTrackingDataForReport() {
         const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
 
         // No pagination — fetch all for report
-        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?limit=5000`);
+        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?limit=0`);
         if (!res.ok) return;
         const data = await res.json();
 
