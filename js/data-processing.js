@@ -1,6 +1,25 @@
 // ==========================================================
 // DATA PROCESSING: Fetch, Merge, Filter
 // ==========================================================
+
+// ===== PERFORMANCE: In-memory cache layer =====
+// Prevents re-downloading and re-processing on every menu/submenu click.
+// Data is only re-fetched when explicitly invalidated (upload/save/delete).
+let _dpCache = {
+    allFiles: null,
+    savedPlans: null,
+    ts: 0,
+    dirty: true
+};
+let _processedByDept = {}; // dept -> { groupedData, buyers }
+const _DP_TTL = 120000; // 2 min: reuse network data within this window
+
+// Call this after any mutation (upload, delete, save, wipe)
+function markDataDirty() {
+    _dpCache.dirty = true;
+    _processedByDept = {};
+}
+
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
     const currentDept = tabId.replace('_report', '');
@@ -203,26 +222,44 @@ function clearGlobalSearch() {
 }
 
 async function fetchAndProcessData(isSilent = false) {
+    const currentDept = activeTabId.replace('_report', '');
+
+    // ===== FAST PATH: If we already processed this dept and data isn't dirty, render instantly =====
+    if (!_dpCache.dirty && _processedByDept[currentDept] && (Date.now() - _dpCache.ts < _DP_TTL)) {
+        groupedData = _processedByDept[currentDept].groupedData;
+        if (isReportMode) {
+            _renderReportUI(currentDept);
+        } else {
+            renderBuyerTabs(_processedByDept[currentDept].buyers);
+            currentPage = 1;
+            renderMainTable();
+        }
+        return;
+    }
+
     if (!isSilent) {
         document.getElementById('loadingData').classList.remove('hidden');
     }
 
-    const currentDept = activeTabId.replace('_report', '');
-
     try {
-        const [res, datesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; }),
-            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`).catch(e => { console.error(e); return null; })
-        ]);
+        // ===== Network: reuse cached responses if still fresh =====
+        let allFiles, savedPlans;
+        if (!_dpCache.dirty && _dpCache.allFiles && (Date.now() - _dpCache.ts < _DP_TTL)) {
+            allFiles = _dpCache.allFiles;
+            savedPlans = _dpCache.savedPlans;
+        } else {
+            const [res, datesRes] = await Promise.all([
+                fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; }),
+                fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`).catch(e => { console.error(e); return null; })
+            ]);
 
-        let allFiles = [];
-        if (res && res.ok) {
-            allFiles = await res.json();
-        }
+            allFiles = [];
+            if (res && res.ok) allFiles = await res.json();
 
-        let savedPlans = [];
-        if (datesRes && datesRes.ok) {
-            savedPlans = await datesRes.json();
+            savedPlans = [];
+            if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
+
+            _dpCache = { allFiles, savedPlans, ts: Date.now(), dirty: false };
         }
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
@@ -245,25 +282,29 @@ async function fetchAndProcessData(isSilent = false) {
         const hasDeptFile = deptFiles.length > 0;
 
         const readFiles = async (fileList) => {
-            let raw = [];
-            for (let i = 0; i < fileList.length; i++) {
-                let file = fileList[i];
+            // PERFORMANCE: Download all files in parallel instead of sequentially
+            const fetchPromises = fileList.map(async (file, i) => {
                 try {
                     const encodedName = encodeURIComponent(file.savedName);
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                    // No ?t=Date.now() — server already sends Cache-Control: immutable for GridFS files
+                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`);
                     if (!fRes.ok) {
                         console.error(`Failed to fetch file: ${file.originalName}`);
-                        continue;
+                        return null;
                     }
                     const ab = await fRes.arrayBuffer();
                     const wb = XLSX.read(ab, { type: 'array' });
                     let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                    sheetData.forEach(row => {
-                        row._fileIndex = i;
-                        raw.push(row);
-                    });
-                } catch (e) { console.error("File read err:", e); }
-            }
+                    sheetData.forEach(row => { row._fileIndex = i; });
+                    return sheetData;
+                } catch (e) { console.error("File read err:", e); return null; }
+            });
+
+            const results = await Promise.all(fetchPromises);
+            let raw = [];
+            results.forEach(sheetData => {
+                if (sheetData) raw.push(...sheetData);
+            });
             return raw;
         };
 
@@ -637,42 +678,7 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         if (isReportMode) {
-            let hasConfirmData = false;
-            let hasTentativeData = false;
-
-            
-            Object.values(groupedData).forEach(group => {
-                if (group.isConfirm) hasConfirmData = true;
-                if (group.isTentative) hasTentativeData = true;
-            });
-
-            const cardCombinedReport = document.getElementById('cardCombinedReport');
-            const reportEmpty = document.getElementById('reportEmptyState');
-            const cardsGrid = document.getElementById('reportCardsGrid');
-
-            const titleEl = document.getElementById('combinedReportTitle');
-            const btnTextEl = document.getElementById('combinedReportBtnText');
-            
-            if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
-            if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
-
-            if (cardCombinedReport) {
-                cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
-            }
-
-            if (!hasConfirmData && !hasTentativeData) {
-                if (cardsGrid) cardsGrid.style.display = 'none';
-                if (reportEmpty) {
-                    reportEmpty.classList.remove('hidden');
-                    reportEmpty.style.display = 'flex';
-                }
-            } else {
-                if (cardsGrid) cardsGrid.style.display = 'grid';
-                if (reportEmpty) {
-                    reportEmpty.classList.add('hidden');
-                    reportEmpty.style.display = 'none';
-                }
-            }
+            _renderReportUI(currentDept);
         }
 
         if (!isReportMode) {
@@ -681,16 +687,49 @@ async function fetchAndProcessData(isSilent = false) {
             renderMainTable();
         }
 
-        if (!isSilent) {
-            document.getElementById('loadingData').classList.add('hidden');
-        }
+        // Store processed data for instant future navigation
+        _processedByDept[currentDept] = {
+            groupedData: groupedData,
+            buyers: Array.from(globalBuyersList)
+        };
 
         document.getElementById('loadingData').classList.add('hidden');
     } catch (e) {
         console.error("Error processing data:", e);
-        if (!isSilent) {
-            document.getElementById('loadingData').classList.add('hidden');
-        }
+        document.getElementById('loadingData').classList.add('hidden');
+    }
+}
+
+// Report mode UI helper (used by both main path and cache fast-path)
+function _renderReportUI(currentDept) {
+    let hasConfirmData = false;
+    let hasTentativeData = false;
+
+    Object.values(groupedData).forEach(group => {
+        if (group.isConfirm) hasConfirmData = true;
+        if (group.isTentative) hasTentativeData = true;
+    });
+
+    const cardCombinedReport = document.getElementById('cardCombinedReport');
+    const reportEmpty = document.getElementById('reportEmptyState');
+    const cardsGrid = document.getElementById('reportCardsGrid');
+
+    const titleEl = document.getElementById('combinedReportTitle');
+    const btnTextEl = document.getElementById('combinedReportBtnText');
+
+    if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
+    if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
+
+    if (cardCombinedReport) {
+        cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
+    }
+
+    if (!hasConfirmData && !hasTentativeData) {
+        if (cardsGrid) cardsGrid.style.display = 'none';
+        if (reportEmpty) { reportEmpty.classList.remove('hidden'); reportEmpty.style.display = 'flex'; }
+    } else {
+        if (cardsGrid) cardsGrid.style.display = 'grid';
+        if (reportEmpty) { reportEmpty.classList.add('hidden'); reportEmpty.style.display = 'none'; }
     }
 }
 

@@ -243,6 +243,7 @@ async function saveFabricPlanning() {
                 existingData.dbData[currentDept] = fabricItemsArr;
                 existingData.dbData[`${currentDept}Status`] = currentStatus;
                 existingData.dbData[`${currentDept}CompletedDate`] = compDate;
+                markDataDirty(); // Invalidate cache so next navigation re-fetches
             } else showToast(`Failed to save ${bookingNo}!`);
         } catch (e) { showToast(`Server Error!`) }
     }

@@ -15,6 +15,7 @@ async function handleExcelUpload() {
         if (res.ok) {
             showToast("Upload Success!");
             document.getElementById('excelFile').value = '';
+            markDataDirty(); // Invalidate caches so next load fetches fresh data
             loadUploadedFiles();
             if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();
         } else { alert("Upload error"); }
@@ -23,7 +24,7 @@ async function handleExcelUpload() {
 
 async function loadUploadedFiles() {
     try {
-        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`);
         const allFiles = await res.json();
         const body = document.getElementById('fileListBody');
 
@@ -66,7 +67,7 @@ async function loadUploadedFiles() {
 async function deleteFileGroup(originalName, category) {
     if (confirm(`Are you sure you want to delete '${originalName}' and all its updated versions?`)) {
         try {
-            const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+            const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`);
             const allFiles = await res.json();
             const filesToDelete = allFiles.filter(f => f.originalName === originalName && (f.category || 'General') === category);
 
@@ -75,6 +76,7 @@ async function deleteFileGroup(originalName, category) {
                 await fetch(`https://abir-backend-api.onrender.com/api/files/${f._id}`, { method: 'DELETE' });
             }
             showToast("All versions deleted!");
+            markDataDirty(); // Invalidate caches
             loadUploadedFiles();
             if (activeTabId !== 'dashboard' && activeTabId !== 'dataManagement') fetchAndProcessData();
         } catch (e) { alert("Delete error"); }

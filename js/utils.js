@@ -1,14 +1,37 @@
 // ==========================================================
 // UTILS: Helper Functions
 // ==========================================================
+
+// ===== PERFORMANCE: Cached column key lookup =====
+// Old getColData was O(keys * columns) per call with repeated .toLowerCase().replace() 
+// Called 1000s of times per page load — this was a massive bottleneck.
+// New version: normalize once per unique key string, build a lookup map once per row object.
+const _normCache = new Map();
+function _norm(key) {
+    if (_normCache.has(key)) return _normCache.get(key);
+    const n = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    _normCache.set(key, n);
+    return n;
+}
+
+const _rowMapCache = new WeakMap();
+function _getRowMap(row) {
+    if (_rowMapCache.has(row)) return _rowMapCache.get(row);
+    const map = {};
+    for (const rk in row) {
+        map[_norm(rk)] = rk;
+    }
+    _rowMapCache.set(row, map);
+    return map;
+}
+
 function getColData(row, keys) {
-    for (let k of keys) {
-        let norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-        for (let rk in row) {
-            if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) {
-                let val = row[rk];
-                return (val === undefined || val === null) ? '' : val;
-            }
+    const map = _getRowMap(row);
+    for (const k of keys) {
+        const actual = map[_norm(k)];
+        if (actual !== undefined) {
+            const val = row[actual];
+            return (val === undefined || val === null) ? '' : val;
         }
     }
     return '';

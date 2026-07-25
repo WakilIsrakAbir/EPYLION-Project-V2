@@ -75,7 +75,7 @@ function closeSidebarMobile() {
                     const res = await fetch('https://abir-backend-api.onrender.com/api/files/clear-all-planning', { method: 'DELETE' });
                     if (res.ok) {
                         showToast("System completely reset! All data and files deleted.");
-
+                        markDataDirty();
                         loadUploadedFiles();
                         await fetchAndProcessData(true);
                         renderMainTable();
