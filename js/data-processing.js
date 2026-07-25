@@ -91,41 +91,91 @@ async function searchGlobalBooking() {
     return;
   }
 
-  // Search via API
   const currentDept = activeTabId.replace("_report", "");
-  try {
-    const res = await fetch(
-      `${API_BASE}/api/orders?dept=${currentDept}&status=${activeMainTab === "All" ? "Completed" : activeMainTab}&search=${encodeURIComponent(searchVal)}&limit=1`,
-    );
-    if (res.ok) {
-      const data = await res.json();
-      if (data.orders && data.orders.length > 0) {
-        const order = data.orders[0];
-        showToast(`Found "${order.orderNo}" — opening...`);
-        openDetailedView(encodeURIComponent(order.orderNo));
-      } else {
-        // Try other statuses
-        for (const status of ["Pending", "Confirm", "Tentative", "Completed"]) {
-          if (status === activeMainTab) continue;
-          const r2 = await fetch(
-            `${API_BASE}/api/orders?dept=${currentDept}&status=${status}&search=${encodeURIComponent(searchVal)}&limit=1`,
-          );
-          if (r2.ok) {
-            const d2 = await r2.json();
-            if (d2.orders && d2.orders.length > 0) {
-              activeMainTab = status === "Completed" ? "All" : status;
-              showToast(`Found "${d2.orders[0].orderNo}" in ${status} list!`);
-              activateMainTab(activeMainTab);
-              return;
-            }
-          }
+
+  // Search across all statuses to find the order
+  const statuses = ["Pending", "Confirm", "Tentative", "Completed"];
+  let foundOrder = null;
+  let foundStatus = "";
+
+  for (const status of statuses) {
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/orders?dept=${currentDept}&status=${status}&search=${encodeURIComponent(searchVal)}&limit=1`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.orders && data.orders.length > 0) {
+          foundOrder = data.orders[0];
+          foundStatus = status;
+          break;
         }
-        showToast(`Booking "${searchVal}" not found in this department!`);
       }
+    } catch (e) {}
+  }
+
+  if (!foundOrder) {
+    showToast(`Booking "${searchVal}" not found in this department!`);
+    return;
+  }
+
+  // Switch to the correct tab
+  activeMainTab = foundStatus === "Completed" ? "All" : foundStatus;
+  const tabs = ["Pending", "Confirm", "Tentative", "All"];
+  tabs.forEach((t) => {
+    const btn = document.getElementById("btn" + t);
+    if (btn) {
+      if (t === activeMainTab)
+        btn.className =
+          "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+      else
+        btn.className =
+          "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
     }
-  } catch (e) {
-    console.error("Search error:", e);
-    showToast("Search failed. Try again.");
+  });
+
+  activeBuyer = foundOrder.buyer || "";
+  currentPage = 1;
+
+  // Fetch page with search to highlight
+  const searchParams = new URLSearchParams({
+    dept: currentDept,
+    status: foundStatus,
+    page: "1",
+    limit: String(rowsPerPage),
+    search: searchVal,
+  });
+
+  const listRes = await fetch(`${API_BASE}/api/orders?${searchParams}`).catch(
+    () => null,
+  );
+  if (listRes && listRes.ok) {
+    const listData = await listRes.json();
+    renderBuyerTabs(listData.buyers || []);
+    renderMainTableFromAPI(listData, foundStatus);
+
+    // Highlight the found row
+    setTimeout(() => {
+      const rows = document.querySelectorAll("#mainTableBody tr");
+      rows.forEach((row) => {
+        const bookingCell = row.querySelector("td:nth-child(2)");
+        if (
+          bookingCell &&
+          bookingCell.innerText
+            .trim()
+            .toLowerCase()
+            .includes(searchVal.toLowerCase())
+        ) {
+          row.style.backgroundColor = "#fef08a";
+          row.style.transition = "background-color 0.3s";
+          row.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => {
+            row.style.backgroundColor = "";
+          }, 4000);
+        }
+      });
+      showToast(`Found "${foundOrder.orderNo}" in ${foundStatus} list!`);
+    }, 200);
   }
 }
 

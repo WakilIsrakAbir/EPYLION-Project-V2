@@ -9,7 +9,7 @@ let activeMainMenu = 'detailed';
 let activeDetailedDepartment = 'knitting';
 let activeSummaryDepartment = 'knitting';
 
-let globalLoadData = { knitting: [], dyeing: [], delivery: [] };
+let globalLoadData = { knitting: [], dyeing: [], delivery: [], yd: [], deliveryfloor: [] };
 
 const LOAD_REPORT_CONFIG = {
     knitting: {
@@ -24,6 +24,16 @@ const LOAD_REPORT_CONFIG = {
     },
     delivery: {
         name: 'Delivery',
+        pendingQtyField: 'DeliBal',
+        columns: ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'Buyer', 'RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'DeliBal', 'RFD', 'Slowmoving']
+    },
+    yd: {
+        name: 'YD',
+        pendingQtyField: 'YD DELIVERY BALANCE',
+        columns: ['OrderNo', 'Booking Type', 'YDB', 'Buyer', 'YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE']
+    },
+    deliveryfloor: {
+        name: 'Delivery (Floor)',
         pendingQtyField: 'DeliBal',
         columns: ['OrderNo', 'Color', 'FabricConstruction', 'GSM', 'Buyer', 'RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'DeliBal', 'RFD', 'Slowmoving']
     }
@@ -85,10 +95,10 @@ function showLoadCalculation(menuName) {
 }
 
 async function fetchLoadCalculationData() {
-    globalLoadData = { knitting: [], dyeing: [], delivery: [] };
+    globalLoadData = { knitting: [], dyeing: [], delivery: [], yd: [], deliveryfloor: [] };
 
     // Fetch confirmed + tentative plan data for each department from API
-    const depts = ['knitting', 'dyeing', 'delivery'];
+    const depts = ['knitting', 'dyeing', 'delivery', 'yd'];
 
     const fetchPromises = depts.map(async (dept) => {
         try {
@@ -144,6 +154,14 @@ async function fetchLoadCalculationData() {
                     row.Slowmoving = getColData(itemData, ['Slowmoving']);
                     row.Unit = getColData(itemData, ['Unit']);
                     row.ProcessName = getColData(itemData, ['Process Name', 'ProcessName', 'Process']);
+                    // YD specific fields
+                    row['Booking Type'] = getColData(itemData, ['Booking Type', 'Type', 'YD Type']);
+                    row.YDB = getColData(itemData, ['YDB', 'YD B']);
+                    row['YD REQ.'] = getColData(itemData, ['YD REQ.', 'YD REQ', 'Requirement']);
+                    row.DYED = getColData(itemData, ['DYED', 'Dyed']);
+                    row['YD BALANCE'] = getColData(itemData, ['YD BALANCE', 'YD Balance']);
+                    row['YD Delivered'] = getColData(itemData, ['YD Delivered', 'Delivered']);
+                    row['YD DELIVERY BALANCE'] = getColData(itemData, ['YD DELIVERY BALANCE', 'YD Balance_1', 'YD Delivery Balance']);
 
                     // Calculate DeliBal if missing
                     if (!row.DeliBal || loadNumber(row.DeliBal) === 0) {
@@ -157,6 +175,17 @@ async function fetchLoadCalculationData() {
                     row.planType = savedItem.planType;
 
                     globalLoadData[dept].push(row);
+
+                    // Also add to deliveryfloor if it has floor dates
+                    if (dept === 'delivery' && savedItem.floorStartDate && savedItem.floorEndDate) {
+                        if (savedItem.floorPlanType === 'Confirm' || savedItem.floorPlanType === 'Tentative') {
+                            const floorRow = { ...row };
+                            floorRow.planStart = savedItem.floorStartDate;
+                            floorRow.planEnd = savedItem.floorEndDate;
+                            floorRow.planType = savedItem.floorPlanType;
+                            globalLoadData.deliveryfloor.push(floorRow);
+                        }
+                    }
                 });
             });
         } catch (e) {

@@ -80,7 +80,7 @@ async function fetchActualTrackingData() {
         const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
 
         // Use new paginated tracking API — no more Excel download!
-        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?limit=200`);
+        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}`);
         if (!res.ok) return;
         const data = await res.json();
 

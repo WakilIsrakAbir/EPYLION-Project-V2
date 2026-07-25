@@ -363,7 +363,7 @@ async function openDetailedView(encodedBookingNo) {
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${formatDateDisplay(knitPlan.end)}</td>
             `;
 
-            const numCols = ['RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
+            const numCols = ['RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'DeliBal', 'RFD', 'Slowmoving', 'FFStock'];
             numCols.forEach(c => {
                 let val = item.itemData[c];
                 itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
