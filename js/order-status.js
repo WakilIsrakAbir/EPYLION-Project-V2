@@ -63,8 +63,8 @@
 
     async function fetchAllDataForOS() {
         try {
-            // Use new paginated Order API — no more Excel download!
-            const res = await fetch(`${API_BASE}/api/orders?dept=knitting&status=Pending&limit=1000`);
+            // Fetch ALL orders (no dept/status filter) for Order Status page
+            const res = await fetch(`${API_BASE}/api/orders/all-list?limit=200`);
             if (!res.ok) return;
             const data = await res.json();
 
@@ -79,44 +79,6 @@
                     status: order.status || 'N/A'
                 };
             });
-
-            // Also fetch orders from other statuses to show all active orders
-            const [confirmRes, tentativeRes] = await Promise.all([
-                fetch(`${API_BASE}/api/orders?dept=knitting&status=Confirm&limit=1000`).catch(() => null),
-                fetch(`${API_BASE}/api/orders?dept=knitting&status=Tentative&limit=1000`).catch(() => null)
-            ]);
-
-            if (confirmRes && confirmRes.ok) {
-                const cd = await confirmRes.json();
-                cd.orders.forEach(order => {
-                    if (!osGroupedData[order.orderNo]) {
-                        osGroupedData[order.orderNo] = {
-                            bookingNo: order.orderNo,
-                            buyers: new Set([order.buyer || 'N/A']),
-                            excelItems: [],
-                            mergedItems: [],
-                            dbData: null,
-                            status: order.status || 'N/A'
-                        };
-                    }
-                });
-            }
-
-            if (tentativeRes && tentativeRes.ok) {
-                const td = await tentativeRes.json();
-                td.orders.forEach(order => {
-                    if (!osGroupedData[order.orderNo]) {
-                        osGroupedData[order.orderNo] = {
-                            bookingNo: order.orderNo,
-                            buyers: new Set([order.buyer || 'N/A']),
-                            excelItems: [],
-                            mergedItems: [],
-                            dbData: null,
-                            status: order.status || 'N/A'
-                        };
-                    }
-                });
-            }
 
             // Apply buyer permissions
             Object.keys(osGroupedData).forEach(bNo => {
