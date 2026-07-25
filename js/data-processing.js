@@ -395,11 +395,23 @@ function renderMainTableFromAPI(data, status) {
 // Fetch report data (Confirm + Tentative with full items)
 async function fetchReportData(currentDept) {
   try {
+    // Only check if data exists (fast count query) — don't fetch full data
     const res = await fetch(
-      `${API_BASE}/api/orders/report/${currentDept}`,
+      `${API_BASE}/api/orders?dept=${currentDept}&status=Confirm&limit=1`,
     );
-    if (!res || !res.ok) return;
-    const data = await res.json();
+    const tentRes = await fetch(
+      `${API_BASE}/api/orders?dept=${currentDept}&status=Tentative&limit=1`,
+    );
+
+    let hasConfirm = false, hasTentative = false;
+    if (res && res.ok) {
+      const d = await res.json();
+      hasConfirm = d.total > 0;
+    }
+    if (tentRes && tentRes.ok) {
+      const d = await tentRes.json();
+      hasTentative = d.total > 0;
+    }
 
     const cardCombinedReport = document.getElementById("cardCombinedReport");
     const reportEmpty = document.getElementById("reportEmptyState");
@@ -412,7 +424,7 @@ async function fetchReportData(currentDept) {
     if (btnTextEl)
       btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
 
-    const hasData = data.orders && data.orders.length > 0;
+    const hasData = hasConfirm || hasTentative;
 
     if (cardCombinedReport)
       cardCombinedReport.style.display = hasData ? "flex" : "none";
@@ -429,9 +441,21 @@ async function fetchReportData(currentDept) {
         reportEmpty.classList.add("hidden");
         reportEmpty.style.display = "none";
       }
+    }
+  } catch (e) {
+    console.error("Report fetch error:", e);
+  }
+}
 
-      // Store report data for export
-      groupedData = {};
+// Actually fetch full report data — called when download button is clicked
+async function fetchFullReportDataForExport(currentDept) {
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/report/${currentDept}`);
+    if (!res || !res.ok) return;
+    const data = await res.json();
+
+    groupedData = {};
+    if (data.orders) {
       data.orders.forEach((order) => {
         const planData = data.planMap[order.orderNo];
         const itemsField = `${currentDept}Items`;
@@ -451,13 +475,19 @@ async function fetchReportData(currentDept) {
   }
 }
 
-function exportCombinedReportToExcel() {
+async function exportCombinedReportToExcel() {
+  const currentDeptLower = activeTabId.replace("_report", "");
+
+  showToast(`Loading ${currentDeptLower.toUpperCase()} report data...`);
+
+  // Fetch full data on demand (not pre-loaded)
+  await fetchFullReportDataForExport(currentDeptLower);
+
   if (!groupedData || Object.keys(groupedData).length === 0) {
     showToast("No data available to export!");
     return;
   }
 
-  const currentDeptLower = activeTabId.replace("_report", "");
   const currentDept = currentDeptLower.toUpperCase();
   let allRows = [];
 
