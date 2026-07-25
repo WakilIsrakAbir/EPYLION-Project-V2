@@ -2,23 +2,8 @@
 // DATA PROCESSING: Fetch, Merge, Filter
 // ==========================================================
 
-// ===== PERFORMANCE: In-memory cache layer =====
-// Prevents re-downloading and re-processing on every menu/submenu click.
-// Data is only re-fetched when explicitly invalidated (upload/save/delete).
-let _dpCache = {
-    allFiles: null,
-    savedPlans: null,
-    ts: 0,
-    dirty: true
-};
-let _processedByDept = {}; // dept -> { groupedData, buyers }
-const _DP_TTL = 120000; // 2 min: reuse network data within this window
-
-// Call this after any mutation (upload, delete, save, wipe)
-function markDataDirty() {
-    _dpCache.dirty = true;
-    _processedByDept = {};
-}
+// Called after mutations — kept for compatibility with other files that call it
+function markDataDirty() { /* no-op: no caching */ }
 
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
@@ -224,43 +209,21 @@ function clearGlobalSearch() {
 async function fetchAndProcessData(isSilent = false) {
     const currentDept = activeTabId.replace('_report', '');
 
-    // ===== FAST PATH: If we already processed this dept and data isn't dirty, render instantly =====
-    if (!_dpCache.dirty && _processedByDept[currentDept] && (Date.now() - _dpCache.ts < _DP_TTL)) {
-        groupedData = _processedByDept[currentDept].groupedData;
-        if (isReportMode) {
-            _renderReportUI(currentDept);
-        } else {
-            renderBuyerTabs(_processedByDept[currentDept].buyers);
-            currentPage = 1;
-            renderMainTable();
-        }
-        return;
-    }
-
     if (!isSilent) {
         document.getElementById('loadingData').classList.remove('hidden');
     }
 
     try {
-        // ===== Network: reuse cached responses if still fresh =====
-        let allFiles, savedPlans;
-        if (!_dpCache.dirty && _dpCache.allFiles && (Date.now() - _dpCache.ts < _DP_TTL)) {
-            allFiles = _dpCache.allFiles;
-            savedPlans = _dpCache.savedPlans;
-        } else {
-            const [res, datesRes] = await Promise.all([
-                fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; }),
-                fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`).catch(e => { console.error(e); return null; })
-            ]);
+        const [res, datesRes] = await Promise.all([
+            fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; }),
+            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`).catch(e => { console.error(e); return null; })
+        ]);
 
-            allFiles = [];
-            if (res && res.ok) allFiles = await res.json();
+        let allFiles = [];
+        if (res && res.ok) allFiles = await res.json();
 
-            savedPlans = [];
-            if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
-
-            _dpCache = { allFiles, savedPlans, ts: Date.now(), dirty: false };
-        }
+        let savedPlans = [];
+        if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
         const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
@@ -678,7 +641,35 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         if (isReportMode) {
-            _renderReportUI(currentDept);
+            let hasConfirmData = false;
+            let hasTentativeData = false;
+
+            Object.values(groupedData).forEach(group => {
+                if (group.isConfirm) hasConfirmData = true;
+                if (group.isTentative) hasTentativeData = true;
+            });
+
+            const cardCombinedReport = document.getElementById('cardCombinedReport');
+            const reportEmpty = document.getElementById('reportEmptyState');
+            const cardsGrid = document.getElementById('reportCardsGrid');
+
+            const titleEl = document.getElementById('combinedReportTitle');
+            const btnTextEl = document.getElementById('combinedReportBtnText');
+
+            if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
+            if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
+
+            if (cardCombinedReport) {
+                cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
+            }
+
+            if (!hasConfirmData && !hasTentativeData) {
+                if (cardsGrid) cardsGrid.style.display = 'none';
+                if (reportEmpty) { reportEmpty.classList.remove('hidden'); reportEmpty.style.display = 'flex'; }
+            } else {
+                if (cardsGrid) cardsGrid.style.display = 'grid';
+                if (reportEmpty) { reportEmpty.classList.add('hidden'); reportEmpty.style.display = 'none'; }
+            }
         }
 
         if (!isReportMode) {
@@ -687,49 +678,10 @@ async function fetchAndProcessData(isSilent = false) {
             renderMainTable();
         }
 
-        // Store processed data for instant future navigation
-        _processedByDept[currentDept] = {
-            groupedData: groupedData,
-            buyers: Array.from(globalBuyersList)
-        };
-
         document.getElementById('loadingData').classList.add('hidden');
     } catch (e) {
         console.error("Error processing data:", e);
         document.getElementById('loadingData').classList.add('hidden');
-    }
-}
-
-// Report mode UI helper (used by both main path and cache fast-path)
-function _renderReportUI(currentDept) {
-    let hasConfirmData = false;
-    let hasTentativeData = false;
-
-    Object.values(groupedData).forEach(group => {
-        if (group.isConfirm) hasConfirmData = true;
-        if (group.isTentative) hasTentativeData = true;
-    });
-
-    const cardCombinedReport = document.getElementById('cardCombinedReport');
-    const reportEmpty = document.getElementById('reportEmptyState');
-    const cardsGrid = document.getElementById('reportCardsGrid');
-
-    const titleEl = document.getElementById('combinedReportTitle');
-    const btnTextEl = document.getElementById('combinedReportBtnText');
-
-    if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
-    if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
-
-    if (cardCombinedReport) {
-        cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
-    }
-
-    if (!hasConfirmData && !hasTentativeData) {
-        if (cardsGrid) cardsGrid.style.display = 'none';
-        if (reportEmpty) { reportEmpty.classList.remove('hidden'); reportEmpty.style.display = 'flex'; }
-    } else {
-        if (cardsGrid) cardsGrid.style.display = 'grid';
-        if (reportEmpty) { reportEmpty.classList.add('hidden'); reportEmpty.style.display = 'none'; }
     }
 }
 

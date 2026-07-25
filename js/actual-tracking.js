@@ -77,20 +77,14 @@ async function loadActualTracking(deptKey) {
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
-        // ===== PERFORMANCE: Reuse cached network data if available =====
-        let allFiles, savedPlans;
-        if (!_dpCache.dirty && _dpCache.allFiles && (Date.now() - _dpCache.ts < _DP_TTL)) {
-            allFiles = _dpCache.allFiles;
-            savedPlans = _dpCache.savedPlans;
-        } else {
-            const [datesRes, filesRes] = await Promise.all([
-                fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`),
-                fetch(`https://abir-backend-api.onrender.com/api/files/all`)
-            ]);
-            savedPlans = datesRes.ok ? await datesRes.json() : [];
-            allFiles = filesRes.ok ? await filesRes.json() : [];
-            _dpCache = { allFiles, savedPlans, ts: Date.now(), dirty: false };
-        }
+        // Fetch all data in parallel
+        const [datesRes, filesRes] = await Promise.all([
+            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`),
+            fetch(`https://abir-backend-api.onrender.com/api/files/all`)
+        ]);
+
+        const savedPlans = datesRes.ok ? await datesRes.json() : [];
+        const allFiles = filesRes.ok ? await filesRes.json() : [];
 
         // Also fetch general file data for booking dates and buyer info
         const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
