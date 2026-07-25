@@ -21,28 +21,38 @@ let buyersLoaded = false;
               });
               const filesToRead = Array.from(latestFilesMap.values());
               
-              const sheetResults = await Promise.all(filesToRead.map(file => fetchAndParseFile(file)));
-              sheetResults.forEach(sheetData => {
-                  sheetData.forEach(row => {
-                      let buyerVal = '';
-                      for (const k of Object.keys(row)) {
-                          const cleanK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                          if (['buyer', 'buyername', 'customer'].includes(cleanK)) {
-                              buyerVal = row[k];
-                              break;
-                          }
-                      }
+              for (let file of filesToRead) {
+                  try {
+                      const encodedName = encodeURIComponent(file.savedName);
+                      const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                      if (!fRes.ok) continue;
+                      const ab = await fRes.arrayBuffer();
+                      const wb = XLSX.read(ab, { type: 'array' });
+                      let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                       
-                      let buyer = String(buyerVal).trim();
-                      if (buyer && buyer.toUpperCase() !== 'UNDEFINED' && buyer.toUpperCase() !== 'N/A' && buyer.toUpperCase() !== 'GENERAL') {
-                          const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, '');
-                          if (id && !existingIds.has(id)) {
-                              BUYERS.push({ id: id, name: buyer });
-                              existingIds.add(id);
+                      sheetData.forEach(row => {
+                          let buyerVal = '';
+                          for (const k of Object.keys(row)) {
+                              const cleanK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                              if (['buyer', 'buyername', 'customer'].includes(cleanK)) {
+                                  buyerVal = row[k];
+                                  break;
+                              }
                           }
-                      }
-                  });
-              });
+                          
+                          let buyer = String(buyerVal).trim();
+                          if (buyer && buyer.toUpperCase() !== 'UNDEFINED' && buyer.toUpperCase() !== 'N/A' && buyer.toUpperCase() !== 'GENERAL') {
+                              const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              if (id && !existingIds.has(id)) {
+                                  BUYERS.push({ id: id, name: buyer });
+                                  existingIds.add(id);
+                              }
+                          }
+                      });
+                  } catch(e) {
+                      console.error('Error parsing file for buyers', e);
+                  }
+              }
           }
       } catch(e) {
           console.error('Error fetching files for buyers', e);
@@ -80,18 +90,22 @@ let buyersLoaded = false;
     {title:'Data Upload & Management', icon:'fa-upload', items:[
       ['uploadGeneral','Upload General Data'], ['uploadYD','Upload YD Data'],
       ['uploadKnitting','Upload Knitting Data'], ['uploadDyeing','Upload Dyeing Data'], ['uploadFinishing','Upload Finishing Data'],
-      ['uploadDelivery','Upload Delivery Data'], ['wipeSystem','Wipe System Data']
+      ['uploadDelivery','Upload Delivery Data'], ['viewFiles','View Uploaded Files'], ['deleteFiles','Delete Uploaded Files'], ['wipeSystem','Wipe System Data']
     ]},
-    {title:'Plan Save Permissions', icon:'fa-floppy-disk', items:[
+    {title:'Planning Save Permissions', icon:'fa-floppy-disk', items:[
       ['saveYD','Save YD Planning'], ['saveKnitting','Save Knitting Planning'], ['saveDyeing','Save Dyeing Planning'],
-      ['saveFinishing','Save Finishing Planning'], ['saveDelivery','Save Delivery Planning']
-    ]},
-    {title:'Actual Tracking Save Permissions', icon:'fa-floppy-disk', items:[
-      ['saveActualYD','Save YD Actual'], ['saveActualKnitting','Save Knitting Actual'], ['saveActualDyeing','Save Dyeing Actual'],
-      ['saveActualFinishing','Save Finishing Actual'], ['saveActualDelivery','Save Delivery Actual'], ['saveActualDeliveryFloor','Save Delivery (Floor) Actual']
+      ['saveFinishing','Save Finishing Planning'], ['saveDelivery','Save Delivery Planning'], ['saveActual','Save Plan vs Actual']
     ]},
     {title:'Order Workflow Actions', icon:'fa-arrows-rotate', items:[
-      ['editConfirmedPlan','Edit Confirmed Plan'], ['bypassDownstreamConfirm','Bypass Downstream Confirm']
+      ['confirmPlan','Move to Confirm'], ['tentativePlan','Move to Tentative'], ['completeOrder','Mark Order Completed'],
+      ['reopenOrder','Reopen Completed Order'], ['changeOrderStatus','Change Order Status'], ['deletePlan','Delete Planning Data']
+    ]},
+    {title:'Data Editing Actions', icon:'fa-pen-to-square', items:[
+      ['editDates','Edit Production Dates'], ['editActualQty','Edit Actual Quantity'], ['editRemarks','Edit Internal Remarks'],
+      ['bulkUpdate','Bulk Update'], ['globalSearch','Global Booking Search']
+    ]},
+    {title:'User Management', icon:'fa-user-shield', items:[
+      ['createUsers','Create Users'], ['editUsers','Edit Users'], ['deleteUsers','Delete Users'], ['resetPassword','Reset Password'], ['changePermissions','Change Permissions']
     ]}
   ];
 
@@ -118,13 +132,9 @@ let buyersLoaded = false;
       ['loadDetailedKnitting', 'Detailed Load (Knitting)'],
       ['loadDetailedDyeing', 'Detailed Load (Dyeing)'],
       ['loadDetailedDelivery', 'Detailed Load (Delivery)'],
-      ['loadDetailedYD', 'Detailed Load (YD)'],
-      ['loadDetailedDeliveryFloor', 'Detailed Load (Delivery Floor)'],
       ['loadSummaryKnitting', 'Load Summary (Knitting)'],
       ['loadSummaryDyeing', 'Load Summary (Dyeing)'],
-      ['loadSummaryDelivery', 'Load Summary (Delivery)'],
-      ['loadSummaryYD', 'Load Summary (YD)'],
-      ['loadSummaryDeliveryFloor', 'Load Summary (Delivery Floor)']
+      ['loadSummaryDelivery', 'Load Summary (Delivery)']
     ]}
   ];
   
@@ -144,17 +154,18 @@ let buyersLoaded = false;
       Object.keys(p.menus).forEach(k => setMenu(k)); setAllObj(p.actions); setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Approver') {
       ['orderManagement','reports','actualTracking','trackingReports','loadCalculation'].forEach(k => setMenu(k));
-      ['editConfirmedPlan'].forEach(k=>p.actions[k]=true);
+      ['confirmPlan','tentativePlan','completeOrder','reopenOrder','changeOrderStatus','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
       setAllObj(p.downloads); p.buyers.accessType='all';
     } else if (role === 'Planner') {
       ['orderManagement','reports','actualTracking','loadCalculation'].forEach(k => setMenu(k));
       p.menus.dataManagement.view=true;
-      ['uploadGeneral','uploadYD','uploadKnitting','uploadDyeing','uploadFinishing','uploadDelivery'].forEach(k=>p.actions[k]=true);
-      ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActualYD','saveActualKnitting','saveActualDyeing','saveActualFinishing','saveActualDelivery','saveActualDeliveryFloor'].forEach(k=>p.actions[k]=true);
+      p.actions.viewFiles=true;
+      ['saveYD','saveKnitting','saveDyeing','saveFinishing','saveDelivery','saveActual','tentativePlan','editDates','editActualQty','editRemarks','globalSearch'].forEach(k=>p.actions[k]=true);
 
       ['reportUpdatedExcelYD','reportUpdatedExcelKnitting','reportUpdatedExcelDyeing','reportUpdatedExcelFinishing','reportUpdatedExcelDelivery','osDetailedExcel','osDetailedPdf','loadDetailedKnitting','loadDetailedDyeing','loadDetailedDelivery','loadSummaryKnitting','loadSummaryDyeing','loadSummaryDelivery'].forEach(k=>p.downloads[k]=true); p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next','marks'];
     } else {
       ['reports','trackingReports'].forEach(k => setMenu(k));
+      ['globalSearch'].forEach(k=>p.actions[k]=true);
 
       ['trackingYD','trackingKnitting','trackingDyeing','trackingFinishing','trackingDelivery','trackingDeliveryFloor'].forEach(k=>p.downloads[k]=true);
       p.buyers.accessType='selected'; p.buyers.buyerIds=['hm','next'];
@@ -270,25 +281,11 @@ let buyersLoaded = false;
 
       users = rawUsers.map(u => {
         let isLive = false;
-        let isFakeLastActive = false;
-        
-        // The backend occasionally sends `lastActive = new Date()` on the fly for users who have never logged in.
-        // We can detect this because the generated `lastActive` will be exactly when the API was called (close to `now`),
-        // but their `updatedAt` (if they have one) will remain untouched in the database.
         if (u.lastActive) {
-            const lastActiveTime = new Date(u.lastActive).getTime();
-            const isGeneratedNow = Math.abs(now - lastActiveTime) < 60000;
-            const isUpdatedAtNow = u.updatedAt ? (Math.abs(now - new Date(u.updatedAt).getTime()) < 60000) : false;
-            
-            if (isGeneratedNow && !isUpdatedAtNow) {
-                isFakeLastActive = true;
-            }
-        }
-
-        if (u.lastActive && !isFakeLastActive) {
            const diff = now - new Date(u.lastActive).getTime();
-           // Allow up to 5 minutes of clock skew (-300000ms) to accommodate users with slightly out-of-sync clocks
-           isLive = diff >= -300000 && diff < liveThreshold;
+           // Strict check: diff must be between -60 seconds (clock skew) and the threshold.
+           // This prevents users with future timestamps (e.g. timezone bugs) from always appearing active.
+           isLive = diff >= -60000 && diff < liveThreshold;
         }
 
         return {
@@ -297,7 +294,7 @@ let buyersLoaded = false;
           role: u.role,
           status: u.status || 'active',
           createdAt: new Date(u.createdAt).toLocaleDateString(),
-          lastLogin: (u.lastActive && !isFakeLastActive) ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]` : 'Never',
+          lastLogin: u.lastActive ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]` : 'Never',
           isLive: isLive,
           passwordHint: u.password || 'Hidden',
           permissions: u.permissions || makeTemplate(u.role)
@@ -309,12 +306,10 @@ let buyersLoaded = false;
 
       // Loading state is automatically replaced by renderUsers()
 
-      // Removed auto-refresh to prevent blinking
-      // Instead, we use a silent heartbeat to keep the user's online status active on the server
       if (!liveUpdateInterval) {
         liveUpdateInterval = setInterval(() => {
-            fetch('https://abir-backend-api.onrender.com/api/auth/users', { headers: { 'Authorization': `Bearer ${token}` } }).catch(()=>{});
-        }, 30000);
+            loadUsers(true);
+        }, 15000);
       }
 
     } catch (err) {
@@ -382,6 +377,8 @@ let buyersLoaded = false;
     const liveCount = users.filter(u => u.isLive).length;
     document.getElementById('statActive').textContent = liveCount;
     document.getElementById('statAdmins').textContent = users.filter(u=>u.role==='Admin').length;
+    document.getElementById('statCustom').textContent = users.filter(u=>JSON.stringify(u.permissions)!==JSON.stringify(makeTemplate(u.role))).length;
+    document.getElementById('statBuyerRestricted').textContent = users.filter(u=>u.permissions.buyers.accessType==='selected').length;
   }
   
   function buyerNames(p) {

@@ -3,7 +3,6 @@
 // ==========================================================
 function openDetailedView(encodedBookingNo) {
     const bookingNo = decodeURIComponent(encodedBookingNo);
-
     let data = groupedData[bookingNo];
     if (!data) return;
 
@@ -224,7 +223,7 @@ function openDetailedView(encodedBookingNo) {
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${formatDateDisplay(knitPlan.end)}</td>
             `;
 
-            const numCols = ['RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'DeliBal', 'RFD', 'Slowmoving', 'FFStock'];
+            const numCols = ['RequiredQtyKgs', 'NetReceivedQtyKgs', 'NetDeliveryQtyKgs', 'RFD', 'Slowmoving', 'FFStock'];
             numCols.forEach(c => {
                 let val = item.itemData[c];
                 itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${val !== undefined && val !== null ? val : ''}</td>`;
@@ -288,16 +287,8 @@ function openDetailedView(encodedBookingNo) {
     });
     itemBody.innerHTML = itemHtml;
 
-    let canEditConfirmed = false;
-    const permsStr = localStorage.getItem('permissions');
-    if (permsStr) {
-        try {
-            const permissions = JSON.parse(permsStr);
-            if (permissions && permissions.actions && permissions.actions.editConfirmedPlan) {
-                canEditConfirmed = true;
-            }
-        } catch(e) {}
-    }
+    const userRole = localStorage.getItem('role');
+    const isAdmin = userRole ? (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'approver') : false;
 
     document.querySelectorAll('#detFabricItemsBody .fabric-row').forEach(row => {
         const planSelect = row.querySelector('.row-plan-type');
@@ -306,7 +297,7 @@ function openDetailedView(encodedBookingNo) {
 
         const isConfirmed = planSelect && planSelect.value === 'Confirm';
 
-        if (isConfirmed && !canEditConfirmed) {
+        if (isConfirmed && !isAdmin) {
             if (planSelect) planSelect.disabled = true;
             if (startInput) startInput.disabled = true;
             if (endInput) endInput.disabled = true;

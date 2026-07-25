@@ -13,21 +13,6 @@ async function loadActualTracking(deptKey) {
     // Show Plan vs Actual view
     const pvaView = document.getElementById('planVsActualView');
     if (pvaView) pvaView.classList.remove('hidden');
-    
-    const permsStr = localStorage.getItem('permissions');
-    if (permsStr) {
-        try {
-            const permissions = JSON.parse(permsStr);
-            if (permissions && permissions.actions) {
-                const btn = document.getElementById('btnSaveActual');
-                if (btn) {
-                    const deptMap = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery', deliveryfloor: 'DeliveryFloor' };
-                    const key = 'saveActual' + (deptMap[deptKey] || '');
-                    btn.style.display = permissions.actions[key] ? '' : 'none';
-                }
-            }
-        } catch(e) {}
-    }
 
     const uniqueId = `actualTracking_${deptKey}`;
     activeTabId = uniqueId;
@@ -92,15 +77,13 @@ async function loadActualTracking(deptKey) {
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
-        // Fetch saved plan data from DB for this specific department
-        const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
-        const [datesRes, filesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/dept-dates/${dbDeptKey}?t=${Date.now()}`),
-            fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`)
-        ]);
-        if (!datesRes || !datesRes.ok) return;
+        // Fetch all saved plan data from DB
+        const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
+        if (!datesRes.ok) return;
         const savedPlans = await datesRes.json();
-        if (!filesRes || !filesRes.ok) return;
+
+        // Also fetch general file data for booking dates and buyer info
+        const filesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
         const allFiles = await filesRes.json();
         const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
         generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -110,28 +93,34 @@ async function fetchActualTrackingData() {
 
         // Read general files for booking date & buyer info
         let generalDataMap = {};
-        const generalSheetResults = await Promise.all(generalFiles.map(file => fetchAndParseFile(file)));
-        generalSheetResults.forEach(sheetData => {
-            sheetData.forEach(row => {
-                let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-                let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
-                if (!bNo) return;
+        for (let file of generalFiles) {
+            try {
+                const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
+                if (!fRes.ok) continue;
+                const ab = await fRes.arrayBuffer();
+                const wb = XLSX.read(ab, { type: 'array' });
+                let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                sheetData.forEach(row => {
+                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
+                    let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
+                    if (!bNo) return;
 
-                let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
+                    let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
+                    let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
 
-                let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
-                let bookingDate = formatExcelDate(dateVal);
+                    let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
+                    let bookingDate = formatExcelDate(dateVal);
 
-                if (!generalDataMap[bNo]) {
-                    generalDataMap[bNo] = { buyers: new Set(), bookingDate: bookingDate };
-                }
-                if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
-                    generalDataMap[bNo].buyers.add(buyer);
-                }
-                if (bookingDate && bookingDate !== 'N/A') generalDataMap[bNo].bookingDate = bookingDate;
-            });
-        });
+                    if (!generalDataMap[bNo]) {
+                        generalDataMap[bNo] = { buyers: new Set(), bookingDate: bookingDate };
+                    }
+                    if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
+                        generalDataMap[bNo].buyers.add(buyer);
+                    }
+                    if (bookingDate && bookingDate !== 'N/A') generalDataMap[bNo].bookingDate = bookingDate;
+                });
+            } catch (e) { console.error('File read err:', e); }
+        }
 
         let deptExtMap = {};
         let targetDeptName = actualDeptKey === 'knitting' ? 'Knitting' :
@@ -145,37 +134,35 @@ async function fetchActualTrackingData() {
             dFilesRaw.forEach(f => latestDFilesMap.set(f.originalName, f));
             const deptFiles = Array.from(latestDFilesMap.values());
 
-            const deptSheetResults = await Promise.all(deptFiles.map(file => fetchAndParseFile(file)));
-            deptSheetResults.forEach(sheetData => {
-                sheetData.forEach(row => {
-                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-                    let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
-                    if (!bNo) return;
+            for (let file of deptFiles) {
+                try {
+                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
+                    if (!fRes.ok) continue;
+                    const ab = await fRes.arrayBuffer();
+                    const wb = XLSX.read(ab, { type: 'array' });
+                    let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                     
-                    if (!deptExtMap[bNo]) deptExtMap[bNo] = { prod: 0, bal: 0 };
-                    
-                    if (actualDeptKey === 'knitting') {
-                        deptExtMap[bNo].prod += Number(getColData(row, ['Knit Prod.'])) || 0;
-                        deptExtMap[bNo].bal += Number(getColData(row, ['Knit. Bala.', 'Knit Bal.'])) || 0;
-                    } else if (actualDeptKey === 'dyeing') {
-                        deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
-                        deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
-                    } else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
-                        deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty'])) || 0;
-                        let bal = Number(getColData(row, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Delivery Balance'])) || 0;
-                        if (bal === 0) {
-                            const req = Number(getColData(row, ['RequiredQtyKgs', 'Req Qty', 'Qty'])) || 0;
-                            const del = Number(getColData(row, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty'])) || 0;
-                            if (req > 0) bal = req - del;
+                    sheetData.forEach(row => {
+                        let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
+                        let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
+                        if (!bNo) return;
+                        
+                        if (!deptExtMap[bNo]) deptExtMap[bNo] = { prod: 0, bal: 0 };
+                        
+                        if (actualDeptKey === 'knitting') {
+                            deptExtMap[bNo].prod += Number(getColData(row, ['Knit Prod.'])) || 0;
+                            deptExtMap[bNo].bal += Number(getColData(row, ['Knit. Bala.', 'Knit Bal.'])) || 0;
+                        } else if (actualDeptKey === 'dyeing') {
+                            deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
+                            deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
+                        } else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
+                            deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs'])) || 0;
+                            deptExtMap[bNo].bal += Number(getColData(row, ['Deli. Bal.', 'Deli Bal.'])) || 0;
                         }
-                        deptExtMap[bNo].bal += bal;
-                    }
-                });
-            });
+                    });
+                } catch (e) { console.error('Dept File read err:', e); }
+            }
         }
-
-        let preloadedPerms = null;
-        try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
 
         // Process saved plans - find orders with confirmed items in the target department
         savedPlans.forEach(plan => {
@@ -253,7 +240,7 @@ async function fetchActualTrackingData() {
                 extBal = deptExtMap[plan.orderNo].bal;
             }
 
-            if (!hasBuyerPermission(displayBuyer.split(','), preloadedPerms)) return;
+            if (!hasBuyerPermission(displayBuyer.split(','))) return;
 
             actualTrackingData.push({
                 orderNo: plan.orderNo,

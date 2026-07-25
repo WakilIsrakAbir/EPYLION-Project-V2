@@ -2,20 +2,13 @@
 // UTILS: Helper Functions
 // ==========================================================
 function getColData(row, keys) {
-    if (!row) return '';
-    if (!row._normMap) {
-        row._normMap = {};
-        for (let rk in row) {
-            if (rk.startsWith('_')) continue;
-            let normRK = rk.toLowerCase().replace(/[^a-z0-9]/g, '');
-            row._normMap[normRK] = row[rk];
-        }
-    }
     for (let k of keys) {
-        let normK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-        let val = row._normMap[normK];
-        if (val !== undefined && val !== null) {
-            return val;
+        let norm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        for (let rk in row) {
+            if (rk.toLowerCase().replace(/[^a-z0-9]/g, '') === norm) {
+                let val = row[rk];
+                return (val === undefined || val === null) ? '' : val;
+            }
         }
     }
     return '';
@@ -44,11 +37,9 @@ function formatDateDisplay(dateStr) {
         return val;
     }
 
-    function hasBuyerPermission(buyersSetOrArray, preloadedPerms = null) {
-        let userPerms = preloadedPerms;
-        if (!userPerms) {
-            try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
-        }
+    function hasBuyerPermission(buyersSetOrArray) {
+        let userPerms = null;
+        try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
         const type = userPerms?.buyers?.accessType || 'all';
         const ids = userPerms?.buyers?.buyerIds || [];
         

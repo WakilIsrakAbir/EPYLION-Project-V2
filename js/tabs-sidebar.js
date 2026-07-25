@@ -1,4 +1,4 @@
-// ==========================================================
+﻿// ==========================================================
 // TABS & SIDEBAR: Tab Management, Sidebar
 // ==========================================================
 function renderTabs() {
@@ -74,8 +74,6 @@ function closeSidebarMobile() {
                 try {
                     const res = await fetch('https://abir-backend-api.onrender.com/api/files/clear-all-planning', { method: 'DELETE' });
                     if (res.ok) {
-                        if (window.parsedFileCacheMap) window.parsedFileCacheMap.clear();
-                        cachedGeneralFilesStr = ""; cachedDeptFilesStr = {}; cachedGeneralRawData = []; cachedDeptRawData = {}; cachedGroupedData = {}; cachedGlobalBuyersList = {};
                         showToast("System completely reset! All data and files deleted.");
 
                         loadUploadedFiles();

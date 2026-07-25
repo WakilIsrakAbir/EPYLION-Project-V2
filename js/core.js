@@ -145,20 +145,6 @@ function applyPermissions() {
             if (a.uploadGeneral || a.uploadYD || a.uploadKnitting || a.uploadDyeing || a.uploadFinishing || a.uploadDelivery) {
                 canUpload = true;
             }
-            
-            const toggleTab = (id, hasPerm) => {
-                const tab = document.getElementById(id);
-                if (tab) tab.style.display = hasPerm ? 'block' : 'none';
-            };
-            toggleTab('tabGeneral', a.uploadGeneral);
-            toggleTab('tabYD', a.uploadYD);
-            toggleTab('tabKnitting', a.uploadKnitting);
-            toggleTab('tabDyeing', a.uploadDyeing);
-            toggleTab('tabFinishing', a.uploadFinishing);
-            toggleTab('tabDelivery', a.uploadDelivery);
-            
-            const wipeZone = document.getElementById('wipeSystemZone');
-            if (wipeZone) wipeZone.style.display = a.wipeSystem ? 'flex' : 'none';
         }
         if (uploadArea) uploadArea.style.display = canUpload ? 'flex' : 'none';
 
@@ -177,13 +163,9 @@ function applyPermissions() {
             toggleBtn('btnLoadDetailedKnitting', d.loadDetailedKnitting);
             toggleBtn('btnLoadDetailedDyeing', d.loadDetailedDyeing);
             toggleBtn('btnLoadDetailedDelivery', d.loadDetailedDelivery);
-            toggleBtn('btnLoadDetailedYD', d.loadDetailedYD);
-            toggleBtn('btnLoadDetailedDeliveryFloor', d.loadDetailedDeliveryFloor);
             toggleBtn('btnLoadSummaryKnitting', d.loadSummaryKnitting);
             toggleBtn('btnLoadSummaryDyeing', d.loadSummaryDyeing);
             toggleBtn('btnLoadSummaryDelivery', d.loadSummaryDelivery);
-            toggleBtn('btnLoadSummaryYD', d.loadSummaryYD);
-            toggleBtn('btnLoadSummaryDeliveryFloor', d.loadSummaryDeliveryFloor);
         }
 
     } else {
@@ -256,8 +238,6 @@ function showDataManagementView() {
     activeTabId = 'dataManagement';
     hideAllCoreViews();
     document.getElementById('dataManagementView').classList.remove('hidden');
-    const loadingData = document.getElementById('loadingData');
-    if (loadingData) loadingData.classList.add('hidden');
     renderTabs();
     closeSidebarMobile();
     setActiveSidebarMenu('menu-data-mgmt');
@@ -299,22 +279,6 @@ async function loadMenuData(deptKey, menuName, mode = 'manage') {
         document.getElementById('reportActionContainer').classList.add('hidden');
         document.getElementById('reportActionContainer').style.display = 'none';
         activateMainTab('Pending');
-        
-        const permsStr = localStorage.getItem('permissions');
-        if (permsStr) {
-            try {
-                const permissions = JSON.parse(permsStr);
-                if (permissions && permissions.actions) {
-                    const a = permissions.actions;
-                    const btn = document.getElementById('saveDatesBtn');
-                    if (btn) {
-                        const deptMap = { yd: 'YD', knitting: 'Knitting', dyeing: 'Dyeing', finishing: 'Finishing', delivery: 'Delivery' };
-                        const key = 'save' + deptMap[deptKey];
-                        btn.style.display = a[key] ? '' : 'none';
-                    }
-                }
-            } catch(e) {}
-        }
     }
 
     if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuName, dept: deptKey, mode: mode });

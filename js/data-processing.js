@@ -1,57 +1,6 @@
 // ==========================================================
 // DATA PROCESSING: Fetch, Merge, Filter
 // ==========================================================
-// ==========================================================
-let cachedGeneralFilesStr = "";
-let cachedDeptFilesStr = {};
-let cachedGeneralRawData = [];
-let cachedDeptRawData = {};
-let cachedGroupedData = {};
-let cachedGlobalBuyersList = {};
-
-// Global in-memory cache for parsed Excel file JSON data
-window.parsedFileCacheMap = window.parsedFileCacheMap || new Map();
-
-/**
- * Universal helper to fetch and parse an Excel spreadsheet from GridFS into JSON.
- * Caches results in window.parsedFileCacheMap keyed by file.savedName.
- * If file is already cached, returns cached JSON immediately (0 ms, 0 network bytes).
- */
-async function fetchAndParseFile(file) {
-    if (!file || !file.savedName) return [];
-    const cacheKey = file.savedName;
-
-    if (window.parsedFileCacheMap.has(cacheKey)) {
-        return window.parsedFileCacheMap.get(cacheKey);
-    }
-
-    try {
-        const encodedName = encodeURIComponent(file.savedName);
-        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-        const timeoutId = controller ? setTimeout(() => controller.abort(), 20000) : null;
-
-        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`, {
-            signal: controller ? controller.signal : undefined
-        });
-        if (timeoutId) clearTimeout(timeoutId);
-
-        if (!fRes.ok) {
-            console.error(`Failed to fetch file: ${file.originalName || file.savedName}`);
-            return [];
-        }
-
-        const ab = await fRes.arrayBuffer();
-        const wb = XLSX.read(ab, { type: 'array' });
-        const sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-
-        window.parsedFileCacheMap.set(cacheKey, sheetData);
-        return sheetData;
-    } catch (e) {
-        console.error("fetchAndParseFile error:", file.originalName || file.savedName, e);
-        return [];
-    }
-}
-
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
     const currentDept = tabId.replace('_report', '');
@@ -259,16 +208,21 @@ async function fetchAndProcessData(isSilent = false) {
     }
 
     const currentDept = activeTabId.replace('_report', '');
-    const datesPromise = fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?dept=${currentDept}`)
-        .then(r => r.ok ? r.json() : [])
-        .catch(e => []);
 
     try {
-        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; });
+        const [res, datesRes] = await Promise.all([
+            fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`).catch(e => { console.error(e); return null; }),
+            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`).catch(e => { console.error(e); return null; })
+        ]);
 
         let allFiles = [];
         if (res && res.ok) {
             allFiles = await res.json();
+        }
+
+        let savedPlans = [];
+        if (datesRes && datesRes.ok) {
+            savedPlans = await datesRes.json();
         }
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
@@ -288,55 +242,33 @@ async function fetchAndProcessData(isSilent = false) {
         const generalFiles = getLatestFiles(generalFilesRaw);
         const deptFiles = getLatestFiles(deptFilesRaw);
 
-        const currentGeneralFilesStr = JSON.stringify(generalFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
-        const currentDeptFilesStr = JSON.stringify(deptFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
-
-        if (
-            currentGeneralFilesStr === cachedGeneralFilesStr &&
-            currentDeptFilesStr === cachedDeptFilesStr[currentDept] &&
-            cachedGroupedData[currentDept] &&
-            cachedGlobalBuyersList[currentDept]
-        ) {
-            groupedData = cachedGroupedData[currentDept];
-            globalBuyersList = cachedGlobalBuyersList[currentDept];
-            if (!isReportMode) {
-                renderBuyerTabs(Array.from(globalBuyersList));
-                currentPage = 1;
-                renderMainTable();
-            }
-            const loadingEl = document.getElementById('loadingData');
-            if (loadingEl) loadingEl.classList.add('hidden');
-            return;
-        }
-
         const hasDeptFile = deptFiles.length > 0;
 
         const readFiles = async (fileList) => {
-            if (!fileList || fileList.length === 0) return [];
-            const results = await Promise.all(fileList.map(async (file, i) => {
-                const sheetData = await fetchAndParseFile(file);
-                return sheetData.map(row => ({ ...row, _fileIndex: i }));
-            }));
-            return results.flat();
+            let raw = [];
+            for (let i = 0; i < fileList.length; i++) {
+                let file = fileList[i];
+                try {
+                    const encodedName = encodeURIComponent(file.savedName);
+                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}?t=${Date.now()}`);
+                    if (!fRes.ok) {
+                        console.error(`Failed to fetch file: ${file.originalName}`);
+                        continue;
+                    }
+                    const ab = await fRes.arrayBuffer();
+                    const wb = XLSX.read(ab, { type: 'array' });
+                    let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                    sheetData.forEach(row => {
+                        row._fileIndex = i;
+                        raw.push(row);
+                    });
+                } catch (e) { console.error("File read err:", e); }
+            }
+            return raw;
         };
 
-        let generalRawData = [];
-        if (currentGeneralFilesStr === cachedGeneralFilesStr && cachedGeneralRawData.length > 0) {
-            generalRawData = cachedGeneralRawData;
-        } else {
-            generalRawData = await readFiles(generalFiles);
-            cachedGeneralRawData = generalRawData;
-            cachedGeneralFilesStr = currentGeneralFilesStr;
-        }
-
-        let deptRawData = [];
-        if (currentDeptFilesStr === cachedDeptFilesStr[currentDept] && cachedDeptRawData[currentDept] && cachedDeptRawData[currentDept].length > 0) {
-            deptRawData = cachedDeptRawData[currentDept];
-        } else {
-            deptRawData = await readFiles(deptFiles);
-            cachedDeptRawData[currentDept] = deptRawData;
-            cachedDeptFilesStr[currentDept] = currentDeptFilesStr;
-        }
+        const generalRawData = await readFiles(generalFiles);
+        const deptRawData = await readFiles(deptFiles);
 
         groupedData = {};
 
@@ -432,9 +364,6 @@ async function fetchAndProcessData(isSilent = false) {
         });
 
         try {
-            let savedPlans = await datesPromise;
-            if (!savedPlans || !Array.isArray(savedPlans)) savedPlans = [];
-
             if (savedPlans && savedPlans.length > 0) {
                 savedPlans.forEach(plan => {
                     if (groupedData[plan.orderNo]) {
@@ -459,12 +388,9 @@ async function fetchAndProcessData(isSilent = false) {
             }
         } catch (e) { console.error("Error fetching db dates", e); }
 
-        let preloadedPerms = null;
-        try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
-
         // Apply Buyer Permissions globally
         Object.keys(groupedData).forEach(bNo => {
-            if (!hasBuyerPermission(groupedData[bNo].buyers, preloadedPerms)) {
+            if (!hasBuyerPermission(groupedData[bNo].buyers)) {
                 delete groupedData[bNo];
             }
         });
@@ -502,15 +428,6 @@ async function fetchAndProcessData(isSilent = false) {
                 let excelOccurrence = {};
                 let currentFileIndex = -1;
 
-                let dyeingColorMap = new Map();
-                if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
-                    group.dbData.dyeing.forEach(d => {
-                        if (d.itemData && d.itemData.Color) {
-                            dyeingColorMap.set(String(d.itemData.Color).trim().toLowerCase(), d);
-                        }
-                    });
-                }
-
                 group.excelItems.forEach(exItem => {
                     if (exItem._fileIndex !== currentFileIndex) {
                         excelOccurrence = {};
@@ -545,15 +462,6 @@ async function fetchAndProcessData(isSilent = false) {
                             Slowmoving: getColData(exItem, ['Slowmoving']),
                             FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
                         };
-
-                        const deliBalStr = String(dynamicItemData.DeliBal || '').trim();
-                        if (deliBalStr === '' || parseFloat(deliBalStr) === 0) {
-                            const req = parseFloat(String(dynamicItemData.RequiredQtyKgs || '').replace(/,/g, '')) || 0;
-                            const del = parseFloat(String(dynamicItemData.NetDeliveryQtyKgs || '').replace(/,/g, '')) || 0;
-                            if (req > 0) {
-                                dynamicItemData.DeliBal = req - del;
-                            }
-                        }
                     } else if (currentDept === 'yd') {
                         let ydBalanceKeys = [];
                         let typeKeys = [];
@@ -640,9 +548,9 @@ async function fetchAndProcessData(isSilent = false) {
                         });
                     } else {
                         let recoveredDbItem = null;
-                        if (currentDept === 'dyeing') {
+                        if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
                             const myColor = String(dynamicItemData.Color || '').trim().toLowerCase();
-                            recoveredDbItem = dyeingColorMap.get(myColor);
+                            recoveredDbItem = group.dbData.dyeing.find(d => d.itemData && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
                         }
 
                         if (recoveredDbItem) {
@@ -773,9 +681,6 @@ async function fetchAndProcessData(isSilent = false) {
             renderMainTable();
         }
 
-        cachedGroupedData[currentDept] = groupedData;
-        cachedGlobalBuyersList[currentDept] = globalBuyersList;
-
         if (!isSilent) {
             document.getElementById('loadingData').classList.add('hidden');
         }
@@ -783,9 +688,9 @@ async function fetchAndProcessData(isSilent = false) {
         document.getElementById('loadingData').classList.add('hidden');
     } catch (e) {
         console.error("Error processing data:", e);
-    } finally {
-        const loadingEl = document.getElementById('loadingData');
-        if (loadingEl) loadingEl.classList.add('hidden');
+        if (!isSilent) {
+            document.getElementById('loadingData').classList.add('hidden');
+        }
     }
 }
 

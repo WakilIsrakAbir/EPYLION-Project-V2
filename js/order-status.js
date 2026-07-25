@@ -6,8 +6,6 @@
     let osRowsPerPage = 10;
     let osSearchQuery = '';
     let osGroupedData = {}; 
-    let cachedOSFilesStr = "";
-    let cachedOSRawData = [];
 
     async function showOrderStatus() {
         localStorage.setItem('activePage', JSON.stringify({ page: 'orderStatus' }));
@@ -64,10 +62,6 @@
         };
 
     async function fetchAllDataForOS() {
-        const datesPromise = fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`)
-            .then(r => r.ok ? r.json() : [])
-            .catch(e => []);
-
         try {
             const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
             if (!res.ok) return;
@@ -79,25 +73,25 @@
             const latestFiles = Array.from(latestFilesMap.values());
 
             const readFiles = async (fileList) => {
-                if (!fileList || fileList.length === 0) return [];
-                const results = await Promise.all(fileList.map(async (file, i) => {
-                    const sheetData = await fetchAndParseFile(file);
-                    return sheetData.map(row => ({ ...row, _fileIndex: i }));
-                }));
-                return results.flat();
+                let raw = [];
+                for (let i = 0; i < fileList.length; i++) {
+                    let file = fileList[i];
+                    try {
+                        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
+                        if (!fRes.ok) continue;
+                        const ab = await fRes.arrayBuffer();
+                        const wb = XLSX.read(ab, { type: 'array' });
+                        let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                        sheetData.forEach(row => {
+                            row._fileIndex = i; 
+                            raw.push(row);
+                        });
+                    } catch (e) { console.error("File read err:", e); }
+                }
+                return raw;
             };
 
-            const currentOSFilesStr = JSON.stringify(latestFiles.map(f => ({ n: f.originalName, d: f.createdAt })));
-            
-            let allRawData = [];
-            if (currentOSFilesStr === cachedOSFilesStr && cachedOSRawData.length > 0) {
-                allRawData = cachedOSRawData;
-            } else {
-                allRawData = await readFiles(latestFiles);
-                cachedOSRawData = allRawData;
-                cachedOSFilesStr = currentOSFilesStr;
-            }
-
+            const allRawData = await readFiles(latestFiles);
             osGroupedData = {};
 
             const initGroup = (bNo) => {
@@ -106,11 +100,10 @@
                     osGroupedData[bNoStr] = {
                         bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
                         buyers: new Set(),
-                        generalInfo: {},
                         excelItems: [],
                         mergedItems: [],
-                        mergeMap: new Map(),
-                        dbData: null
+                        dbData: null,
+                        status: 'N/A'
                     };
                 }
             };
@@ -132,16 +125,14 @@
                 let constr = getColData(row, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
 
                 if (color || constr) {
-                    let colorKey = String(color || '').trim().toLowerCase();
-                    let constrKey = String(constr || '').trim().toLowerCase();
-                    let key = `${colorKey}_||_${constrKey}`;
-                    
-                    let existingItem = osGroupedData[bNo].mergeMap.get(key);
-                    
+                    let existingItem = osGroupedData[bNo].mergedItems.find(m => {
+                        let eColor = getColData(m.itemData, ['Color', 'Colour', 'Fab Color']);
+                        let eConstr = getColData(m.itemData, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
+                        return String(eColor).trim().toLowerCase() === String(color).trim().toLowerCase() &&
+                            String(eConstr).trim().toLowerCase() === String(constr).trim().toLowerCase();
+                    });
                     if (!existingItem) {
-                        let newItem = { itemData: { ...row } };
-                        osGroupedData[bNo].mergedItems.push(newItem);
-                        osGroupedData[bNo].mergeMap.set(key, newItem);
+                        osGroupedData[bNo].mergedItems.push({ itemData: { ...row } });
                     }
                     else {
                         Object.keys(row).forEach(k => {
@@ -162,8 +153,9 @@
             });
 
             try {
-                const savedPlans = await datesPromise;
-                if (savedPlans && savedPlans.length > 0) {
+                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
+                if (datesRes.ok) {
+                    const savedPlans = await datesRes.json();
                     savedPlans.forEach(plan => {
                         if (osGroupedData[plan.orderNo]) {
                             osGroupedData[plan.orderNo].dbData = plan;
@@ -172,11 +164,8 @@
                 }
             } catch (e) { }
 
-            let preloadedPerms = null;
-            try { preloadedPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e){}
-
             Object.keys(osGroupedData).forEach(bNo => {
-                if (!hasBuyerPermission(osGroupedData[bNo].buyers, preloadedPerms)) {
+                if (!hasBuyerPermission(osGroupedData[bNo].buyers)) {
                     delete osGroupedData[bNo];
                 }
             });
@@ -265,9 +254,8 @@
         btnContainer.appendChild(nextBtn);
     }
 
-    window.viewOSDetails = function(encodedBookingNo) {
+    function viewOSDetails(encodedBookingNo) {
         const bookingNo = decodeURIComponent(encodedBookingNo);
-
         const orderData = osGroupedData[bookingNo];
         if (!orderData) return;
 
@@ -318,18 +306,8 @@
 
             if (item['Slowmoving'] !== undefined) t.slow += parseNumValue(item['Slowmoving']);
 
-            let foundDeliBal = false;
-            if (item['Deli. Bal.'] !== undefined) { t.deliBal += parseNumValue(item['Deli. Bal.']); foundDeliBal = true; }
-            else if (item['DeliBal'] !== undefined) { t.deliBal += parseNumValue(item['DeliBal']); foundDeliBal = true; }
-            else if (item['Delivery Balance'] !== undefined) { t.deliBal += parseNumValue(item['Delivery Balance']); foundDeliBal = true; }
-            
-            if (!foundDeliBal) {
-                const req = parseNumValue(item['RequiredQtyKgs'] || item['Req Qty'] || item['Qty']);
-                const del = parseNumValue(item['NetDeliveryQtyKgs'] || item['NetDeliveryQty'] || item['DeliveryQty']);
-                if (req > 0) {
-                    t.deliBal += (req - del);
-                }
-            }
+            if (item['Deli. Bal.'] !== undefined) t.deliBal += parseNumValue(item['Deli. Bal.']);
+            else if (item['DeliBal'] !== undefined) t.deliBal += parseNumValue(item['DeliBal']);
 
             if (item['RFD'] !== undefined) t.rfd += parseNumValue(item['RFD']);
         });
