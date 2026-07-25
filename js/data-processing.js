@@ -477,52 +477,30 @@ async function fetchFullReportDataForExport(currentDept) {
 
 async function exportCombinedReportToExcel() {
   const currentDeptLower = activeTabId.replace("_report", "");
+  showToast(`Downloading ${currentDeptLower.toUpperCase()} Report...`);
 
-  showToast(`Loading ${currentDeptLower.toUpperCase()} report data...`);
-
-  // Fetch full data on demand (not pre-loaded)
-  await fetchFullReportDataForExport(currentDeptLower);
-
-  if (!groupedData || Object.keys(groupedData).length === 0) {
-    showToast("No data available to export!");
-    return;
-  }
-
-  const currentDept = currentDeptLower.toUpperCase();
-  let allRows = [];
-
-  Object.values(groupedData).forEach((group) => {
-    if (group.mergedItems) {
-      group.mergedItems.forEach((item) => {
-        if (item.planType === "Confirm" || item.planType === "Tentative") {
-          let rowData = { ...(item.itemData || {}) };
-          rowData["Plan Start Date"] = formatDateDisplay(item.startDate) || "";
-          rowData["Plan End Date"] = formatDateDisplay(item.endDate) || "";
-          rowData["Plan Type"] = item.planType || "";
-          rowData["Limitation"] = item.limitation || "";
-          rowData["Remarks"] = item.remarks || "";
-          allRows.push(rowData);
-        }
-      });
+  // Direct download from backend — server generates Excel file
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/report-download/${currentDeptLower}`);
+    if (!res.ok) {
+      showToast(`No data found for ${currentDeptLower.toUpperCase()} report!`);
+      return;
     }
-  });
-
-  if (allRows.length === 0) {
-    showToast(
-      `No Confirm or Tentative data found to export for ${currentDept}!`,
-    );
-    return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.download = `${currentDeptLower.toUpperCase()}_Updated_Report_${dateStr}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`${currentDeptLower.toUpperCase()} Report downloaded!`);
+  } catch (e) {
+    console.error('Download error:', e);
+    showToast('Download failed. Try again.');
   }
-
-  showToast(`Generating Excel file for Updated ${currentDept} Report...`);
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(allRows);
-  formatExcelWorksheet(ws);
-  XLSX.utils.book_append_sheet(wb, ws, `${currentDept}_Report`);
-
-  const dateStr = new Date().toISOString().split("T")[0];
-  XLSX.writeFile(wb, `${currentDept}_Updated_Report_${dateStr}.xlsx`);
 }
 
 function renderBuyerTabs(buyers) {
