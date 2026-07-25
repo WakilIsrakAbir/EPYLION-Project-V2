@@ -346,7 +346,7 @@ function renderMainTableFromAPI(data, status) {
 async function fetchReportData(currentDept) {
   try {
     const res = await fetch(
-      `${API_BASE}/api/orders/report/${currentDept}?page=1&limit=2000`,
+      `${API_BASE}/api/orders/report/${currentDept}`,
     );
     if (!res || !res.ok) return;
     const data = await res.json();
