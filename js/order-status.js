@@ -63,107 +63,62 @@
 
     async function fetchAllDataForOS() {
         try {
-            const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all?t=${Date.now()}`);
+            // Use new paginated Order API — no more Excel download!
+            const res = await fetch(`${API_BASE}/api/orders?dept=knitting&status=Pending&limit=1000`);
             if (!res.ok) return;
-            const allFiles = await res.json();
+            const data = await res.json();
 
-            allFiles.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            const latestFilesMap = new Map();
-            allFiles.forEach(f => latestFilesMap.set(f.originalName, f));
-            const latestFiles = Array.from(latestFilesMap.values());
-
-            const readFiles = async (fileList) => {
-                let raw = [];
-                for (let i = 0; i < fileList.length; i++) {
-                    let file = fileList[i];
-                    try {
-                        const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${file.savedName}?t=${Date.now()}`);
-                        if (!fRes.ok) continue;
-                        const ab = await fRes.arrayBuffer();
-                        const wb = XLSX.read(ab, { type: 'array' });
-                        let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                        sheetData.forEach(row => {
-                            row._fileIndex = i; 
-                            raw.push(row);
-                        });
-                    } catch (e) { console.error("File read err:", e); }
-                }
-                return raw;
-            };
-
-            const allRawData = await readFiles(latestFiles);
             osGroupedData = {};
-
-            const initGroup = (bNo) => {
-                let bNoStr = String(bNo);
-                if (!osGroupedData[bNoStr]) {
-                    osGroupedData[bNoStr] = {
-                        bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
-                        buyers: new Set(),
-                        excelItems: [],
-                        mergedItems: [],
-                        dbData: null,
-                        status: 'N/A'
-                    };
-                }
-            };
-
-            allRawData.forEach((row, index) => {
-                let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-                let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
-                initGroup(bNo);
-
-                let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
-                if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
-                    osGroupedData[bNo].buyers.add(buyer);
-                }
-
-                osGroupedData[bNo].excelItems.push(row);
-
-                let color = getColData(row, ['Color', 'Colour', 'Fab Color']);
-                let constr = getColData(row, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
-
-                if (color || constr) {
-                    let existingItem = osGroupedData[bNo].mergedItems.find(m => {
-                        let eColor = getColData(m.itemData, ['Color', 'Colour', 'Fab Color']);
-                        let eConstr = getColData(m.itemData, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
-                        return String(eColor).trim().toLowerCase() === String(color).trim().toLowerCase() &&
-                            String(eConstr).trim().toLowerCase() === String(constr).trim().toLowerCase();
-                    });
-                    if (!existingItem) {
-                        osGroupedData[bNo].mergedItems.push({ itemData: { ...row } });
-                    }
-                    else {
-                        Object.keys(row).forEach(k => {
-                            if (row[k] !== undefined && row[k] !== '' && row[k] !== null) {
-                                if (!existingItem.itemData[k] || existingItem.itemData[k] === '') {
-                                    existingItem.itemData[k] = row[k];
-                                } else {
-                                    let existingNum = parseFloat(String(existingItem.itemData[k]).replace(/,/g, ''));
-                                    let newNum = parseFloat(String(row[k]).replace(/,/g, ''));
-                                    if (!isNaN(existingNum) && !isNaN(newNum)) {
-                                        existingItem.itemData[k] = Math.max(existingNum, newNum); 
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
+            data.orders.forEach(order => {
+                osGroupedData[order.orderNo] = {
+                    bookingNo: order.orderNo,
+                    buyers: new Set([order.buyer || 'N/A']),
+                    excelItems: [],
+                    mergedItems: [],
+                    dbData: null,
+                    status: order.status || 'N/A'
+                };
             });
 
-            try {
-                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/all-dates?t=${Date.now()}`);
-                if (datesRes.ok) {
-                    const savedPlans = await datesRes.json();
-                    savedPlans.forEach(plan => {
-                        if (osGroupedData[plan.orderNo]) {
-                            osGroupedData[plan.orderNo].dbData = plan;
-                        }
-                    });
-                }
-            } catch (e) { }
+            // Also fetch orders from other statuses to show all active orders
+            const [confirmRes, tentativeRes] = await Promise.all([
+                fetch(`${API_BASE}/api/orders?dept=knitting&status=Confirm&limit=1000`).catch(() => null),
+                fetch(`${API_BASE}/api/orders?dept=knitting&status=Tentative&limit=1000`).catch(() => null)
+            ]);
 
+            if (confirmRes && confirmRes.ok) {
+                const cd = await confirmRes.json();
+                cd.orders.forEach(order => {
+                    if (!osGroupedData[order.orderNo]) {
+                        osGroupedData[order.orderNo] = {
+                            bookingNo: order.orderNo,
+                            buyers: new Set([order.buyer || 'N/A']),
+                            excelItems: [],
+                            mergedItems: [],
+                            dbData: null,
+                            status: order.status || 'N/A'
+                        };
+                    }
+                });
+            }
+
+            if (tentativeRes && tentativeRes.ok) {
+                const td = await tentativeRes.json();
+                td.orders.forEach(order => {
+                    if (!osGroupedData[order.orderNo]) {
+                        osGroupedData[order.orderNo] = {
+                            bookingNo: order.orderNo,
+                            buyers: new Set([order.buyer || 'N/A']),
+                            excelItems: [],
+                            mergedItems: [],
+                            dbData: null,
+                            status: order.status || 'N/A'
+                        };
+                    }
+                });
+            }
+
+            // Apply buyer permissions
             Object.keys(osGroupedData).forEach(bNo => {
                 if (!hasBuyerPermission(osGroupedData[bNo].buyers)) {
                     delete osGroupedData[bNo];
