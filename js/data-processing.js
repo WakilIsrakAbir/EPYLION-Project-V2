@@ -214,16 +214,11 @@ async function fetchAndProcessData(isSilent = false) {
     }
 
     try {
-        const [res, datesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; }),
-            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`).catch(e => { console.error(e); return null; })
-        ]);
+        // Step 1: Get file metadata only (fast - small payload)
+        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; });
 
         let allFiles = [];
         if (res && res.ok) allFiles = await res.json();
-
-        let savedPlans = [];
-        if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
 
         const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
         const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
@@ -366,6 +361,20 @@ async function fetchAndProcessData(isSilent = false) {
                 groupedData[bNo].excelItems.push(row);
             }
         });
+
+        // Step 2: Fetch saved plans ONLY for orders found in Excel (not all 2128!)
+        let savedPlans = [];
+        const orderNosInView = Object.keys(groupedData);
+        if (orderNosInView.length > 0) {
+            try {
+                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderNos: orderNosInView })
+                });
+                if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
+            } catch (e) { console.error("Error fetching dates:", e); }
+        }
 
         try {
             if (savedPlans && savedPlans.length > 0) {

@@ -77,9 +77,10 @@ async function loadActualTracking(deptKey) {
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
-        // Fetch all data in parallel
+        // Fetch file list and dept-specific saved plans in parallel
+        const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
         const [datesRes, filesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/all-dates`),
+            fetch(`https://abir-backend-api.onrender.com/api/files/dept-dates/${dbDeptKey}`),
             fetch(`https://abir-backend-api.onrender.com/api/files/all`)
         ]);
 
