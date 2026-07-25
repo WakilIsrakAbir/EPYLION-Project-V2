@@ -92,7 +92,7 @@ async function fetchLoadCalculationData() {
 
     const fetchPromises = depts.map(async (dept) => {
         try {
-            const res = await fetch(`${API_BASE}/api/orders/report/${dept}?page=1&limit=100`);
+            const res = await fetch(`${API_BASE}/api/orders/report/${dept}?page=1&limit=2000`);
             if (!res || !res.ok) return;
             const data = await res.json();
 
