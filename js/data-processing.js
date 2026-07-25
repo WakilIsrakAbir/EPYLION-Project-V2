@@ -1,9 +1,11 @@
 // ==========================================================
-// DATA PROCESSING: Fetch, Merge, Filter
+// DATA PROCESSING: Fetch from paginated API (Approach A)
 // ==========================================================
 
-// Called after mutations — kept for compatibility with other files that call it
-function markDataDirty() { /* no-op: no caching */ }
+const API_BASE = 'https://abir-backend-api.onrender.com';
+
+// Called after mutations — triggers re-fetch on next navigation
+function markDataDirty() { /* no-op with server-side approach */ }
 
 function generateItemId(itemData, tabId) {
     if (!itemData) return Date.now().toString();
@@ -38,166 +40,49 @@ function activateMainTab(tabName) {
     activeBuyer = '';
     document.querySelectorAll('.buyer-tab').forEach(t => t.classList.remove('active'));
     currentPage = 1;
-    renderMainTable();
+    // Fetch from server with new status filter
+    fetchAndProcessData();
 }
 
-function searchGlobalBooking() {
+async function searchGlobalBooking() {
     const searchVal = document.getElementById('globalBookingSearch').value.trim();
     if (!searchVal) {
         showToast('Please enter a Booking No. to search');
         return;
     }
 
-    const searchLower = searchVal.toLowerCase();
-    let found = false;
-    let foundList = '';
-    let foundBuyer = '';
-    let foundBookingExact = '';
-
-    // First find all matches
-    const allItems = Object.values(groupedData);
-    let matchedItems = allItems.filter(g => {
-        const bookingLower = g.bookingNo.toLowerCase();
-        return bookingLower === searchLower || bookingLower.includes(searchLower);
-    });
-
-    if (matchedItems.length > 0) {
-        found = true;
-        
-        // Prioritize exact match if available
-        let targetGroup = matchedItems.find(g => g.bookingNo.toLowerCase() === searchLower);
-        if (!targetGroup) {
-            targetGroup = matchedItems[0]; // Fallback to the first partial match
-        }
-        
-        foundBookingExact = targetGroup.bookingNo;
-        
-        // Determine which list it belongs to
-        const status = (targetGroup.generalInfo && targetGroup.generalInfo.OrderStatus) ? targetGroup.generalInfo.OrderStatus : 'On Process';
-        if (status === 'Completed') {
-            foundList = 'All';
-        } else if (targetGroup.isPending) {
-            foundList = 'Pending';
-        } else if (targetGroup.isConfirm) {
-            foundList = 'Confirm';
-        } else if (targetGroup.isTentative) {
-            foundList = 'Tentative';
-        }
-        
-        // Get buyer - uppercase normalize
-        if (targetGroup.buyers && targetGroup.buyers.size > 0) {
-            foundBuyer = Array.from(targetGroup.buyers)[0].toUpperCase().trim();
-        }
-    }
-
-    if (!found) {
-        showToast(`Booking "${searchVal}" not found in this department!`);
-        return;
-    }
-
-    // First activate the correct list
-    if (foundList) {
-        activeMainTab = foundList;
-        const tabs = ['Pending', 'Confirm', 'Tentative', 'All'];
-        tabs.forEach(t => {
-            const btn = document.getElementById('btn' + t);
-            if (btn) {
-                if (t === foundList) btn.className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
-                else btn.className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
-            }
-        });
-    }
-
-    // Set buyer filter
-    if (foundBuyer) {
-        activeBuyer = foundBuyer;
-    }
-    
-    // Get filtered data to calculate correct page
-    let data = Object.values(groupedData).filter(g => g.mergedItems && g.mergedItems.length > 0);
-    
-    // Filter by status
-    data = data.filter(g => {
-        const status = (g.generalInfo && g.generalInfo.OrderStatus) ? g.generalInfo.OrderStatus : 'On Process';
-        if (activeMainTab === 'All') return status === 'Completed';
-        return status !== 'Completed';
-    });
-    
-    // Filter by main tab
-    if (activeMainTab === 'Pending') data = data.filter(d => d.isPending);
-    else if (activeMainTab === 'Confirm') data = data.filter(d => d.isConfirm);
-    else if (activeMainTab === 'Tentative') data = data.filter(d => d.isTentative);
-    
-    // Filter by buyer
-    if (activeBuyer !== '') {
-        const searchB = activeBuyer.toLowerCase().trim();
-        data = data.filter(d => {
-            const bArr = Array.from(d.buyers).map(x => x.toLowerCase().trim());
-            return bArr.includes(searchB);
-        });
-    }
-    
-    // Find which page the booking is on
-    let foundIndex = -1;
-    data.forEach((d, idx) => {
-        if (d.bookingNo === foundBookingExact || d.bookingNo.toLowerCase() === searchLower) {
-            foundIndex = idx;
-        }
-    });
-    
-    // Calculate correct page
-    if (foundIndex >= 0) {
-        currentPage = Math.floor(foundIndex / rowsPerPage) + 1;
-    } else {
-        currentPage = 1;
-    }
-    
-    // Render table FIRST
-    renderMainTable();
-    
-    // After table renders, FORCE buyer tab activation and highlight row
-    setTimeout(() => {
-        // FORCE buyer tabs visual update (re-render all tabs with correct active state)
-        const buyerTabs = document.querySelectorAll('.buyer-tab');
-        buyerTabs.forEach(tab => {
-            const tabText = tab.innerText.toUpperCase().trim();
-            if (tabText === foundBuyer.toUpperCase().trim()) {
-                tab.classList.add('active');
+    // Search via API
+    const currentDept = activeTabId.replace('_report', '');
+    try {
+        const res = await fetch(`${API_BASE}/api/orders?dept=${currentDept}&status=${activeMainTab === 'All' ? 'Completed' : activeMainTab}&search=${encodeURIComponent(searchVal)}&limit=1`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.orders && data.orders.length > 0) {
+                const order = data.orders[0];
+                showToast(`Found "${order.orderNo}" — opening...`);
+                openDetailedView(encodeURIComponent(order.orderNo));
             } else {
-                tab.classList.remove('active');
-            }
-        });
-        
-        // Highlight the matching row with yellow background
-        const rows = document.querySelectorAll('#mainTableBody tr');
-        let highlighted = false;
-        rows.forEach(row => {
-            const bookingCell = row.querySelector('td:nth-child(2)');
-            if (bookingCell) {
-                const cellText = bookingCell.innerText.trim();
-                if (cellText === foundBookingExact || cellText.toLowerCase() === searchLower) {
-                    // Apply yellow highlight
-                    row.style.backgroundColor = '#fef08a';
-                    row.style.transition = 'background-color 0.3s';
-                    
-                    // Scroll into view
-                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    highlighted = true;
-                    
-                    // Remove highlight after 4 seconds
-                    setTimeout(() => {
-                        row.style.backgroundColor = '';
-                    }, 4000);
+                // Try other statuses
+                for (const status of ['Pending', 'Confirm', 'Tentative', 'Completed']) {
+                    if (status === activeMainTab) continue;
+                    const r2 = await fetch(`${API_BASE}/api/orders?dept=${currentDept}&status=${status}&search=${encodeURIComponent(searchVal)}&limit=1`);
+                    if (r2.ok) {
+                        const d2 = await r2.json();
+                        if (d2.orders && d2.orders.length > 0) {
+                            activeMainTab = status === 'Completed' ? 'All' : status;
+                            showToast(`Found "${d2.orders[0].orderNo}" in ${status} list!`);
+                            activateMainTab(activeMainTab);
+                            return;
+                        }
+                    }
                 }
+                showToast(`Booking "${searchVal}" not found in this department!`);
             }
-        });
-        
-        if (highlighted) {
-            showToast(`✓ Found "${foundBookingExact}" in ${foundList} List under ${foundBuyer} buyer!`);
-        } else {
-            showToast(`Booking found in database but not displayed. Try different filters.`);
         }
-    }, 500);
+    } catch (e) {
+        console.error('Search error:', e);
+        showToast('Search failed. Try again.');
+    }
 }
 
 function clearGlobalSearch() {
@@ -206,6 +91,10 @@ function clearGlobalSearch() {
     showToast('Search cleared. Showing Pending List.');
 }
 
+// ==========================================================
+// MAIN DATA FETCH: Now uses paginated /api/orders endpoint
+// No more Excel download/parse! Server returns ready data.
+// ==========================================================
 async function fetchAndProcessData(isSilent = false) {
     const currentDept = activeTabId.replace('_report', '');
 
@@ -214,483 +103,231 @@ async function fetchAndProcessData(isSilent = false) {
     }
 
     try {
-        // Step 1: Get file metadata only (fast - small payload)
-        const res = await fetch(`https://abir-backend-api.onrender.com/api/files/all`).catch(e => { console.error(e); return null; });
-
-        let allFiles = [];
-        if (res && res.ok) allFiles = await res.json();
-
-        const targetCategory = currentDept === 'yd' ? 'YD' : currentDept.charAt(0).toUpperCase() + currentDept.slice(1);
-        const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
-        const deptFilesRaw = allFiles.filter(f => f.category === targetCategory);
-
-        generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        deptFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-        
-        const getLatestFiles = (files) => {
-            const latestFilesMap = new Map();
-            files.forEach(f => latestFilesMap.set(f.originalName, f));
-            return Array.from(latestFilesMap.values());
-        };
-
-        const generalFiles = getLatestFiles(generalFilesRaw);
-        const deptFiles = getLatestFiles(deptFilesRaw);
-
-        const hasDeptFile = deptFiles.length > 0;
-
-        const readFiles = async (fileList) => {
-            // PERFORMANCE: Download all files in parallel instead of sequentially
-            const fetchPromises = fileList.map(async (file, i) => {
-                try {
-                    const encodedName = encodeURIComponent(file.savedName);
-                    // No ?t=Date.now() — server already sends Cache-Control: immutable for GridFS files
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodedName}`);
-                    if (!fRes.ok) {
-                        console.error(`Failed to fetch file: ${file.originalName}`);
-                        return null;
-                    }
-                    const ab = await fRes.arrayBuffer();
-                    const wb = XLSX.read(ab, { type: 'array' });
-                    let sheetData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                    sheetData.forEach(row => { row._fileIndex = i; });
-                    return sheetData;
-                } catch (e) { console.error("File read err:", e); return null; }
-            });
-
-            const results = await Promise.all(fetchPromises);
-            let raw = [];
-            results.forEach(sheetData => {
-                if (sheetData) raw.push(...sheetData);
-            });
-            return raw;
-        };
-
-        const generalRawData = await readFiles(generalFiles);
-        const deptRawData = await readFiles(deptFiles);
-
-        groupedData = {};
-
-        const initGroup = (bNo) => {
-            let bNoStr = String(bNo);
-            if (!groupedData[bNoStr]) {
-                groupedData[bNoStr] = {
-                    bookingNo: bNoStr.startsWith('Unknown_Booking_') ? 'N/A' : bNoStr,
-                    buyers: new Set(),
-                    generalInfo: {},
-                    excelItems: [],
-                    dbData: null,
-                    status: 'N/A'
-                };
-            }
-        };
-
-        generalRawData.forEach((row, index) => {
-            let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-            let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
-
-            let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-            let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
-
-            initGroup(bNo);
-            if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
-                groupedData[bNo].buyers.add(buyer);
-            }
-
-            let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
-            if (dateVal) groupedData[bNo].bookingDate = formatExcelDate(dateVal);
-
-            let teamVal = getColData(row, ['BuyerTeam', 'Team']);
-            if (teamVal) groupedData[bNo].buyerTeam = String(teamVal);
-
-            let statusVal = getColData(row, ['Status']);
-            if (statusVal) groupedData[bNo].status = String(statusVal);
-
-            let ewo = getColData(row, ['OrderNo', 'EWO']);
-            let orderQty = getColData(row, ['RequiredQtyKgs', 'Qty', 'Order Qty']);
-            let bUnit = getColData(row, ['BookingUnit']);
-            let unit = getColData(row, ['Unit']);
-            let finalConf = getColData(row, ['FinalConfirmation', 'Status']);
-            let eventDay = getColData(row, ['EventDay']);
-            let ship1 = formatExcelDate(getColData(row, ['1stShipmentDate', 'Ship1']));
-            let shipLast = formatExcelDate(getColData(row, ['LastShipmentDate', 'ShipLast']));
-            let yarnDate = formatExcelDate(getColData(row, ['TAYarnDate', 'YarnDate']));
-            let deliStart = formatExcelDate(getColData(row, ['TADeliStart', 'DeliStart']));
-            let deliEnd = formatExcelDate(getColData(row, ['TADeliEnd', 'DeliEnd']));
-            let knitStart = formatExcelDate(getColData(row, ['TAKnittingStart', 'KnitStart']));
-            let knitEnd = formatExcelDate(getColData(row, ['TAKnittingEnd', 'KnitEnd']));
-            let dyeStart = formatExcelDate(getColData(row, ['TADyeingStart', 'DyeStart']));
-            let dyeEnd = formatExcelDate(getColData(row, ['TADyeingEnd', 'DyeEnd']));
-            let fabNotes = getColData(row, ['FabricNotes', 'Notes']);
-
-            if (Object.keys(groupedData[bNo].generalInfo).length === 0) {
-                groupedData[bNo].generalInfo = { EWO: ewo, OrderQty: orderQty, BookingUnit: bUnit, Unit: unit, FinalConf: finalConf, EventDay: eventDay, Ship1: ship1, ShipLast: shipLast, YarnDate: yarnDate, DeliStart: deliStart, DeliEnd: deliEnd, KnitStart: knitStart, KnitEnd: knitEnd, DyeStart: dyeStart, DyeEnd: dyeEnd, FabNotes: fabNotes };
-            } else {
-                if (ewo) groupedData[bNo].generalInfo.EWO = ewo;
-                if (orderQty) groupedData[bNo].generalInfo.OrderQty = orderQty;
-                if (bUnit) groupedData[bNo].generalInfo.BookingUnit = bUnit;
-                if (unit) groupedData[bNo].generalInfo.Unit = unit;
-                if (finalConf) groupedData[bNo].generalInfo.FinalConf = finalConf;
-                if (eventDay) groupedData[bNo].generalInfo.EventDay = eventDay;
-                if (ship1 !== 'N/A') groupedData[bNo].generalInfo.Ship1 = ship1;
-                if (shipLast !== 'N/A') groupedData[bNo].generalInfo.ShipLast = shipLast;
-                if (yarnDate !== 'N/A') groupedData[bNo].generalInfo.YarnDate = yarnDate;
-                if (deliStart !== 'N/A') groupedData[bNo].generalInfo.DeliStart = deliStart;
-                if (deliEnd !== 'N/A') groupedData[bNo].generalInfo.DeliEnd = deliEnd;
-                if (knitStart !== 'N/A') groupedData[bNo].generalInfo.KnitStart = knitStart;
-                if (knitEnd !== 'N/A') groupedData[bNo].generalInfo.KnitEnd = knitEnd;
-                if (dyeStart !== 'N/A') groupedData[bNo].generalInfo.DyeStart = dyeStart;
-                if (dyeEnd !== 'N/A') groupedData[bNo].generalInfo.DyeEnd = dyeEnd;
-                if (fabNotes) groupedData[bNo].generalInfo.FabNotes = fabNotes;
-            }
-        });
-
-        deptRawData.forEach((row, index) => {
-            let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-            let bNo = String(bNoVal !== '' ? bNoVal : 'Unknown_Booking_' + index).trim();
-            
-            initGroup(bNo);
-            
-            if (groupedData[bNo]) {
-                let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
-                if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
-                    groupedData[bNo].buyers.add(buyer);
-                }
-
-                groupedData[bNo].excelItems.push(row);
-            }
-        });
-
-        // Step 2: Fetch saved plans ONLY for orders found in Excel (not all 2128!)
-        let savedPlans = [];
-        const orderNosInView = Object.keys(groupedData);
-        if (orderNosInView.length > 0) {
-            try {
-                const datesRes = await fetch(`https://abir-backend-api.onrender.com/api/files/specific-dates`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderNos: orderNosInView })
-                });
-                if (datesRes && datesRes.ok) savedPlans = await datesRes.json();
-            } catch (e) { console.error("Error fetching dates:", e); }
-        }
-
-        try {
-            if (savedPlans && savedPlans.length > 0) {
-                savedPlans.forEach(plan => {
-                    if (groupedData[plan.orderNo]) {
-                        groupedData[plan.orderNo].dbData = plan;
-
-                        groupedData[plan.orderNo].generalInfo.OrderStatus = plan[`${currentDept}Status`] || 'On Process';
-                        groupedData[plan.orderNo].generalInfo.CompletedDate = plan[`${currentDept}CompletedDate`] || null;
-                        
-                        ['knitting', 'dyeing', 'finishing', 'delivery', 'yd'].forEach(dept => {
-                            if (plan[dept] && Array.isArray(plan[dept])) {
-                                plan[dept].forEach(item => {
-                                    let rawB = item.itemData ? (item.itemData.Buyer || item.itemData.BuyerName || item.itemData.Customer || '') : '';
-                                    let b = String(rawB).trim().toUpperCase().replace(/\s+/g, ' ');
-                                    if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
-                                        groupedData[plan.orderNo].buyers.add(b);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        } catch (e) { console.error("Error fetching db dates", e); }
-
-        // Apply Buyer Permissions globally
-        Object.keys(groupedData).forEach(bNo => {
-            if (!hasBuyerPermission(groupedData[bNo].buyers)) {
-                delete groupedData[bNo];
-            }
-        });
-
-        const globalBuyersList = new Set();
-
-        Object.values(groupedData).forEach(group => {
-            const mergedItemsMap = new Map();
-
-            if (hasDeptFile) {
-                const dbDepartmentItems = group.dbData && group.dbData[currentDept] ? group.dbData[currentDept] : [];
-
-                const dbHistoryMap = new Map();
-                let dbOccurrence = {};
-                dbDepartmentItems.forEach(dbItem => {
-                    if (dbItem.itemId) {
-                        dbHistoryMap.set(dbItem.itemId, dbItem);
-                    } else if (dbItem.itemData) {
-                        let baseId = generateItemId(dbItem.itemData, currentDept);
-                        let strictId = baseId;
-
-                        if (currentDept === 'knitting' || currentDept === 'delivery' || currentDept === 'yd') {
-                            dbOccurrence[baseId] = (dbOccurrence[baseId] || 0) + 1;
-                            strictId = dbOccurrence[baseId] > 1 ? `${baseId}_${dbOccurrence[baseId]}` : baseId;
-                        } else {
-                            if (dbOccurrence[baseId]) return;
-                            dbOccurrence[baseId] = 1;
-                        }
-
-                        dbItem.itemId = strictId;
-                        dbHistoryMap.set(strictId, dbItem);
-                    }
-                });
-
-                let excelOccurrence = {};
-                let currentFileIndex = -1;
-
-                group.excelItems.forEach(exItem => {
-                    if (exItem._fileIndex !== currentFileIndex) {
-                        excelOccurrence = {};
-
-                        if (currentFileIndex !== -1) {
-                            mergedItemsMap.clear();
-                        }
-
-                        currentFileIndex = exItem._fileIndex;
-                    }
-
-                    let dynamicItemData = {};
-                    if (currentDept === 'knitting' || currentDept === 'delivery') {
-                        dynamicItemData = {
-                            OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
-                            Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
-                            FabricConstruction: getColData(exItem, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']),
-                            GSM: getColData(exItem, ['GSM', 'G.S.M']),
-                            RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
-                            Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
-                            Allowance: getColData(exItem, ['Allowance %', 'Allowance']),
-                            YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']),
-                            AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
-                            YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']),
-                            GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
-                            KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
-                            KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
-                            NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
-                            NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
-                            DeliBal: getColData(exItem, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Delivery Balance']),
-                            RFD: getColData(exItem, ['RFD']),
-                            Slowmoving: getColData(exItem, ['Slowmoving']),
-                            FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
-                        };
-                    } else if (currentDept === 'yd') {
-                        let ydBalanceKeys = [];
-                        let typeKeys = [];
-                        let dateKeys = [];
-                        
-                        for (let rk in exItem) {
-                            let norm = rk.toLowerCase().replace(/[^a-z0-9]/g, '');
-                            if (norm === 'ydbalance' || norm === 'yddeliverybalance') ydBalanceKeys.push(rk);
-                            if (norm === 'type' || norm === 'ydtype' || norm === 'yarntype' || norm === 'bookingtype') typeKeys.push(rk);
-                            if (norm === 'date' || norm === 'ydbookingdate' || norm === 'bookingdate') dateKeys.push(rk);
-                        }
-
-                        let redBalanceVal = '';
-                        let normalBalanceVal = '';
-                        ydBalanceKeys.forEach(k => {
-                            if (k.toLowerCase().replace(/[^a-z0-9]/g, '') === 'yddeliverybalance') redBalanceVal = exItem[k];
-                            else if (normalBalanceVal === '') normalBalanceVal = exItem[k];
-                            else redBalanceVal = exItem[k]; 
-                        });
-
-                        dynamicItemData = {
-                            OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
-                            'Booking Type': typeKeys.length > 0 ? exItem[typeKeys[0]] : '',
-                            YDB: getColData(exItem, ['YDB', 'YD B']),
-                            'YD Booking Date': dateKeys.length > 0 ? formatExcelDate(exItem[dateKeys[0]]) : '',
-                            'YD REQ.': getColData(exItem, ['YD REQ.', 'YD REQ', 'YD Req', 'Requirement']),
-                            DYED: getColData(exItem, ['DYED', 'Dyed', 'Dye']),
-                            'YD BALANCE': normalBalanceVal,
-                            'YD Delivered': getColData(exItem, ['YD Delivered', 'Delivered', 'Delivery']),
-                            'YD DELIVERY BALANCE': redBalanceVal !== '' ? redBalanceVal : getColData(exItem, ['YD Balance_1', 'YD Balance 2', 'Balance 2', 'YD Balance(Red)']),
-                            'Barrier Qty.': getColData(exItem, ['Barrier Qty.', 'Barrier Qty', 'Barrier']),
-                            'Workable Qty.': getColData(exItem, ['Workable Qty.', 'Workable Qty', 'Workable'])
-                        };
-                    } else {
-                        dynamicItemData = {
-                            OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
-                            Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
-                            RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
-                            Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
-                            Unit: getColData(exItem, ['Unit']),
-                            ProcessName: getColData(exItem, ['Process Name', 'ProcessName', 'Process']),
-                            GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
-                            KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
-                            KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
-                            BPQty: getColData(exItem, ['BP Qty', 'BPQty']),
-                            DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']),
-                            DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
-                            NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
-                            NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
-                            RFD: getColData(exItem, ['RFD']),
-                            Slowmoving: getColData(exItem, ['Slowmoving']),
-                            FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
-                        };
-                    }
-
-                    let baseId = generateItemId(dynamicItemData, currentDept);
-                    excelOccurrence[baseId] = (excelOccurrence[baseId] || 0) + 1;
-                    let strictId = excelOccurrence[baseId] > 1 ? `${baseId}_${excelOccurrence[baseId]}` : baseId;
-
-                    if (dbHistoryMap.has(strictId)) {
-                        const oldDbItem = dbHistoryMap.get(strictId);
-
-                        if (oldDbItem.itemData) {
-                            if (oldDbItem.itemData.Unit) dynamicItemData.Unit = oldDbItem.itemData.Unit;
-                            if (oldDbItem.itemData.ProcessName) {
-                                dynamicItemData.ProcessName = oldDbItem.itemData.ProcessName;
-                                dynamicItemData['Process Name'] = oldDbItem.itemData.ProcessName;
-                            }
-                        }
-
-                        mergedItemsMap.set(strictId, {
-                            itemId: strictId,
-                            itemData: dynamicItemData,
-                            startDate: oldDbItem.startDate || '',
-                            endDate: oldDbItem.endDate || '',
-                            planType: oldDbItem.planType || '',
-                            limitation: oldDbItem.limitation || '',
-                            remarks: oldDbItem.remarks || '',
-                            floorStartDate: oldDbItem.floorStartDate || '',
-                            floorEndDate: oldDbItem.floorEndDate || '',
-                            floorPlanType: oldDbItem.floorPlanType || '',
-                            yarnDate: oldDbItem.yarnDate || '',
-                            source: 'Both'
-                        });
-                    } else {
-                        let recoveredDbItem = null;
-                        if (currentDept === 'dyeing' && group.dbData && group.dbData.dyeing) {
-                            const myColor = String(dynamicItemData.Color || '').trim().toLowerCase();
-                            recoveredDbItem = group.dbData.dyeing.find(d => d.itemData && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
-                        }
-
-                        if (recoveredDbItem) {
-                            if (recoveredDbItem.itemData) {
-                                if (recoveredDbItem.itemData.Unit) dynamicItemData.Unit = recoveredDbItem.itemData.Unit;
-                                if (recoveredDbItem.itemData.ProcessName) {
-                                    dynamicItemData.ProcessName = recoveredDbItem.itemData.ProcessName;
-                                    dynamicItemData['Process Name'] = recoveredDbItem.itemData.ProcessName;
-                                }
-                            }
-                            mergedItemsMap.set(strictId, {
-                                itemId: strictId,
-                                itemData: dynamicItemData,
-                                startDate: recoveredDbItem.startDate || '',
-                                endDate: recoveredDbItem.endDate || '',
-                                planType: recoveredDbItem.planType || '',
-                                limitation: recoveredDbItem.limitation || '',
-                                remarks: recoveredDbItem.remarks || '',
-                                floorStartDate: recoveredDbItem.floorStartDate || '',
-                                floorEndDate: recoveredDbItem.floorEndDate || '',
-                                floorPlanType: recoveredDbItem.floorPlanType || '',
-                                yarnDate: recoveredDbItem.yarnDate || '',
-                                source: 'Recovered'
-                            });
-                        } else {
-                            mergedItemsMap.set(strictId, {
-                                itemId: strictId, itemData: dynamicItemData,
-                                startDate: '', endDate: '', planType: '', limitation: '', remarks: '',
-                                floorStartDate: '', floorEndDate: '', floorPlanType: '', yarnDate: '', source: 'Excel'
-                            });
-                        }
-                    }
-                });
-            }
-
-
-
-            group.mergedItems = Array.from(mergedItemsMap.values());
-
-            group.isPending = false;
-            group.isConfirm = false;
-            group.isTentative = false;
-
-            let totalItems = group.mergedItems.length;
-
-            if (totalItems > 0) {
-                let hasSelect = false;
-                let hasTentative = false;
-                let confirmCount = 0;
-
-                group.mergedItems.forEach(item => {
-                    if (!item.planType || item.planType === '' || item.planType === 'Select') {
-                        hasSelect = true;
-                    } else if (item.planType === 'Tentative') {
-                        hasTentative = true;
-                    } else if (item.planType === 'Confirm') {
-                        confirmCount++;
-                    }
-
-                    let rawBuyer = item.itemData ? (item.itemData.Buyer || item.itemData.BuyerName || item.itemData['Buyer Name(s)'] || item.itemData.Customer || '') : '';
-                    let b = String(rawBuyer).trim().toUpperCase().replace(/\s+/g, ' ');
-                    if (b && b !== 'UNDEFINED' && b !== 'N/A' && b !== 'GENERAL') {
-                        group.buyers.add(b);
-                    }
-                });
-
-                if (hasSelect) {
-                    group.isPending = true;
-                } else if (hasTentative) {
-                    group.isTentative = true;
-                } else if (confirmCount === totalItems) {
-                    group.isConfirm = true;
-                } else {
-                    group.isPending = true;
-                }
-            }
-
-            if (totalItems > 0) {
-                if (group.buyers.size === 0) group.buyers.add('GENERAL');
-                group.buyers.forEach(b => {
-                    globalBuyersList.add(b);
-                });
-            }
-        });
-
         if (isReportMode) {
-            let hasConfirmData = false;
-            let hasTentativeData = false;
-
-            Object.values(groupedData).forEach(group => {
-                if (group.isConfirm) hasConfirmData = true;
-                if (group.isTentative) hasTentativeData = true;
-            });
-
-            const cardCombinedReport = document.getElementById('cardCombinedReport');
-            const reportEmpty = document.getElementById('reportEmptyState');
-            const cardsGrid = document.getElementById('reportCardsGrid');
-
-            const titleEl = document.getElementById('combinedReportTitle');
-            const btnTextEl = document.getElementById('combinedReportBtnText');
-
-            if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
-            if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
-
-            if (cardCombinedReport) {
-                cardCombinedReport.style.display = (hasConfirmData || hasTentativeData) ? 'flex' : 'none';
-            }
-
-            if (!hasConfirmData && !hasTentativeData) {
-                if (cardsGrid) cardsGrid.style.display = 'none';
-                if (reportEmpty) { reportEmpty.classList.remove('hidden'); reportEmpty.style.display = 'flex'; }
-            } else {
-                if (cardsGrid) cardsGrid.style.display = 'grid';
-                if (reportEmpty) { reportEmpty.classList.add('hidden'); reportEmpty.style.display = 'none'; }
-            }
+            await fetchReportData(currentDept);
+        } else {
+            await fetchOrderList(currentDept);
         }
-
-        if (!isReportMode) {
-            renderBuyerTabs(Array.from(globalBuyersList));
-            currentPage = 1;
-            renderMainTable();
-        }
-
-        document.getElementById('loadingData').classList.add('hidden');
     } catch (e) {
         console.error("Error processing data:", e);
-        document.getElementById('loadingData').classList.add('hidden');
+    }
+
+    document.getElementById('loadingData').classList.add('hidden');
+}
+
+// Fetch paginated order list for Order Management view
+async function fetchOrderList(currentDept) {
+    const status = activeMainTab === 'All' ? 'Completed' : activeMainTab;
+    const searchParams = new URLSearchParams({
+        dept: currentDept,
+        status: status,
+        page: currentPage,
+        limit: rowsPerPage
+    });
+    if (activeBuyer) searchParams.set('buyer', activeBuyer);
+
+    // Fetch orders + buyers in parallel
+    const [ordersRes, buyersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/orders?${searchParams}`).catch(e => null),
+        fetch(`${API_BASE}/api/orders/buyers/${currentDept}`).catch(e => null)
+    ]);
+
+    let ordersData = { orders: [], total: 0, page: 1, totalPages: 0, buyers: [] };
+    if (ordersRes && ordersRes.ok) {
+        ordersData = await ordersRes.json();
+    }
+
+    let allBuyers = [];
+    if (buyersRes && buyersRes.ok) {
+        allBuyers = await buyersRes.json();
+    }
+
+    // Apply buyer permissions
+    let userPerms = null;
+    try { userPerms = JSON.parse(localStorage.getItem('permissions')); } catch(e) {}
+    if (userPerms && userPerms.buyers && userPerms.buyers.accessType !== 'all') {
+        const ids = userPerms.buyers.buyerIds || [];
+        allBuyers = allBuyers.filter(b => {
+            const id = String(b).toLowerCase().replace(/[^a-z0-9]/g, '');
+            return ids.includes(id);
+        });
+    }
+
+    // Build groupedData compatible structure for renderMainTable
+    groupedData = {};
+    ordersData.orders.forEach(order => {
+        groupedData[order.orderNo] = {
+            bookingNo: order.orderNo,
+            buyers: new Set([order.buyer || 'N/A']),
+            bookingDate: order.bookingDate ? formatDateDisplay(order.bookingDate) : 'N/A',
+            status: order.status || 'N/A',
+            generalInfo: { OrderStatus: status === 'Completed' ? 'Completed' : 'On Process' },
+            mergedItems: [{ planType: status }], // Stub so filtering works
+            isPending: status === 'Pending',
+            isConfirm: status === 'Confirm',
+            isTentative: status === 'Tentative'
+        };
+    });
+
+    // Render buyer tabs
+    renderBuyerTabs(allBuyers);
+
+    // Render table with server-side pagination info
+    renderMainTableFromAPI(ordersData, status);
+}
+
+// Render main table from API response (server-side pagination)
+function renderMainTableFromAPI(data, status) {
+    const tbody = document.getElementById('mainTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const dataTableWrapper = document.getElementById('dataTableContentWrapper');
+    const paginationControls = document.getElementById('paginationControls');
+    const thead = document.querySelector('#dataTableContent thead');
+    const buyerFilterContainer = document.getElementById('buyerFilterContainer');
+
+    if (status === 'Completed') {
+        buyerFilterContainer.classList.add('hidden');
+        dataTableWrapper.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        if (data.orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No completed orders found.</td></tr>`;
+            paginationControls.classList.add('hidden');
+            return;
+        }
+
+        if (thead.dataset.currentTab !== 'All') {
+            thead.innerHTML = `
+            <tr class="bg-gray-800 text-white text-[11px] font-bold border-b border-gray-700">
+                <th class="p-2 border-r border-gray-700 text-center w-[120px]">
+                    <button onclick="downloadCompletedList()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded shadow text-[10px]"><i class="fas fa-file-excel mr-1"></i> EXCEL</button>
+                </th>
+                <th class="p-2 border-r border-gray-700">Order/Booking No.</th>
+                <th class="p-2 border-r border-gray-700 text-center">Completed Date</th>
+                <th class="p-2">Buyer</th>
+            </tr>
+            <tr class="bg-white border-b border-gray-300">
+                <th class="p-1 border-r border-gray-300 bg-white"></th>
+                <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(1, this.value)" placeholder="Search No..."></th>
+                <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn('compDate', this.value)" placeholder="Search Date..."></th>
+                <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(3, this.value)" placeholder="Search Buyer..."></th>
+            </tr>`;
+            thead.dataset.currentTab = 'All';
+        }
+
+        let html = '';
+        data.orders.forEach(o => {
+            html += `
+            <tr class="hover:bg-gray-50 border-b border-gray-200 bg-white transition-colors">
+                <td class="p-2 border-r border-gray-200 text-center">
+                    <button onclick="openDetailedView('${encodeURIComponent(o.orderNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm" title="View/Edit"><i class="fas fa-eye"></i></button>
+                </td>
+                <td class="p-2 border-r border-gray-200 text-gray-800 font-bold">${o.orderNo}</td>
+                <td class="p-2 border-r border-gray-200 text-center text-gray-600 font-medium">${o.bookingDate ? formatDateDisplay(o.bookingDate) : 'N/A'}</td>
+                <td class="p-2 border-r border-gray-200 font-medium text-gray-600">${o.buyer || 'N/A'}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+
+        paginationControls.classList.remove('hidden');
+        updatePaginationUI((data.page - 1) * data.limit, Math.min(data.page * data.limit, data.total), data.total, data.totalPages);
+        return;
+    }
+
+    // Active list (Pending/Confirm/Tentative)
+    if (thead.dataset.currentTab !== 'Active') {
+        thead.innerHTML = `
+        <tr class="text-gray-700 text-[11px] font-bold border-b border-gray-300">
+            <th class="p-2 border-r border-gray-300 text-center w-[50px] bg-tableHeader">Manage</th>
+            <th class="p-2 border-r border-gray-300 bg-tableHeader">Order/Booking No.</th>
+            <th class="p-2 border-r border-gray-300 text-center bg-tableHeader">Booking Date</th>
+            <th class="p-2 border-r border-gray-300 bg-tableHeader text-blue-700">Buyer</th>
+            <th class="p-2 border-r border-gray-300 bg-tableHeader w-[700px]">Status</th>
+        </tr>
+        <tr class="bg-white border-b border-gray-300">
+            <th class="p-1 border-r border-gray-300 bg-white"></th>
+            <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(1, this.value)" placeholder="Search No..."></th>
+            <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(2, this.value)" placeholder="Search Date..."></th>
+            <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(3, this.value)" placeholder="Search Buyer..."></th>
+            <th class="p-1 border-r border-gray-300 bg-white"><input type="text" class="header-search" oninput="filterByColumn(4, this.value)" placeholder="Search Status..."></th>
+        </tr>`;
+        thead.dataset.currentTab = 'Active';
+    }
+
+    buyerFilterContainer.classList.remove('hidden');
+
+    if (data.orders.length === 0) {
+        dataTableWrapper.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        paginationControls.classList.add('hidden');
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 bg-white border-b border-gray-200"><i class="fas fa-search text-3xl mb-3 text-gray-300 block"></i>No ${activeMainTab} data found.</td></tr>`;
+        return;
+    }
+
+    dataTableWrapper.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    paginationControls.classList.remove('hidden');
+
+    let html = '';
+    data.orders.forEach(o => {
+        html += `
+        <tr class="hover:bg-blue-50 border-b border-gray-200 transition-colors">
+            <td class="p-2 border-r border-gray-200 text-center"><button onclick="openDetailedView('${encodeURIComponent(o.orderNo)}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition shadow-sm"><i class="fas fa-eye"></i></button></td>
+            <td class="p-2 border-r border-gray-200 text-blue-700 font-bold">${o.orderNo}</td>
+            <td class="p-2 border-r border-gray-200 text-center">${o.bookingDate ? formatDateDisplay(o.bookingDate) : 'N/A'}</td>
+            <td class="p-2 border-r border-gray-200 font-medium text-gray-800">${o.buyer || 'N/A'}</td>
+            <td class="p-2 border-r border-gray-200 text-gray-600 font-medium">${o.status || 'N/A'}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+
+    updatePaginationUI((data.page - 1) * data.limit, Math.min(data.page * data.limit, data.total), data.total, data.totalPages);
+}
+
+// Fetch report data (Confirm + Tentative with full items)
+async function fetchReportData(currentDept) {
+    try {
+        const res = await fetch(`${API_BASE}/api/orders/report/${currentDept}?page=1&limit=100`);
+        if (!res || !res.ok) return;
+        const data = await res.json();
+
+        const cardCombinedReport = document.getElementById('cardCombinedReport');
+        const reportEmpty = document.getElementById('reportEmptyState');
+        const cardsGrid = document.getElementById('reportCardsGrid');
+        const titleEl = document.getElementById('combinedReportTitle');
+        const btnTextEl = document.getElementById('combinedReportBtnText');
+
+        if (titleEl) titleEl.innerText = `Updated ${currentDept.toUpperCase()} Report`;
+        if (btnTextEl) btnTextEl.innerText = `Download ${currentDept.toUpperCase()} Data`;
+
+        const hasData = data.orders && data.orders.length > 0;
+
+        if (cardCombinedReport) cardCombinedReport.style.display = hasData ? 'flex' : 'none';
+
+        if (!hasData) {
+            if (cardsGrid) cardsGrid.style.display = 'none';
+            if (reportEmpty) { reportEmpty.classList.remove('hidden'); reportEmpty.style.display = 'flex'; }
+        } else {
+            if (cardsGrid) cardsGrid.style.display = 'grid';
+            if (reportEmpty) { reportEmpty.classList.add('hidden'); reportEmpty.style.display = 'none'; }
+
+            // Store report data for export
+            groupedData = {};
+            data.orders.forEach(order => {
+                const planData = data.planMap[order.orderNo];
+                const itemsField = `${currentDept}Items`;
+                groupedData[order.orderNo] = {
+                    bookingNo: order.orderNo,
+                    buyers: new Set([order.buyer || 'N/A']),
+                    generalInfo: {},
+                    dbData: planData || null,
+                    mergedItems: (planData && planData[currentDept]) ? planData[currentDept] : [],
+                    isConfirm: true
+                };
+            });
+        }
+    } catch (e) {
+        console.error('Report fetch error:', e);
     }
 }
 
@@ -702,109 +339,23 @@ function exportCombinedReportToExcel() {
 
     const currentDeptLower = activeTabId.replace('_report', '');
     const currentDept = currentDeptLower.toUpperCase();
-    const isDeliveryDept = (currentDeptLower === 'delivery');
     let allRows = [];
 
     Object.values(groupedData).forEach(group => {
         if (group.mergedItems) {
             group.mergedItems.forEach(item => {
                 if (item.planType === 'Confirm' || item.planType === 'Tentative') {
-
-                    if (isDeliveryDept) {
-                        // For delivery: build row with proper column order including knitting/dyeing plan data
-                        let knitPlan = { start: '', end: '', type: '' };
-                        let dyePlan = { start: '', end: '', type: '' };
-
-                        if (group.dbData) {
-                            let myColor = String(item.itemData.Color || '').trim().toLowerCase();
-                            let myConst = String(item.itemData.FabricConstruction || '').trim().toLowerCase();
-                            let myGSM = String(item.itemData.GSM || '').trim().toLowerCase();
-
-                            // Knitting plan lookup: match by Color + FabricConstruction + GSM
-                            if (group.dbData.knitting && Array.isArray(group.dbData.knitting)) {
-                                const kItem = group.dbData.knitting.find(k => k.itemData
-                                    && String(k.itemData.Color || '').trim().toLowerCase() === myColor
-                                    && String(k.itemData.FabricConstruction || '').trim().toLowerCase() === myConst
-                                    && String(k.itemData.GSM || '').trim().toLowerCase() === myGSM);
-                                if (kItem) {
-                                    knitPlan.start = kItem.startDate || '';
-                                    knitPlan.end = kItem.endDate || '';
-                                    knitPlan.type = kItem.planType || '';
-                                }
-                            }
-
-                            // Dyeing plan lookup: match by Color
-                            if (group.dbData.dyeing && Array.isArray(group.dbData.dyeing)) {
-                                const dItem = group.dbData.dyeing.find(d => d.itemData
-                                    && String(d.itemData.Color || '').trim().toLowerCase() === myColor);
-                                if (dItem) {
-                                    dyePlan.start = dItem.startDate || '';
-                                    dyePlan.end = dItem.endDate || '';
-                                    dyePlan.type = dItem.planType || '';
-                                }
-                            }
-                        }
-
-                        // Build ordered row for delivery
-                        let rowData = {};
-                        rowData['OrderNo'] = item.itemData.OrderNo || '';
-                        rowData['Color'] = item.itemData.Color || '';
-                        rowData['FabricConstruction'] = item.itemData.FabricConstruction || '';
-                        rowData['GSM'] = item.itemData.GSM || '';
-                        rowData['RequiredQtyKgs'] = item.itemData.RequiredQtyKgs || '';
-                        rowData['Buyer'] = item.itemData.Buyer || '';
-                        rowData['KnitBala'] = item.itemData.KnitBala || '';
-                        rowData['NetReceivedQtyKgs'] = item.itemData.NetReceivedQtyKgs || '';
-                        rowData['NetDeliveryQtyKgs'] = item.itemData.NetDeliveryQtyKgs || '';
-                        rowData['RFD'] = item.itemData.RFD || '';
-                        rowData['Slowmoving'] = item.itemData.Slowmoving || '';
-                        rowData['FFStock'] = item.itemData.FFStock || '';
-
-                        // NEW: Knitting plan columns
-                        rowData['Knit Start Date'] = formatDateDisplay(knitPlan.start) || '';
-                        rowData['Knit End Date'] = formatDateDisplay(knitPlan.end) || '';
-                        rowData['Knit Plan Type'] = knitPlan.type || '';
-
-                        // NEW: Dyeing plan columns
-                        rowData['Dyeing Start Date'] = formatDateDisplay(dyePlan.start) || '';
-                        rowData['Dyeing End Date'] = formatDateDisplay(dyePlan.end) || '';
-                        rowData['Dyeing Plan Type'] = dyePlan.type || '';
-
-                        // Delivery plan columns
-                        rowData['Delivery Plan Start'] = formatDateDisplay(item.startDate) || '';
-                        rowData['Delivery Plan End'] = formatDateDisplay(item.endDate) || '';
-                        rowData['Delivery Plan Type'] = item.planType || '';
-
-                        // NEW: Floor planning columns
-                        rowData['Delivery Plan Start (Floor)'] = formatDateDisplay(item.floorStartDate) || '';
-                        rowData['Delivery Plan End (Floor)'] = formatDateDisplay(item.floorEndDate) || '';
-                        rowData['Delivery Plan Type (Floor)'] = item.floorPlanType || '';
-
-                        rowData['Limitation'] = item.limitation || '';
-                        rowData['Remarks'] = item.remarks || '';
-
-                        allRows.push(rowData);
-                    } else {
-                        // For all other departments: keep original behavior
-                        let rowData = { ...item.itemData };
-
-                        if (currentDept === 'KNITTING') {
-                            rowData['Yarn Date'] = item.yarnDate ? formatDateDisplay(item.yarnDate) : '';
-                        }
-
-                        rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
-                        rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
-                        rowData['Plan Type'] = item.planType || '';
-                        rowData['Limitation'] = item.limitation || '';
-                        rowData['Remarks'] = item.remarks || '';
-
-                        allRows.push(rowData);
-                    }
+                    let rowData = { ...(item.itemData || {}) };
+                    rowData['Plan Start Date'] = formatDateDisplay(item.startDate) || '';
+                    rowData['Plan End Date'] = formatDateDisplay(item.endDate) || '';
+                    rowData['Plan Type'] = item.planType || '';
+                    rowData['Limitation'] = item.limitation || '';
+                    rowData['Remarks'] = item.remarks || '';
+                    allRows.push(rowData);
                 }
             });
         }
     });
-
 
     if (allRows.length === 0) {
         showToast(`No Confirm or Tentative data found to export for ${currentDept}!`);
@@ -815,16 +366,11 @@ function exportCombinedReportToExcel() {
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(allRows);
-    
-    // Apply special formatting
     formatExcelWorksheet(ws);
-    
     XLSX.utils.book_append_sheet(wb, ws, `${currentDept}_Report`);
 
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `${currentDept}_Updated_Report_${dateStr}.xlsx`;
-
-    XLSX.writeFile(wb, filename);
+    XLSX.writeFile(wb, `${currentDept}_Updated_Report_${dateStr}.xlsx`);
 }
 
 function renderBuyerTabs(buyers) {
@@ -833,7 +379,8 @@ function renderBuyerTabs(buyers) {
     buyers.forEach(b => {
         const btn = document.createElement('div');
         btn.className = `buyer-tab ${activeBuyer !== '' && activeBuyer.toLowerCase() === b.toLowerCase() ? 'active' : ''}`;
-        btn.innerText = b; btn.onclick = () => activateBuyerFilter(b);
+        btn.innerText = b;
+        btn.onclick = () => activateBuyerFilter(b);
         container.appendChild(btn);
     });
 }
@@ -844,8 +391,14 @@ function activateBuyerFilter(buyer) {
         if (t.innerText.toLowerCase() === buyer.toLowerCase()) t.classList.add('active');
         else t.classList.remove('active');
     });
-    currentPage = 1; renderMainTable();
+    currentPage = 1;
+    fetchAndProcessData(true);
 }
 
-function filterByColumn(colIndex, val) { colFilters[colIndex] = String(val).toLowerCase().trim(); currentPage = 1; renderMainTable(); }
-
+function filterByColumn(colIndex, val) {
+    colFilters[colIndex] = String(val).toLowerCase().trim();
+    currentPage = 1;
+    // For server-side filtering, trigger a search via the search param
+    // For now, use client-side filtering on the current page (search still works via API)
+    fetchAndProcessData(true);
+}

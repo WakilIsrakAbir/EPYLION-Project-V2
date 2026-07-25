@@ -1,10 +1,92 @@
 // ==========================================================
-// DETAILED VIEW: Order Detail Form
+// DETAILED VIEW: Order Detail Form (fetches from API on demand)
 // ==========================================================
-function openDetailedView(encodedBookingNo) {
+async function openDetailedView(encodedBookingNo) {
     const bookingNo = decodeURIComponent(encodedBookingNo);
-    let data = groupedData[bookingNo];
-    if (!data) return;
+    const currentDept = activeTabId.replace('_report', '');
+
+    // Show loading
+    document.getElementById('listView').classList.add('hidden');
+    document.getElementById('detailedView').classList.remove('hidden');
+    document.getElementById('detFabricItemsBody').innerHTML = '<tr><td colspan="20" class="p-10 text-center text-gray-500">Loading order data...</td></tr>';
+
+    // Fetch single order from API
+    let data = null;
+    try {
+        const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(bookingNo)}?dept=${currentDept}`);
+        if (res.ok) {
+            const result = await res.json();
+            // Build compatible data structure
+            const order = result.order;
+            const planData = result.planData;
+            
+            data = {
+                bookingNo: order.orderNo,
+                buyers: new Set([order.buyer || 'N/A']),
+                bookingDate: order.bookingDate ? formatDateDisplay(order.bookingDate) : 'N/A',
+                buyerTeam: order.bookingBy || '',
+                generalInfo: {
+                    EWO: order.orderNo,
+                    OrderQty: order.requiredQtyKgs,
+                    BookingUnit: '',
+                    Unit: '',
+                    FinalConf: order.finalConfirmation,
+                    OrderStatus: planData ? (planData[`${currentDept}Status`] || 'On Process') : 'On Process',
+                    EventDay: order.eventDay,
+                    Ship1: order.ship1 ? formatDateDisplay(order.ship1) : 'N/A',
+                    ShipLast: order.shipLast ? formatDateDisplay(order.shipLast) : 'N/A',
+                    YarnDate: order.yarnDate ? formatDateDisplay(order.yarnDate) : 'N/A',
+                    DeliStart: order.deliStart ? formatDateDisplay(order.deliStart) : 'N/A',
+                    DeliEnd: order.deliEnd ? formatDateDisplay(order.deliEnd) : 'N/A',
+                    KnitStart: order.knitStart ? formatDateDisplay(order.knitStart) : 'N/A',
+                    KnitEnd: order.knitEnd ? formatDateDisplay(order.knitEnd) : 'N/A',
+                    DyeStart: order.dyeStart ? formatDateDisplay(order.dyeStart) : 'N/A',
+                    DyeEnd: order.dyeEnd ? formatDateDisplay(order.dyeEnd) : 'N/A',
+                    FabNotes: order.fabricNotes
+                },
+                dbData: planData,
+                mergedItems: [],
+                excelItems: order[`${currentDept}Items`] || []
+            };
+
+            // Build merged items from excel items + plan data
+            const dbItems = (planData && planData[currentDept]) ? planData[currentDept] : [];
+            const dbMap = new Map();
+            dbItems.forEach(item => { if (item.itemId) dbMap.set(item.itemId, item); });
+
+            data.excelItems.forEach((exItem, idx) => {
+                const itemData = { ...exItem };
+                itemData.OrderNo = order.orderNo;
+                const itemId = generateItemId(itemData, currentDept) || `item_${idx}`;
+                
+                const dbItem = dbMap.get(itemId);
+                data.mergedItems.push({
+                    itemId: itemId,
+                    itemData: itemData,
+                    startDate: dbItem ? dbItem.startDate || '' : '',
+                    endDate: dbItem ? dbItem.endDate || '' : '',
+                    planType: dbItem ? dbItem.planType || '' : '',
+                    limitation: dbItem ? dbItem.limitation || '' : '',
+                    remarks: dbItem ? dbItem.remarks || '' : '',
+                    floorStartDate: dbItem ? dbItem.floorStartDate || '' : '',
+                    floorEndDate: dbItem ? dbItem.floorEndDate || '' : '',
+                    floorPlanType: dbItem ? dbItem.floorPlanType || '' : '',
+                    yarnDate: dbItem ? dbItem.yarnDate || '' : '',
+                    source: dbItem ? 'Both' : 'Excel'
+                });
+            });
+
+            // Store in groupedData so save-planning can access it
+            groupedData[bookingNo] = data;
+        }
+    } catch (e) {
+        console.error('Error fetching order detail:', e);
+    }
+
+    if (!data) {
+        document.getElementById('detFabricItemsBody').innerHTML = '<tr><td colspan="20" class="p-10 text-center text-red-500">Failed to load order data.</td></tr>';
+        return;
+    }
 
     currentViewIndex = bookingNo;
     document.getElementById('listView').classList.add('hidden');
@@ -38,7 +120,6 @@ function openDetailedView(encodedBookingNo) {
 
     const itemBody = document.getElementById('detFabricItemsBody');
     let itemHtml = '';
-    const currentDept = activeTabId.replace('_report', '');
 
     data.mergedItems.forEach((item) => {
         let rowClass = "hover:bg-blue-50 border-b border-gray-200 transition-colors fabric-row bg-white";

@@ -77,140 +77,40 @@ async function loadActualTracking(deptKey) {
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
-        // Fetch file list and dept-specific saved plans in parallel
         const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
-        const [datesRes, filesRes] = await Promise.all([
-            fetch(`https://abir-backend-api.onrender.com/api/files/dept-dates/${dbDeptKey}`),
-            fetch(`https://abir-backend-api.onrender.com/api/files/all`)
-        ]);
 
-        const savedPlans = datesRes.ok ? await datesRes.json() : [];
-        const allFiles = filesRes.ok ? await filesRes.json() : [];
+        // Use new paginated tracking API — no more Excel download!
+        const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?limit=200`);
+        if (!res.ok) return;
+        const data = await res.json();
 
-        // Also fetch general file data for booking dates and buyer info
-        const generalFilesRaw = allFiles.filter(f => f.category === 'General' || !f.category);
-        generalFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        const latestFilesMap = new Map();
-        generalFilesRaw.forEach(f => latestFilesMap.set(f.originalName, f));
-        const generalFiles = Array.from(latestFilesMap.values());
+        const { planDocs, orderMap } = data;
 
-        // ===== PERFORMANCE: Read general files in PARALLEL (not sequential) =====
-        let generalDataMap = {};
-        const generalPromises = generalFiles.map(async (file) => {
-            try {
-                const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodeURIComponent(file.savedName)}`);
-                if (!fRes.ok) return null;
-                const ab = await fRes.arrayBuffer();
-                const wb = XLSX.read(ab, { type: 'array' });
-                return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-            } catch (e) { console.error('File read err:', e); return null; }
-        });
-
-        const generalResults = await Promise.all(generalPromises);
-        generalResults.forEach(sheetData => {
-            if (!sheetData) return;
-            sheetData.forEach(row => {
-                    let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-                    let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
-                    if (!bNo) return;
-
-                    let buyerVal = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                    let buyer = String(buyerVal).trim().toUpperCase().replace(/\s+/g, ' ');
-
-                    let dateVal = getColData(row, ['BookingReceiveDate', 'BookingDate', 'Date']);
-                    let bookingDate = formatExcelDate(dateVal);
-
-                    if (!generalDataMap[bNo]) {
-                        generalDataMap[bNo] = { buyers: new Set(), bookingDate: bookingDate };
-                    }
-                    if (buyer && buyer !== 'UNDEFINED' && buyer !== 'N/A' && buyer !== 'GENERAL') {
-                        generalDataMap[bNo].buyers.add(buyer);
-                    }
-                    if (bookingDate && bookingDate !== 'N/A') generalDataMap[bNo].bookingDate = bookingDate;
-                });
-        });
-
-        let deptExtMap = {};
-        let targetDeptName = actualDeptKey === 'knitting' ? 'Knitting' :
-                             actualDeptKey === 'dyeing' ? 'Dyeing' :
-                             (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') ? 'Delivery' : null;
-
-        if (targetDeptName) {
-            const dFilesRaw = allFiles.filter(f => f.category === targetDeptName);
-            dFilesRaw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            const latestDFilesMap = new Map();
-            dFilesRaw.forEach(f => latestDFilesMap.set(f.originalName, f));
-            const deptFiles = Array.from(latestDFilesMap.values());
-
-            // ===== PERFORMANCE: Read dept files in PARALLEL =====
-            const deptPromises = deptFiles.map(async (file) => {
-                try {
-                    const fRes = await fetch(`https://abir-backend-api.onrender.com/uploads/${encodeURIComponent(file.savedName)}`);
-                    if (!fRes.ok) return null;
-                    const ab = await fRes.arrayBuffer();
-                    const wb = XLSX.read(ab, { type: 'array' });
-                    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-                } catch (e) { console.error('Dept File read err:', e); return null; }
-            });
-
-            const deptResults = await Promise.all(deptPromises);
-            deptResults.forEach(sheetData => {
-                if (!sheetData) return;
-                sheetData.forEach(row => {
-                        let bNoVal = getColData(row, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']);
-                        let bNo = String(bNoVal !== '' ? bNoVal : '').trim();
-                        if (!bNo) return;
-                        
-                        if (!deptExtMap[bNo]) deptExtMap[bNo] = { prod: 0, bal: 0 };
-                        
-                        if (actualDeptKey === 'knitting') {
-                            deptExtMap[bNo].prod += Number(getColData(row, ['Knit Prod.'])) || 0;
-                            deptExtMap[bNo].bal += Number(getColData(row, ['Knit. Bala.', 'Knit Bal.'])) || 0;
-                        } else if (actualDeptKey === 'dyeing') {
-                            deptExtMap[bNo].prod += Number(getColData(row, ['Dyeing Prod.'])) || 0;
-                            deptExtMap[bNo].bal += Number(getColData(row, ['Dyeing Bala.', 'Dyeing Bal.'])) || 0;
-                        } else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
-                            deptExtMap[bNo].prod += Number(getColData(row, ['NetDeliveryQtyKgs'])) || 0;
-                            deptExtMap[bNo].bal += Number(getColData(row, ['Deli. Bal.', 'Deli Bal.'])) || 0;
-                        }
-                });
-            });
-        }
-
-        // Process saved plans - find orders with confirmed items in the target department
-        savedPlans.forEach(plan => {
-            const dbDeptKey = actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey;
+        // Process saved plans
+        planDocs.forEach(plan => {
             const deptItems = plan[dbDeptKey];
             if (!deptItems || !Array.isArray(deptItems) || deptItems.length === 0) return;
 
             let startDates, endDates;
-            
+
             if (actualDeptKey === 'deliveryfloor') {
                 const floorItems = deptItems.filter(item => item.floorPlanType === 'Confirm' || item.floorPlanType === 'Tentative');
                 if (floorItems.length === 0) return;
-                
                 startDates = floorItems.map(item => item.floorStartDate).filter(d => d && d !== '' && d !== '-');
                 endDates = floorItems.map(item => item.floorEndDate).filter(d => d && d !== '' && d !== '-');
             } else {
                 const allConfirm = deptItems.every(item => item.planType === 'Confirm');
                 if (!allConfirm) return;
-                
                 startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
                 endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
             }
 
             let planStart = '';
             let planEnd = '';
-            if (startDates.length > 0) {
-                startDates.sort();
-                planStart = startDates[0]; // MIN
-            }
-            if (endDates.length > 0) {
-                endDates.sort();
-                planEnd = endDates[endDates.length - 1]; // MAX
-            }
+            if (startDates.length > 0) { startDates.sort(); planStart = startDates[0]; }
+            if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
 
-            // Get previously saved actual data
+            // Get saved actual data
             const actualKey = actualDeptKey + 'Actual';
             let actualStart = '';
             let actualEnd = '';
@@ -219,38 +119,34 @@ async function fetchActualTrackingData() {
             if (plan[actualKey]) {
                 actualStart = plan[actualKey].actualStart || '';
                 actualEnd = plan[actualKey].actualEnd || '';
-                failReason = plan[actualKey].failReason || plan[actualKey].remarks || ''; // backward compat
+                failReason = plan[actualKey].failReason || plan[actualKey].remarks || '';
                 relatedDept = plan[actualKey].relatedDept || '';
             }
 
-            // First try to get buyer from dept items (file data)
-            let displayBuyer = 'N/A';
-            let buyersFromItems = new Set();
-            deptItems.forEach(item => {
-                if (item.itemData && item.itemData.Buyer) {
-                    let b = String(item.itemData.Buyer).trim();
-                    if (b && b.toLowerCase() !== 'undefined' && b.toLowerCase() !== 'n/a') buyersFromItems.add(b);
-                }
-            });
-            if (buyersFromItems.size > 0) {
-                displayBuyer = Array.from(buyersFromItems).join(', ');
+            // Get buyer and booking date from Order collection
+            const orderInfo = orderMap[plan.orderNo] || {};
+            let displayBuyer = orderInfo.buyer || 'N/A';
+            let bookingDate = orderInfo.bookingDate ? formatDateDisplay(orderInfo.bookingDate) : 'N/A';
+
+            // Fallback: get buyer from dept items
+            if (displayBuyer === 'N/A' || !displayBuyer) {
+                let buyersFromItems = new Set();
+                deptItems.forEach(item => {
+                    if (item.itemData && item.itemData.Buyer) {
+                        let b = String(item.itemData.Buyer).trim();
+                        if (b && b.toLowerCase() !== 'undefined' && b.toLowerCase() !== 'n/a') buyersFromItems.add(b);
+                    }
+                });
+                if (buyersFromItems.size > 0) displayBuyer = Array.from(buyersFromItems).join(', ');
             }
 
-            // Fallback to general data if not found in file, also get booking date
-            let genInfo = generalDataMap[plan.orderNo];
-            let bookingDate = 'N/A';
-            if (genInfo) {
-                if (displayBuyer === 'N/A') {
-                    displayBuyer = genInfo.buyers.size > 0 ? Array.from(genInfo.buyers).join(', ') : 'N/A';
-                }
-                bookingDate = genInfo.bookingDate || 'N/A';
-            }
-
+            // Get ext prod/bal from Order items
             let extProd = '';
             let extBal = '';
-            if (targetDeptName && deptExtMap[plan.orderNo]) {
-                extProd = deptExtMap[plan.orderNo].prod;
-                extBal = deptExtMap[plan.orderNo].bal;
+            const orderDoc = orderMap[plan.orderNo];
+            if (orderDoc) {
+                // These will be calculated from the Order.{dept}Items if needed
+                // For now leave empty — the data is in the order items
             }
 
             if (!hasBuyerPermission(displayBuyer.split(','))) return;
