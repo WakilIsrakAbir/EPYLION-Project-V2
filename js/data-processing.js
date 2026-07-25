@@ -126,21 +126,15 @@ async function fetchOrderList(currentDept) {
     });
     if (activeBuyer) searchParams.set('buyer', activeBuyer);
 
-    // Fetch orders + buyers in parallel
-    const [ordersRes, buyersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/orders?${searchParams}`).catch(e => null),
-        fetch(`${API_BASE}/api/orders/buyers/${currentDept}`).catch(e => null)
-    ]);
+    // Single API call — returns orders + buyers for current status
+    const ordersRes = await fetch(`${API_BASE}/api/orders?${searchParams}`).catch(e => null);
 
     let ordersData = { orders: [], total: 0, page: 1, totalPages: 0, buyers: [] };
     if (ordersRes && ordersRes.ok) {
         ordersData = await ordersRes.json();
     }
 
-    let allBuyers = [];
-    if (buyersRes && buyersRes.ok) {
-        allBuyers = await buyersRes.json();
-    }
+    let allBuyers = ordersData.buyers || [];
 
     // Apply buyer permissions
     let userPerms = null;

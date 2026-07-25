@@ -55,8 +55,67 @@ async function openDetailedView(encodedBookingNo) {
             dbItems.forEach(item => { if (item.itemId) dbMap.set(item.itemId, item); });
 
             data.excelItems.forEach((exItem, idx) => {
-                const itemData = { ...exItem };
-                itemData.OrderNo = order.orderNo;
+                // Normalize item data using getColData for flexible column matching
+                let itemData = {};
+                if (currentDept === 'knitting' || currentDept === 'delivery') {
+                    itemData = {
+                        OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                        Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
+                        FabricConstruction: getColData(exItem, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']),
+                        GSM: getColData(exItem, ['GSM', 'G.S.M']),
+                        RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
+                        Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
+                        Allowance: getColData(exItem, ['Allowance %', 'Allowance']),
+                        YarnReq: getColData(exItem, ['Yarn req.', 'YarnReq']),
+                        AllocatedQty: getColData(exItem, ['Allocated Qty', 'AllocatedQty']),
+                        YarnBala: getColData(exItem, ['Yarn bala.', 'YarnBala']),
+                        GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
+                        KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                        KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                        NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
+                        NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
+                        DeliBal: getColData(exItem, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Delivery Balance', 'Deli. Bala.']),
+                        RFD: getColData(exItem, ['RFD']),
+                        Slowmoving: getColData(exItem, ['Slowmoving']),
+                        FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                    };
+                } else if (currentDept === 'yd') {
+                    itemData = {
+                        OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                        'Booking Type': getColData(exItem, ['Booking Type', 'Type', 'YD Type']),
+                        YDB: getColData(exItem, ['YDB', 'YD B']),
+                        'YD Booking Date': getColData(exItem, ['YD Booking Date', 'Date', 'Booking Date']),
+                        'YD REQ.': getColData(exItem, ['YD REQ.', 'YD REQ', 'YD Req', 'Requirement']),
+                        DYED: getColData(exItem, ['DYED', 'Dyed', 'Dye']),
+                        'YD BALANCE': getColData(exItem, ['YD BALANCE', 'YD Balance']),
+                        'YD Delivered': getColData(exItem, ['YD Delivered', 'Delivered', 'Delivery']),
+                        'YD DELIVERY BALANCE': getColData(exItem, ['YD DELIVERY BALANCE', 'YD Balance_1', 'YD Balance 2']),
+                        'Barrier Qty.': getColData(exItem, ['Barrier Qty.', 'Barrier Qty', 'Barrier']),
+                        'Workable Qty.': getColData(exItem, ['Workable Qty.', 'Workable Qty', 'Workable'])
+                    };
+                } else {
+                    // Dyeing / Finishing
+                    itemData = {
+                        OrderNo: getColData(exItem, ['BookingNo', 'OrderNo', 'EWO', 'Booking', 'Order No', 'Booking No']),
+                        Color: getColData(exItem, ['Color', 'Colour', 'Fab Color']),
+                        RequiredQtyKgs: getColData(exItem, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
+                        Buyer: getColData(exItem, ['Buyer', 'BuyerName', 'Customer']),
+                        Unit: getColData(exItem, ['Unit']),
+                        ProcessName: getColData(exItem, ['Process Name', 'ProcessName', 'Process']),
+                        GreyReq: getColData(exItem, ['Grey Req.', 'GreyReq']),
+                        KnitProd: getColData(exItem, ['Knit Prod.', 'KnitProd']),
+                        KnitBala: getColData(exItem, ['Knit. Bala.', 'KnitBala']),
+                        BPQty: getColData(exItem, ['BP Qty', 'BPQty']),
+                        DyeingProd: getColData(exItem, ['Dyeing Prod.', 'DyeingProd']),
+                        DyeingBala: getColData(exItem, ['Dyeing Bala.', 'DyeingBala']),
+                        NetReceivedQtyKgs: getColData(exItem, ['NetReceivedQtyKgs', 'NetReceivedQty', 'ReceivedQty']),
+                        NetDeliveryQtyKgs: getColData(exItem, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
+                        RFD: getColData(exItem, ['RFD']),
+                        Slowmoving: getColData(exItem, ['Slowmoving']),
+                        FFStock: getColData(exItem, ['FF Stock', 'FFStock'])
+                    };
+                }
+
                 const itemId = generateItemId(itemData, currentDept) || `item_${idx}`;
                 
                 const dbItem = dbMap.get(itemId);
