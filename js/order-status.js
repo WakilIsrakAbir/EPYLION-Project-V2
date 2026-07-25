@@ -209,13 +209,43 @@
         btnContainer.appendChild(nextBtn);
     }
 
-    function viewOSDetails(encodedBookingNo) {
+    async function viewOSDetails(encodedBookingNo) {
         const bookingNo = decodeURIComponent(encodedBookingNo);
-        const orderData = osGroupedData[bookingNo];
-        if (!orderData) return;
 
         document.getElementById('osListView').classList.add('hidden');
         document.getElementById('osDetailedView').classList.remove('hidden');
+
+        // Fetch full order data from API on demand
+        let orderData = osGroupedData[bookingNo];
+        try {
+            const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(bookingNo)}?dept=knitting`);
+            if (res.ok) {
+                const result = await res.json();
+                const order = result.order;
+                const planData = result.planData;
+
+                // Build excelItems from all department items combined
+                const allItems = [
+                    ...(order.knittingItems || []),
+                    ...(order.dyeingItems || []),
+                    ...(order.deliveryItems || [])
+                ];
+
+                orderData = {
+                    bookingNo: order.orderNo,
+                    buyers: new Set([order.buyer || 'N/A']),
+                    excelItems: allItems,
+                    mergedItems: [],
+                    dbData: planData,
+                    status: order.status || 'N/A'
+                };
+                osGroupedData[bookingNo] = orderData;
+            }
+        } catch (e) {
+            console.error('Error fetching OS detail:', e);
+        }
+
+        if (!orderData) return;
 
         let allocatedQty = 0, yarnBala = 0, knitProd = 0, knitBala = 0;
         let dyeingProd = 0, dyeingBala = 0;
