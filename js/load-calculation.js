@@ -85,60 +85,86 @@ function showLoadCalculation(menuName) {
 }
 
 async function fetchLoadCalculationData() {
-    if (Object.keys(groupedData).length === 0) {
-        await fetchAndProcessData(true);
-    }
-
     globalLoadData = { knitting: [], dyeing: [], delivery: [] };
-    
-    for (const bNo in groupedData) {
-        const order = groupedData[bNo];
-        if (!order.dbData) continue;
-        
-        ['knitting', 'dyeing', 'delivery'].forEach(dept => {
-            if (order.dbData[dept] && Array.isArray(order.dbData[dept])) {
-                order.dbData[dept].forEach(savedItem => {
-                    if (savedItem.planType === 'Confirm' || savedItem.planType === 'Tentative') {
-                        let latestItemData = savedItem.itemData;
-                        if (order.mergedItems) {
-                            const latestItem = order.mergedItems.find(m => m.itemId === savedItem.itemId);
-                            if (latestItem) {
-                                latestItemData = latestItem.itemData;
-                            }
-                        }
 
-                        let row = { ...latestItemData };
-                        row.OrderNo = bNo;
-                        row.planStart = savedItem.startDate;
-                        row.planEnd = savedItem.endDate;
-                        row.planType = savedItem.planType;
-                        
-                        // Standardize values
-                        row.Buyer = getColData(row, ['Buyer', 'BuyerName', 'Customer']);
-                        row.Color = getColData(row, ['Color', 'Colour', 'Fab Color']);
-                        row.FabricConstruction = getColData(row, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
-                        row.GSM = getColData(row, ['GSM', 'G S M']);
-                        row.GreyReq = getColData(row, ['GreyReq', 'Grey Req', 'G. Req', 'Grey req']);
-                        row.KnitProd = getColData(row, ['KnitProd', 'Knit Prod', 'K. Prod']);
-                        row.KnitBala = getColData(row, ['KnitBala', 'Knit Bala', 'K. Bala', 'Knit. Bala.']);
-                        row.DyeingProd = getColData(row, ['DyeingProd', 'Dyeing Prod', 'D. Prod']);
-                        row.DyeingBala = getColData(row, ['DyeingBala', 'Dyeing Bala', 'D. Bala', 'Dyeing Bala.']);
-                        row.DeliBal = getColData(row, ['DeliBal', 'Deli Bal', 'Deli. Bal.']);
-                        row.RequiredQtyKgs = getColData(row, ['RequiredQtyKgs', 'RequiredQty', 'ReqQty']);
-                        row.NetDeliveryQtyKgs = getColData(row, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']);
-                        
-                        if (!row.DeliBal || loadNumber(row.DeliBal) === 0) {
-                            const req = loadNumber(row.RequiredQtyKgs);
-                            const del = loadNumber(row.NetDeliveryQtyKgs);
-                            if (req > 0) row.DeliBal = req - del;
+    // Fetch confirmed + tentative plan data for each department from API
+    const depts = ['knitting', 'dyeing', 'delivery'];
+
+    const fetchPromises = depts.map(async (dept) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/orders/report/${dept}?page=1&limit=100`);
+            if (!res || !res.ok) return;
+            const data = await res.json();
+
+            if (!data.orders || !data.planMap) return;
+
+            data.orders.forEach(order => {
+                const planData = data.planMap[order.orderNo];
+                if (!planData || !planData[dept]) return;
+
+                const itemsField = `${dept}Items`;
+                const excelItems = order[itemsField] || [];
+
+                planData[dept].forEach(savedItem => {
+                    if (savedItem.planType !== 'Confirm' && savedItem.planType !== 'Tentative') return;
+
+                    // Get matching Excel item data for this saved plan item
+                    let itemData = savedItem.itemData || {};
+
+                    // Try to find fresher data from Excel items stored in Order
+                    if (excelItems.length > 0 && savedItem.itemId) {
+                        // Match by itemId or by color/construction
+                        const exItem = excelItems.find(ex => {
+                            const exId = generateItemId(ex, dept);
+                            return exId === savedItem.itemId;
+                        });
+                        if (exItem) {
+                            itemData = exItem;
                         }
-                        
-                        globalLoadData[dept].push(row);
                     }
+
+                    let row = {};
+                    // Normalize using getColData
+                    row.OrderNo = order.orderNo;
+                    row.Buyer = getColData(itemData, ['Buyer', 'BuyerName', 'Customer']) || order.buyer || '';
+                    row.Color = getColData(itemData, ['Color', 'Colour', 'Fab Color']);
+                    row.FabricConstruction = getColData(itemData, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
+                    row.GSM = getColData(itemData, ['GSM', 'G.S.M']);
+                    row.RequiredQtyKgs = getColData(itemData, ['RequiredQtyKgs', 'Req Qty', 'Qty']);
+                    row.GreyReq = getColData(itemData, ['Grey Req.', 'GreyReq']);
+                    row.KnitProd = getColData(itemData, ['Knit Prod.', 'KnitProd']);
+                    row.KnitBala = getColData(itemData, ['Knit. Bala.', 'KnitBala']);
+                    row.BPQty = getColData(itemData, ['BP Qty', 'BPQty']);
+                    row.DyeingProd = getColData(itemData, ['Dyeing Prod.', 'DyeingProd']);
+                    row.DyeingBala = getColData(itemData, ['Dyeing Bala.', 'DyeingBala']);
+                    row.NetReceivedQtyKgs = getColData(itemData, ['NetReceivedQtyKgs', 'NetReceivedQty']);
+                    row.NetDeliveryQtyKgs = getColData(itemData, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']);
+                    row.DeliBal = getColData(itemData, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Deli. Bala.', 'Delivery Balance']);
+                    row.RFD = getColData(itemData, ['RFD']);
+                    row.Slowmoving = getColData(itemData, ['Slowmoving']);
+                    row.Unit = getColData(itemData, ['Unit']);
+                    row.ProcessName = getColData(itemData, ['Process Name', 'ProcessName', 'Process']);
+
+                    // Calculate DeliBal if missing
+                    if (!row.DeliBal || loadNumber(row.DeliBal) === 0) {
+                        const req = loadNumber(row.RequiredQtyKgs);
+                        const del = loadNumber(row.NetDeliveryQtyKgs);
+                        if (req > 0) row.DeliBal = req - del;
+                    }
+
+                    row.planStart = savedItem.startDate;
+                    row.planEnd = savedItem.endDate;
+                    row.planType = savedItem.planType;
+
+                    globalLoadData[dept].push(row);
                 });
-            }
-        });
-    }
+            });
+        } catch (e) {
+            console.error(`Load calc fetch error for ${dept}:`, e);
+        }
+    });
+
+    await Promise.all(fetchPromises);
 }
 
 function initLoadMonthSelector() {
