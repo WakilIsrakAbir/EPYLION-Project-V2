@@ -81,7 +81,7 @@ function showLoadCalculation(menuName) {
     
     setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
     
-    // fetch and render
+    // Don't pre-fetch all departments — load on demand when user clicks download
     fetchLoadCalculationData().then(() => {
         if (document.getElementById('loadStartMonth').options.length === 0) {
             initLoadMonthSelector();
@@ -194,6 +194,88 @@ async function fetchLoadCalculationData() {
     });
 
     await Promise.all(fetchPromises);
+}
+
+// Fetch data for a single department on-demand (for download click)
+async function ensureLoadDataForDept(dept) {
+    if (globalLoadData[dept] && globalLoadData[dept].length > 0) return; // already loaded
+    
+    const actualDept = dept === 'deliveryfloor' ? 'delivery' : dept;
+    try {
+        const res = await fetch(`${API_BASE}/api/orders/report/${actualDept}`);
+        if (!res || !res.ok) return;
+        const data = await res.json();
+        if (!data.orders || !data.planMap) return;
+
+        globalLoadData[dept] = [];
+
+        data.orders.forEach(order => {
+            const planData = data.planMap[order.orderNo];
+            if (!planData || !planData[actualDept]) return;
+            const excelItems = order[`${actualDept}Items`] || [];
+
+            planData[actualDept].forEach(savedItem => {
+                if (savedItem.planType !== 'Confirm' && savedItem.planType !== 'Tentative') return;
+                let itemData = savedItem.itemData || {};
+                if (excelItems.length > 0 && savedItem.itemId) {
+                    const exItem = excelItems.find(ex => generateItemId(ex, actualDept) === savedItem.itemId);
+                    if (exItem) itemData = exItem;
+                }
+
+                let row = {};
+                row.OrderNo = order.orderNo;
+                row.Buyer = getColData(itemData, ['Buyer', 'BuyerName', 'Customer']) || order.buyer || '';
+                row.Color = getColData(itemData, ['Color', 'Colour', 'Fab Color']);
+                row.FabricConstruction = getColData(itemData, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']);
+                row.GSM = getColData(itemData, ['GSM', 'G.S.M']);
+                row.RequiredQtyKgs = getColData(itemData, ['RequiredQtyKgs', 'Req Qty', 'Qty']);
+                row.GreyReq = getColData(itemData, ['Grey Req.', 'GreyReq']);
+                row.KnitProd = getColData(itemData, ['Knit Prod.', 'KnitProd']);
+                row.KnitBala = getColData(itemData, ['Knit. Bala.', 'KnitBala']);
+                row.BPQty = getColData(itemData, ['BP Qty', 'BPQty']);
+                row.DyeingProd = getColData(itemData, ['Dyeing Prod.', 'DyeingProd']);
+                row.DyeingBala = getColData(itemData, ['Dyeing Bala.', 'DyeingBala']);
+                row.NetReceivedQtyKgs = getColData(itemData, ['NetReceivedQtyKgs', 'NetReceivedQty']);
+                row.NetDeliveryQtyKgs = getColData(itemData, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']);
+                row.DeliBal = getColData(itemData, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Deli. Bala.', 'Delivery Balance']);
+                row.RFD = getColData(itemData, ['RFD']);
+                row.Slowmoving = getColData(itemData, ['Slowmoving']);
+                row.Unit = getColData(itemData, ['Unit']);
+                row.ProcessName = getColData(itemData, ['Process Name', 'ProcessName', 'Process']);
+                row['Booking Type'] = getColData(itemData, ['Booking Type', 'Type', 'YD Type']);
+                row.YDB = getColData(itemData, ['YDB', 'YD B']);
+                row['YD REQ.'] = getColData(itemData, ['YD REQ.', 'YD REQ', 'Requirement']);
+                row.DYED = getColData(itemData, ['DYED', 'Dyed']);
+                row['YD BALANCE'] = getColData(itemData, ['YD BALANCE', 'YD Balance']);
+                row['YD Delivered'] = getColData(itemData, ['YD Delivered', 'Delivered']);
+                row['YD DELIVERY BALANCE'] = getColData(itemData, ['YD DELIVERY BALANCE', 'YD Balance_1', 'YD Delivery Balance']);
+
+                if (!row.DeliBal || loadNumber(row.DeliBal) === 0) {
+                    const req = loadNumber(row.RequiredQtyKgs);
+                    const del = loadNumber(row.NetDeliveryQtyKgs);
+                    if (req > 0) row.DeliBal = req - del;
+                }
+
+                row.planStart = savedItem.startDate;
+                row.planEnd = savedItem.endDate;
+                row.planType = savedItem.planType;
+                globalLoadData[dept].push(row);
+
+                if (dept === 'deliveryfloor' || (dept === 'delivery' && savedItem.floorStartDate && savedItem.floorEndDate)) {
+                    if (dept === 'delivery' && savedItem.floorPlanType === 'Confirm' || savedItem.floorPlanType === 'Tentative') {
+                        const floorRow = { ...row };
+                        floorRow.planStart = savedItem.floorStartDate;
+                        floorRow.planEnd = savedItem.floorEndDate;
+                        floorRow.planType = savedItem.floorPlanType;
+                        if (!globalLoadData.deliveryfloor) globalLoadData.deliveryfloor = [];
+                        globalLoadData.deliveryfloor.push(floorRow);
+                    }
+                }
+            });
+        });
+    } catch (e) {
+        console.error(`Load data fetch error for ${dept}:`, e);
+    }
 }
 
 function initLoadMonthSelector() {
@@ -384,8 +466,9 @@ function setSummaryDepartment(department) {
     refreshCurrentView();
 }
 
-function refreshCurrentView() {
+async function refreshCurrentView() {
     if (activeMainMenu === 'summary') {
+        await ensureLoadDataForDept(activeSummaryDepartment);
         const data = buildSummaryData(activeSummaryDepartment);
         renderSummaryTable(data);
     }
@@ -419,7 +502,9 @@ function renderSummaryTable(data) {
     `;
 }
 
-function downloadLoadReport(department) {
+async function downloadLoadReport(department) {
+    showToast(`Loading ${department} data...`);
+    await ensureLoadDataForDept(department);
     const { config, reportMonths, headers, rows } = buildReportData(department);
     if (!rows.length) { showToast(`No ${config.name} load data found.`); return; }
 
@@ -443,7 +528,9 @@ function downloadLoadReport(department) {
     XLSX.writeFile(workbook, filename);
 }
 
-function downloadLoadSummary(department) {
+async function downloadLoadSummary(department) {
+    showToast(`Loading ${department} summary...`);
+    await ensureLoadDataForDept(department);
     const { config, reportMonths, headers, rows, grandMonthlyTotals, grandTotal } = buildSummaryData(department);
     if (!rows.length) { showToast(`No ${config.name} summary data found.`); return; }
 
