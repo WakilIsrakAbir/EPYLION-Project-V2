@@ -89,26 +89,26 @@ async function fetchActualTrackingData() {
         // Process saved plans
         planDocs.forEach(plan => {
             const deptItems = plan[dbDeptKey];
-            if (!deptItems || !Array.isArray(deptItems) || deptItems.length === 0) return;
 
-            let startDates, endDates;
-
-            if (actualDeptKey === 'deliveryfloor') {
-                const floorItems = deptItems.filter(item => item.floorPlanType === 'Confirm' || item.floorPlanType === 'Tentative');
-                if (floorItems.length === 0) return;
-                startDates = floorItems.map(item => item.floorStartDate).filter(d => d && d !== '' && d !== '-');
-                endDates = floorItems.map(item => item.floorEndDate).filter(d => d && d !== '' && d !== '-');
-            } else {
-                const allConfirm = deptItems.every(item => item.planType === 'Confirm');
-                if (!allConfirm) return;
-                startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
-                endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
-            }
-
+            let startDates = [], endDates = [];
             let planStart = '';
             let planEnd = '';
-            if (startDates.length > 0) { startDates.sort(); planStart = startDates[0]; }
-            if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
+
+            if (deptItems && Array.isArray(deptItems) && deptItems.length > 0) {
+                if (actualDeptKey === 'deliveryfloor') {
+                    const floorItems = deptItems.filter(item => item.floorPlanType === 'Confirm' || item.floorPlanType === 'Tentative');
+                    if (floorItems.length > 0) {
+                        startDates = floorItems.map(item => item.floorStartDate).filter(d => d && d !== '' && d !== '-');
+                        endDates = floorItems.map(item => item.floorEndDate).filter(d => d && d !== '' && d !== '-');
+                    }
+                } else {
+                    startDates = deptItems.map(item => item.startDate).filter(d => d && d !== '' && d !== '-');
+                    endDates = deptItems.map(item => item.endDate).filter(d => d && d !== '' && d !== '-');
+                }
+
+                if (startDates.length > 0) { startDates.sort(); planStart = startDates[0]; }
+                if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
+            }
 
             // Get saved actual data
             const actualKey = actualDeptKey + 'Actual';
