@@ -82,7 +82,8 @@ async function fetchActualTrackingData() {
         // Server-side paginated tracking API
         const params = new URLSearchParams({
             page: actualCurrentPage,
-            limit: actualRowsPerPage
+            limit: actualRowsPerPage,
+            status: actualActiveTab  // 'Pending' or 'Complete'
         });
         if (actualActiveBuyer) params.set('buyer', actualActiveBuyer);
 
@@ -254,7 +255,7 @@ function switchActualTab(tab) {
     const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
     btnP.className = tab === 'Pending' ? activeClass : inactiveClass;
     btnC.className = tab === 'Complete' ? activeClass : inactiveClass;
-    renderActualTable();
+    refreshActualTracking(); // Server-side filter by Pending/Complete
 }
 
 function renderActualBuyerFilter() {
