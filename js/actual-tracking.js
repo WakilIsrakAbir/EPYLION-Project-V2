@@ -121,7 +121,7 @@ async function fetchActualTrackingData() {
                 if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
             }
 
-            const actualKey = actualDeptKey + 'Actual';
+            const actualKey = (actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey) + 'Actual';
             let actualStart = '';
             let actualEnd = '';
             let failReason = '';
@@ -207,7 +207,7 @@ async function fetchAllActualTrackingDataForReport() {
                 if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
             }
 
-            const actualKey = actualDeptKey + 'Actual';
+            const actualKey = (actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey) + 'Actual';
             let actualStart = '', actualEnd = '', failReason = '', relatedDept = '';
             if (plan[actualKey]) {
                 actualStart = plan[actualKey].actualStart || '';
@@ -561,7 +561,7 @@ async function saveActualData() {
         return;
     }
 
-    const actualKey = actualDeptKey + 'Actual';
+    const actualKey = (actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey) + 'Actual';
     let savePayloads = [];
     let validationFailed = false;
 
