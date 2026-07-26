@@ -477,7 +477,17 @@ async function fetchFullReportDataForExport(currentDept) {
 
 async function exportCombinedReportToExcel() {
   const currentDeptLower = activeTabId.replace("_report", "");
-  showToast(`Downloading ${currentDeptLower.toUpperCase()} Report...`);
+  
+  // Show loading on the download button
+  const btn = window.event ? window.event.currentTarget : null;
+  let btnText = '';
+  if (btn) {
+    btnText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Downloading...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  }
+  showToast(`Downloading ${currentDeptLower.toUpperCase()} Report... Please wait.`);
 
   // Direct download from backend — server generates Excel file
   try {
@@ -500,6 +510,12 @@ async function exportCombinedReportToExcel() {
   } catch (e) {
     console.error('Download error:', e);
     showToast('Download failed. Try again.');
+  } finally {
+    if (btn) {
+      btn.innerHTML = btnText;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
   }
 }
 
