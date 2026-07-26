@@ -190,7 +190,10 @@
                     excelItems: allItems,
                     mergedItems: [],
                     dbData: planData,
-                    status: order.status || 'N/A'
+                    status: order.status || 'N/A',
+                    rawKnittingItems: order.knittingItems || [],
+                    rawDyeingItems: order.dyeingItems || [],
+                    rawDeliveryItems: order.deliveryItems || []
                 };
                 osGroupedData[bookingNo] = orderData;
             }
@@ -211,56 +214,44 @@
             return isNaN(num) ? 0 : num;
         };
 
-        let totalsPerFile = {};
-        const rawItems = orderData.excelItems || [];
+        // 1. Knitting Items
+        (orderData.rawKnittingItems || []).forEach(item => {
+            if (item['Knit Prod.'] !== undefined) knitProd += parseNumValue(item['Knit Prod.']);
+            else if (item['KnitProd'] !== undefined) knitProd += parseNumValue(item['KnitProd']);
 
-        rawItems.forEach(item => {
-            let fIdx = item._fileIndex !== undefined ? item._fileIndex : 'unknown';
-            if (!totalsPerFile[fIdx]) {
-                totalsPerFile[fIdx] = { alloc: 0, yarn: 0, kProd: 0, kBala: 0, dProd: 0, dBala: 0, del: 0, slow: 0, deliBal: 0, rfd: 0 };
-            }
-            let t = totalsPerFile[fIdx];
-
-            if (item['Allocated Qty '] !== undefined) t.alloc += parseNumValue(item['Allocated Qty ']);
-            else if (item['AllocatedQty'] !== undefined) t.alloc += parseNumValue(item['AllocatedQty']);
-
-            if (item['Yarn bala.'] !== undefined) t.yarn += parseNumValue(item['Yarn bala.']);
-            else if (item['YarnBala'] !== undefined) t.yarn += parseNumValue(item['YarnBala']);
-
-            if (item['Knit Prod.'] !== undefined) t.kProd += parseNumValue(item['Knit Prod.']);
-            else if (item['KnitProd'] !== undefined) t.kProd += parseNumValue(item['KnitProd']);
-
-            if (item['Knit. Bala.'] !== undefined) t.kBala += parseNumValue(item['Knit. Bala.']);
-            else if (item['KnitBala'] !== undefined) t.kBala += parseNumValue(item['KnitBala']);
-
-            if (item['Dyeing Prod.'] !== undefined) t.dProd += parseNumValue(item['Dyeing Prod.']);
-            else if (item['DyeingProd'] !== undefined) t.dProd += parseNumValue(item['DyeingProd']);
-
-            if (item['Dyeing Bala.'] !== undefined) t.dBala += parseNumValue(item['Dyeing Bala.']);
-            else if (item['DyeingBala'] !== undefined) t.dBala += parseNumValue(item['DyeingBala']);
-
-            if (item['NetDeliveryQtyKgs'] !== undefined) t.del += parseNumValue(item['NetDeliveryQtyKgs']);
-            else if (item['NetDeliveryQty'] !== undefined) t.del += parseNumValue(item['NetDeliveryQty']);
-
-            if (item['Slowmoving'] !== undefined) t.slow += parseNumValue(item['Slowmoving']);
-
-            if (item['Deli. Bal.'] !== undefined) t.deliBal += parseNumValue(item['Deli. Bal.']);
-            else if (item['DeliBal'] !== undefined) t.deliBal += parseNumValue(item['DeliBal']);
-
-            if (item['RFD'] !== undefined) t.rfd += parseNumValue(item['RFD']);
+            if (item['Knit. Bala.'] !== undefined) knitBala += parseNumValue(item['Knit. Bala.']);
+            else if (item['KnitBala'] !== undefined) knitBala += parseNumValue(item['KnitBala']);
         });
 
-        Object.values(totalsPerFile).forEach(t => {
-            allocatedQty = Math.max(allocatedQty, t.alloc);
-            yarnBala = Math.max(yarnBala, t.yarn);
-            knitProd = Math.max(knitProd, t.kProd);
-            knitBala = Math.max(knitBala, t.kBala);
-            dyeingProd = Math.max(dyeingProd, t.dProd);
-            dyeingBala = Math.max(dyeingBala, t.dBala);
-            netDeliveryQty = Math.max(netDeliveryQty, t.del);
-            slowMoving = Math.max(slowMoving, t.slow);
-            deliBal = Math.max(deliBal, t.deliBal);
-            rfd = Math.max(rfd, t.rfd);
+        // 2. Dyeing Items
+        (orderData.rawDyeingItems || []).forEach(item => {
+            if (item['Dyeing Prod.'] !== undefined) dyeingProd += parseNumValue(item['Dyeing Prod.']);
+            else if (item['DyeingProd'] !== undefined) dyeingProd += parseNumValue(item['DyeingProd']);
+
+            if (item['Dyeing Bala.'] !== undefined) dyeingBala += parseNumValue(item['Dyeing Bala.']);
+            else if (item['DyeingBala'] !== undefined) dyeingBala += parseNumValue(item['DyeingBala']);
+        });
+
+        // 3. Delivery Items
+        (orderData.rawDeliveryItems || []).forEach(item => {
+            if (item['Allocated Qty '] !== undefined) allocatedQty += parseNumValue(item['Allocated Qty ']);
+            else if (item['AllocatedQty'] !== undefined) allocatedQty += parseNumValue(item['AllocatedQty']);
+            else if (item['Allocated Qty'] !== undefined) allocatedQty += parseNumValue(item['Allocated Qty']);
+
+            if (item['Yarn bala.'] !== undefined) yarnBala += parseNumValue(item['Yarn bala.']);
+            else if (item['YarnBala'] !== undefined) yarnBala += parseNumValue(item['YarnBala']);
+            else if (item['Yarn Bala'] !== undefined) yarnBala += parseNumValue(item['Yarn Bala']);
+
+            if (item['NetDeliveryQtyKgs'] !== undefined) netDeliveryQty += parseNumValue(item['NetDeliveryQtyKgs']);
+            else if (item['NetDeliveryQty'] !== undefined) netDeliveryQty += parseNumValue(item['NetDeliveryQty']);
+            else if (item['DeliveryQty'] !== undefined) netDeliveryQty += parseNumValue(item['DeliveryQty']);
+
+            if (item['Slowmoving'] !== undefined) slowMoving += parseNumValue(item['Slowmoving']);
+
+            if (item['Deli. Bal.'] !== undefined) deliBal += parseNumValue(item['Deli. Bal.']);
+            else if (item['DeliBal'] !== undefined) deliBal += parseNumValue(item['DeliBal']);
+
+            if (item['RFD'] !== undefined) rfd += parseNumValue(item['RFD']);
         });
 
         const displayBuyer = orderData.buyers && orderData.buyers.size > 0 ? Array.from(orderData.buyers).join(', ') : 'Unknown';
