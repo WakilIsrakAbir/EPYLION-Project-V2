@@ -250,6 +250,9 @@
 
             if (item['Deli. Bal.'] !== undefined) deliBal += parseNumValue(item['Deli. Bal.']);
             else if (item['DeliBal'] !== undefined) deliBal += parseNumValue(item['DeliBal']);
+            else if (item['Deli Bal.'] !== undefined) deliBal += parseNumValue(item['Deli Bal.']);
+            else if (item['Delivery Balance'] !== undefined) deliBal += parseNumValue(item['Delivery Balance']);
+            else if (item['Deli. Bala.'] !== undefined) deliBal += parseNumValue(item['Deli. Bala.']);
 
             if (item['RFD'] !== undefined) rfd += parseNumValue(item['RFD']);
         });
