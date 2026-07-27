@@ -126,6 +126,14 @@ async function fetchActualTrackingData() {
                 if (endDates.length > 0) { endDates.sort(); planEnd = endDates[endDates.length - 1]; }
             }
 
+            // Fallback: if no dates from items, use T&A dates from General Info
+            if (!planStart && !planEnd) {
+                const oInfo = orderMap[plan.orderNo] || {};
+                if (actualDeptKey === 'knitting') { planStart = oInfo.knitStart || ''; planEnd = oInfo.knitEnd || ''; }
+                else if (actualDeptKey === 'dyeing') { planStart = oInfo.dyeStart || ''; planEnd = oInfo.dyeEnd || ''; }
+                else if (actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') { planStart = oInfo.deliStart || ''; planEnd = oInfo.deliEnd || ''; }
+            }
+
             const actualKey = (actualDeptKey === 'deliveryfloor' ? 'delivery' : actualDeptKey) + 'Actual';
             let actualStart = '';
             let actualEnd = '';
