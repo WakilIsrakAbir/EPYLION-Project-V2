@@ -86,6 +86,10 @@ async function fetchActualTrackingData() {
             status: actualActiveTab  // 'Pending' or 'Complete'
         });
         if (actualActiveBuyer) params.set('buyer', actualActiveBuyer);
+        if (actualFilterStartMin) params.set('startMin', actualFilterStartMin);
+        if (actualFilterStartMax) params.set('startMax', actualFilterStartMax);
+        if (actualFilterEndMin) params.set('endMin', actualFilterEndMin);
+        if (actualFilterEndMax) params.set('endMax', actualFilterEndMax);
 
         const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?${params}`);
         if (!res.ok) return;
@@ -289,16 +293,17 @@ async function refreshActualTracking() {
     renderActualTable();
 }
 
-function applyActualDateFilter() {
+async function applyActualDateFilter() {
     actualFilterStartMin = document.getElementById('actualFilterStartMin').value;
     actualFilterStartMax = document.getElementById('actualFilterStartMax').value;
     actualFilterEndMin = document.getElementById('actualFilterEndMin').value;
     actualFilterEndMax = document.getElementById('actualFilterEndMax').value;
     actualCurrentPage = 1;
+    await fetchActualTrackingData();
     renderActualTable();
 }
 
-function clearActualDateFilter() {
+async function clearActualDateFilter() {
     actualFilterStartMin = '';
     actualFilterStartMax = '';
     actualFilterEndMin = '';
@@ -308,6 +313,7 @@ function clearActualDateFilter() {
     document.getElementById('actualFilterEndMin').value = '';
     document.getElementById('actualFilterEndMax').value = '';
     actualCurrentPage = 1;
+    await fetchActualTrackingData();
     renderActualTable();
 }
 
