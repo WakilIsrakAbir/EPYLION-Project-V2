@@ -101,7 +101,7 @@ async function searchGlobalBooking() {
   for (const status of statuses) {
     try {
       const res = await fetch(
-        `${API_BASE}/api/orders?dept=${currentDept}&status=${status}&search=${encodeURIComponent(searchVal)}&limit=1`,
+        `${API_BASE}/api/orders?dept=${currentDept}&status=${status}&search=${encodeURIComponent(searchVal)}&exact=true&limit=1`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -144,6 +144,7 @@ async function searchGlobalBooking() {
     page: "1",
     limit: String(rowsPerPage),
     search: searchVal,
+    exact: "true"
   });
 
   const listRes = await fetch(`${API_BASE}/api/orders?${searchParams}`).catch(
@@ -163,8 +164,7 @@ async function searchGlobalBooking() {
           bookingCell &&
           bookingCell.innerText
             .trim()
-            .toLowerCase()
-            .includes(searchVal.toLowerCase())
+            .toLowerCase() === searchVal.toLowerCase()
         ) {
           row.style.backgroundColor = "#fef08a";
           row.style.transition = "background-color 0.3s";
