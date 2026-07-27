@@ -76,16 +76,35 @@ function renderDynamicHeaders() {
         document.getElementById('limitationHeaderText').innerText = 'YD Remarks';
 
         let leftHtml = leftCols.map(c => `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th">${c}</th>`).join('');
+        
+        let newColsHtml = `
+            <th class="p-2 border-r border-gray-300 text-center dynamic-th" rowspan="2">Yarn Ok<br>Date</th>
+            <th class="p-2 border-r border-gray-300 text-center dynamic-th" rowspan="2">Matching<br>Option Date</th>
+            <th class="p-2 border-r border-gray-300 text-center dynamic-th" colspan="3">YD Planning (Floor)</th>
+            <th class="p-2 border-r border-gray-300 text-center dynamic-th" colspan="2">T&A YD Plan</th>
+            <th class="p-2 border-r border-gray-300 text-center dynamic-th" colspan="2">Knit Plan</th>
+        `;
+
         let rightHtml = rightCols.map(c => {
             let className = c === 'YD DELIVERY BALANCE' ? 'text-red-600 font-bold' : '';
-            return `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th ${className}">${c}</th>`;
+            return `<th class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] dynamic-th ${className}" rowspan="2">${c}</th>`;
         }).join('');
 
         document.getElementById('planningHeaderText').insertAdjacentHTML('beforebegin', leftHtml);
-        document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', rightHtml);
+        document.getElementById('mainHeaderRow').insertAdjacentHTML('beforeend', newColsHtml + rightHtml);
+
+        let newSubHtml = `
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">YD Start</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">YD End</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Plan Type</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">YD T&A<br>Start</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">YD T&A<br>End</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Knit Start</th>
+            <th class="p-1 border-r border-gray-300 text-center text-gray-600 dynamic-th">Knit End</th>
+        `;
 
         document.querySelector('#subHeaderRow th').insertAdjacentHTML('beforebegin', `<th class="border-r border-gray-300 dynamic-th" colspan="${leftCols.length}"></th>`);
-        document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', `<th class="border-r border-gray-300 dynamic-th" colspan="${rightCols.length}"></th>`);
+        document.querySelector('#subHeaderRow').insertAdjacentHTML('beforeend', newSubHtml);
     }
     else {
         
@@ -178,6 +197,33 @@ function enforceEndDateMin(startInput, endInputClass) {
         if (endInput.value && endInput.value < startInput.value) {
             endInput.value = startInput.value;
         }
+    }
+}
+
+function syncFloorDates(input, type) {
+    const row = input.closest('tr');
+    if (!row) return;
+    
+    const floorStartInput = row.querySelector('.row-floor-start');
+    const floorEndInput = row.querySelector('.row-floor-end');
+    
+    if (!floorStartInput || !floorEndInput) return;
+
+    if (input.value) {
+        let d = new Date(input.value);
+        d.setDate(d.getDate() - 4);
+        let floorDateStr = d.toISOString().split('T')[0];
+        
+        if (type === 'start') {
+            floorStartInput.value = floorDateStr;
+            enforceEndDateMin(floorStartInput, 'row-floor-end');
+        } else if (type === 'end') {
+            floorEndInput.value = floorDateStr;
+            checkEndDateValid(floorEndInput, 'row-floor-start');
+        }
+    } else {
+        if (type === 'start') floorStartInput.value = '';
+        if (type === 'end') floorEndInput.value = '';
     }
 }
 

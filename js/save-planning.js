@@ -175,6 +175,10 @@ async function saveFabricPlanning() {
                 floorPlan = row.querySelector('.row-floor-plan').value;
             }
 
+            let yarnOk = '', matchingOption = '';
+            if (row.querySelector('.row-yarn-ok-date')) yarnOk = row.querySelector('.row-yarn-ok-date').value;
+            if (row.querySelector('.row-matching-option-date')) matchingOption = row.querySelector('.row-matching-option-date').value;
+
             if (row.querySelector('.row-unit')) itemData.Unit = row.querySelector('.row-unit').value;
             if (row.querySelector('.row-process')) {
                 let pVal = row.querySelector('.row-process').value;
@@ -187,7 +191,7 @@ async function saveFabricPlanning() {
                 startDate: newStartDate, endDate: newEndDate,
                 planType: newPlanType, limitation: newLimitation, remarks: newRemarks,
                 floorStartDate: floorStart, floorEndDate: floorEnd, floorPlanType: floorPlan,
-                yarnDate: newYarnDate
+                yarnDate: newYarnDate, yarnOkDate: yarnOk, matchingOptionDate: matchingOption
             });
 
             let target = existingData.mergedItems.find(m => m.itemId === id);
@@ -196,6 +200,7 @@ async function saveFabricPlanning() {
                 target.limitation = newLimitation; target.remarks = newRemarks;
                 target.floorStartDate = floorStart; target.floorEndDate = floorEnd; target.floorPlanType = floorPlan;
                 target.yarnDate = newYarnDate;
+                target.yarnOkDate = yarnOk; target.matchingOptionDate = matchingOption;
                 target.itemData = itemData;
             }
         });

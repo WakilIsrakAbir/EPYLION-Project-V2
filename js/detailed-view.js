@@ -85,6 +85,8 @@ async function openDetailedView(encodedBookingNo) {
                         'Booking Type': getColData(exItem, ['Booking Type', 'Type', 'YD Type']),
                         YDB: getColData(exItem, ['YDB', 'YD B']),
                         'YD Booking Date': getColData(exItem, ['YD Booking Date', 'Date', 'Booking Date']),
+                        'YD T&A Start': getColData(exItem, ['YD T&A Start', 'T&A Start', 'YD T&A Start Date', 'YD TNA Start', 'TNA Start', 'Start Date']),
+                        'YD T&A End': getColData(exItem, ['YD T&A End', 'T&A End', 'YD T&A End Date', 'YD TNA End', 'TNA End', 'End Date']),
                         'YD REQ.': getColData(exItem, ['YD REQ.', 'YD REQ', 'YD Req', 'Requirement']),
                         DYED: getColData(exItem, ['DYED', 'Dyed', 'Dye']),
                         'YD BALANCE': getColData(exItem, ['YD BALANCE', 'YD Balance']),
@@ -137,6 +139,8 @@ async function openDetailedView(encodedBookingNo) {
                     floorStartDate: dbItem ? dbItem.floorStartDate || '' : '',
                     floorEndDate: dbItem ? dbItem.floorEndDate || '' : '',
                     floorPlanType: dbItem ? dbItem.floorPlanType || '' : '',
+                    yarnOkDate: dbItem ? dbItem.yarnOkDate || '' : '',
+                    matchingOptionDate: dbItem ? dbItem.matchingOptionDate || '' : '',
                     yarnDate: dbItem ? dbItem.yarnDate || '' : '',
                     source: dbItem ? 'Both' : 'Excel'
                 });
@@ -387,8 +391,8 @@ async function openDetailedView(encodedBookingNo) {
             });
 
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date'); syncFloorDates(this, 'start')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date'); syncFloorDates(this, 'end')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
                     <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                         <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -398,6 +402,64 @@ async function openDetailedView(encodedBookingNo) {
                 </td>
                 <td class="p-2 border-r border-gray-300"><input type="text" class="row-limitation w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Limitation" value="${item.limitation || ''}"></td>
                 <td class="p-2 border-r border-gray-300"><input type="text" class="row-remarks w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" placeholder="Remarks" value="${item.remarks || ''}"></td>
+            `;
+
+            let knitPlan = { start: '', end: '' };
+            if (data.dbData && data.dbData.knitting && data.dbData.knitting.length > 0) {
+                const kItem = data.dbData.knitting[0];
+                if (kItem) { knitPlan.start = kItem.startDate || ''; knitPlan.end = kItem.endDate || ''; }
+            } else {
+                let parsedKnitStart = data.generalInfo.KnitStart !== 'N/A' && data.generalInfo.KnitStart !== '-' ? data.generalInfo.KnitStart : '';
+                let parsedKnitEnd = data.generalInfo.KnitEnd !== 'N/A' && data.generalInfo.KnitEnd !== '-' ? data.generalInfo.KnitEnd : '';
+                // Since format is dd-Mon-yy, we may need to skip converting if it's already display string, 
+                // but formatDateDisplay handles both string and actual date parsing gracefully.
+                // However here we just show what we got.
+                knitPlan.start = parsedKnitStart;
+                knitPlan.end = parsedKnitEnd;
+            }
+            
+            let floorStart = item.floorStartDate || '';
+            let floorEnd = item.floorEndDate || '';
+            let floorPlanType = item.floorPlanType || '';
+            let yarnOkDate = item.yarnOkDate || '';
+            let matchingOptionDate = item.matchingOptionDate || '';
+
+            let ydTnAStart = item.itemData['YD T&A Start'] || '';
+            let ydTnAEnd = item.itemData['YD T&A End'] || '';
+            if (typeof ydTnAStart === 'number') ydTnAStart = formatExcelDate(ydTnAStart);
+            if (typeof ydTnAEnd === 'number') ydTnAEnd = formatExcelDate(ydTnAEnd);
+
+            // Default dates for Floor
+            if (!item.floorStartDate && item.startDate) {
+                let d = new Date(item.startDate);
+                d.setDate(d.getDate() - 4);
+                floorStart = d.toISOString().split('T')[0];
+            }
+            if (!item.floorEndDate && item.endDate) {
+                let d = new Date(item.endDate);
+                d.setDate(d.getDate() - 4);
+                floorEnd = d.toISOString().split('T')[0];
+            }
+            if (!item.floorPlanType) {
+                floorPlanType = '';
+            }
+
+            itemHtml += `
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-yarn-ok-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${yarnOkDate}"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-matching-option-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${matchingOptionDate}"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-start p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${floorStart}" onchange="enforceEndDateMin(this, 'row-floor-end')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${floorEnd}" ${floorStart ? `min="${floorStart}"` : ''} onchange="checkEndDateValid(this, 'row-floor-start')"></td>
+                <td class="p-2 border-r border-gray-300 text-center">
+                    <select class="row-floor-plan p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                        <option value="" ${!floorPlanType ? 'selected' : ''}>Select</option>
+                        <option value="Confirm" ${floorPlanType === 'Confirm' ? 'selected' : ''}>Confirm</option>
+                        <option value="Tentative" ${floorPlanType === 'Tentative' ? 'selected' : ''}>Tentative</option>
+                    </select>
+                </td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${ydTnAStart}</td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${ydTnAEnd}</td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.start && knitPlan.start.includes('-') && knitPlan.start.length === 10 ? formatDateDisplay(knitPlan.start) : knitPlan.start}</td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.end && knitPlan.end.includes('-') && knitPlan.end.length === 10 ? formatDateDisplay(knitPlan.end) : knitPlan.end}</td>
             `;
 
             const rightCols = ['YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE', 'Barrier Qty.', 'Workable Qty.'];
