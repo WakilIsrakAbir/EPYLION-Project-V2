@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // SAVE PLANNING: Save Fabric Planning Data
 // ==========================================================
 async function saveFabricPlanning() {
@@ -196,6 +196,7 @@ async function saveFabricPlanning() {
                 target.limitation = newLimitation; target.remarks = newRemarks;
                 target.floorStartDate = floorStart; target.floorEndDate = floorEnd; target.floorPlanType = floorPlan;
                 target.yarnDate = newYarnDate;
+                target.itemData = itemData;
             }
         });
 

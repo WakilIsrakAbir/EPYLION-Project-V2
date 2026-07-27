@@ -119,6 +119,13 @@ async function openDetailedView(encodedBookingNo) {
                 const itemId = generateItemId(itemData, currentDept) || `item_${idx}`;
                 
                 const dbItem = dbMap.get(itemId);
+                
+                if (dbItem && dbItem.itemData) {
+                    if (dbItem.itemData.Unit) itemData.Unit = dbItem.itemData.Unit;
+                    if (dbItem.itemData.ProcessName) itemData.ProcessName = dbItem.itemData.ProcessName;
+                    if (dbItem.itemData['Process Name']) itemData['Process Name'] = dbItem.itemData['Process Name'];
+                }
+
                 data.mergedItems.push({
                     itemId: itemId,
                     itemData: itemData,
