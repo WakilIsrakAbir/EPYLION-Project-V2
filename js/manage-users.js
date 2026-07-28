@@ -137,6 +137,18 @@ const ACTION_GROUPS = [
     ],
   },
   {
+    title: "Actual Tracking Save Permissions",
+    icon: "fa-floppy-disk",
+    items: [
+      ["saveActualYD", "Save Actual Data (YD)"],
+      ["saveActualKnitting", "Save Actual Data (Knitting)"],
+      ["saveActualDyeing", "Save Actual Data (Dyeing)"],
+      ["saveActualFinishing", "Save Actual Data (Finishing)"],
+      ["saveActualDelivery", "Save Actual Data (Delivery)"],
+      ["saveActualDeliveryFloor", "Save Actual Data (Delivery Floor)"],
+    ],
+  },
+  {
     title: "Order Workflow Actions",
     icon: "fa-arrows-rotate",
     items: [
@@ -276,6 +288,12 @@ function makeTemplate(role) {
       "saveDyeing",
       "saveFinishing",
       "saveDelivery",
+      "saveActualYD",
+      "saveActualKnitting",
+      "saveActualDyeing",
+      "saveActualFinishing",
+      "saveActualDelivery",
+      "saveActualDeliveryFloor",
       "tentativePlan",
       "editDates",
       "editActualQty",

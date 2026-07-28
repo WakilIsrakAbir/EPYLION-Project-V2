@@ -22,6 +22,31 @@ async function loadActualTracking(deptKey) {
     if (document.getElementById('actualViewTitle')) document.getElementById('actualViewTitle').innerText = `Plan Vs Actual - ${deptName}`;
     if (document.getElementById('actualDeptTitle')) document.getElementById('actualDeptTitle').innerText = deptName;
 
+    // Check Actual Save permissions
+    const btnSaveActual = document.getElementById('btnSaveActual');
+    if (btnSaveActual) {
+        const permsStr = localStorage.getItem('permissions');
+        let canSaveActual = false;
+        if (permsStr) {
+            try {
+                const p = JSON.parse(permsStr);
+                if (p.actions) {
+                    const actualDeptMap = {
+                        yd: 'saveActualYD',
+                        knitting: 'saveActualKnitting',
+                        dyeing: 'saveActualDyeing',
+                        finishing: 'saveActualFinishing',
+                        delivery: 'saveActualDelivery',
+                        deliveryfloor: 'saveActualDeliveryFloor'
+                    };
+                    const permKey = actualDeptMap[deptKey];
+                    canSaveActual = permKey ? p.actions[permKey] : false;
+                }
+            } catch (e) {}
+        }
+        btnSaveActual.style.display = canSaveActual ? '' : 'none';
+    }
+
     actualCurrentPage = 1;
     actualColFilters = {};
     actualActiveTab = 'Pending';
