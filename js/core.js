@@ -147,6 +147,16 @@ function applyPermissions() {
             });
             const os = document.getElementById('menu-order-status');
             if (os) m.reports.orderStatus ? os.parentElement.classList.remove('hidden') : os.parentElement.classList.add('hidden');
+            
+            // Toggle Plan Filter Submenus based on reports permissions
+            const planFilterMenuEl = document.getElementById('planFilterSubmenu');
+            if (planFilterMenuEl) hasAny(m.reports) ? planFilterMenuEl.parentElement.classList.remove('hidden') : planFilterMenuEl.parentElement.classList.add('hidden');
+            ['yd', 'knitting', 'dyeing', 'delivery'].forEach(k => {
+                const el = document.getElementById(`menu-${k}-planfilter`);
+                if (el) m.reports[k] ? el.parentElement.classList.remove('hidden') : el.parentElement.classList.add('hidden');
+            });
+            const deliveryFloorPF = document.getElementById('menu-deliveryfloor-planfilter');
+            if (deliveryFloorPF) (m.reports.delivery || m.actualTracking?.deliveryfloor) ? deliveryFloorPF.parentElement.classList.remove('hidden') : deliveryFloorPF.parentElement.classList.add('hidden');
         }
 
         // Toggle Actual Tracking
@@ -283,7 +293,8 @@ function hideAllCoreViews() {
         'planVsActualReportView', 
         'planVsActualView',
         'orderStatusSection', 
-        'loadCalculationView'
+        'loadCalculationView',
+        'planFilterView'
     ];
     views.forEach(id => {
         const el = document.getElementById(id);
