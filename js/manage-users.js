@@ -125,7 +125,17 @@ const ACTION_GROUPS = [
       ["wipeSystem", "Wipe System Data"],
     ],
   },
-
+  {
+    title: "Planning Save Permissions",
+    icon: "fa-floppy-disk",
+    items: [
+      ["saveYD", "Save YD Planning"],
+      ["saveKnitting", "Save Knitting Planning"],
+      ["saveDyeing", "Save Dyeing Planning"],
+      ["saveFinishing", "Save Finishing Planning"],
+      ["saveDelivery", "Save Delivery Planning"],
+    ],
+  },
   {
     title: "Order Workflow Actions",
     icon: "fa-arrows-rotate",
@@ -261,7 +271,11 @@ function makeTemplate(role) {
     );
     p.menus.dataManagement.view = true;
     [
-
+      "saveYD",
+      "saveKnitting",
+      "saveDyeing",
+      "saveFinishing",
+      "saveDelivery",
       "tentativePlan",
       "editDates",
       "editActualQty",

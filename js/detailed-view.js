@@ -5,6 +5,24 @@ async function openDetailedView(encodedBookingNo) {
     const bookingNo = decodeURIComponent(encodedBookingNo);
     const currentDept = activeTabId.replace('_report', '');
 
+    // Check save permission
+    const saveBtn = document.getElementById('saveDatesBtn');
+    if (saveBtn) {
+        const permsStr = localStorage.getItem('permissions');
+        let canSave = false;
+        if (permsStr) {
+            try {
+                const p = JSON.parse(permsStr);
+                if (p.actions) {
+                    const deptMap = { yd: 'saveYD', knitting: 'saveKnitting', dyeing: 'saveDyeing', finishing: 'saveFinishing', delivery: 'saveDelivery' };
+                    const permKey = deptMap[currentDept];
+                    canSave = permKey ? p.actions[permKey] : false;
+                }
+            } catch (e) {}
+        }
+        saveBtn.style.display = canSave ? '' : 'none';
+    }
+
     // Show loading
     document.getElementById('listView').classList.add('hidden');
     document.getElementById('detailedView').classList.remove('hidden');
