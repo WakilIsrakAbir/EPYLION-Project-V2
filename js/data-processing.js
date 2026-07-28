@@ -144,7 +144,7 @@ async function searchGlobalBooking() {
     page: "1",
     limit: String(rowsPerPage),
     search: searchVal,
-    exact: "true"
+    exact: "true",
   });
 
   const listRes = await fetch(`${API_BASE}/api/orders?${searchParams}`).catch(
@@ -162,9 +162,7 @@ async function searchGlobalBooking() {
         const bookingCell = row.querySelector("td:nth-child(2)");
         if (
           bookingCell &&
-          bookingCell.innerText
-            .trim()
-            .toLowerCase() === searchVal.toLowerCase()
+          bookingCell.innerText.trim().toLowerCase() === searchVal.toLowerCase()
         ) {
           row.style.backgroundColor = "#fef08a";
           row.style.transition = "background-color 0.3s";
@@ -403,7 +401,8 @@ async function fetchReportData(currentDept) {
       `${API_BASE}/api/orders?dept=${currentDept}&status=Tentative&limit=1`,
     );
 
-    let hasConfirm = false, hasTentative = false;
+    let hasConfirm = false,
+      hasTentative = false;
     if (res && res.ok) {
       const d = await res.json();
       hasConfirm = d.total > 0;
@@ -477,30 +476,35 @@ async function fetchFullReportDataForExport(currentDept) {
 
 async function exportCombinedReportToExcel() {
   const currentDeptLower = activeTabId.replace("_report", "");
-  
+
   // Show loading on the download button
   const btn = window.event ? window.event.currentTarget : null;
-  let btnText = '';
+  let btnText = "";
   if (btn) {
     btnText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Downloading...';
+    btn.innerHTML =
+      '<i class="fas fa-spinner fa-spin mr-1"></i> Downloading...';
     btn.disabled = true;
-    btn.style.opacity = '0.7';
+    btn.style.opacity = "0.7";
   }
-  showToast(`Downloading ${currentDeptLower.toUpperCase()} Report... Please wait.`);
+  showToast(
+    `Downloading ${currentDeptLower.toUpperCase()} Report... Please wait.`,
+  );
 
   // Direct download from backend — server generates Excel file
   try {
-    const res = await fetch(`${API_BASE}/api/orders/report-download/${currentDeptLower}`);
+    const res = await fetch(
+      `${API_BASE}/api/orders/report-download/${currentDeptLower}`,
+    );
     if (!res.ok) {
       showToast(`No data found for ${currentDeptLower.toUpperCase()} report!`);
       return;
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = new Date().toISOString().split("T")[0];
     a.download = `${currentDeptLower.toUpperCase()}_Updated_Report_${dateStr}.xlsx`;
     document.body.appendChild(a);
     a.click();
@@ -508,13 +512,13 @@ async function exportCombinedReportToExcel() {
     URL.revokeObjectURL(url);
     showToast(`${currentDeptLower.toUpperCase()} Report downloaded!`);
   } catch (e) {
-    console.error('Download error:', e);
-    showToast('Download failed. Try again.');
+    console.error("Download error:", e);
+    showToast("Download failed. Try again.");
   } finally {
     if (btn) {
       btn.innerHTML = btnText;
       btn.disabled = false;
-      btn.style.opacity = '1';
+      btn.style.opacity = "1";
     }
   }
 }

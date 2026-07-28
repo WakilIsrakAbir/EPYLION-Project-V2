@@ -374,8 +374,6 @@ let buyersLoaded = false;
   
   function updateDashboardStats() {
     document.getElementById('statTotal').textContent = users.length;
-    const liveCount = users.filter(u => u.isLive).length;
-    document.getElementById('statActive').textContent = liveCount;
     document.getElementById('statAdmins').textContent = users.filter(u=>u.role==='Admin').length;
     document.getElementById('statCustom').textContent = users.filter(u=>JSON.stringify(u.permissions)!==JSON.stringify(makeTemplate(u.role))).length;
     document.getElementById('statBuyerRestricted').textContent = users.filter(u=>u.permissions.buyers.accessType==='selected').length;
