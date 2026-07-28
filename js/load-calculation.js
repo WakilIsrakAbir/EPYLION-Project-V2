@@ -81,17 +81,14 @@ function showLoadCalculation(menuName) {
     
     setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
     
-    // Don't pre-fetch all departments — load on demand when user clicks download
-    fetchLoadCalculationData().then(() => {
-        if (document.getElementById('loadStartMonth').options.length === 0) {
-            initLoadMonthSelector();
-        }
-        if (menuName === 'summary') {
-            setSummaryDepartment(activeSummaryDepartment);
-        } else {
-            refreshCurrentView();
-        }
-    });
+    if (document.getElementById('loadStartMonth').options.length === 0) {
+        initLoadMonthSelector();
+    }
+    if (menuName === 'summary') {
+        setSummaryDepartment(activeSummaryDepartment);
+    } else {
+        refreshCurrentView();
+    }
 }
 
 async function fetchLoadCalculationData() {
@@ -468,6 +465,32 @@ function setSummaryDepartment(department) {
 
 async function refreshCurrentView() {
     if (activeMainMenu === 'summary') {
+        const table = document.getElementById('summaryPreviewTable');
+        if (table) {
+            const tbody = table.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-10">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                            <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                            <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                            <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                            <div class="absolute w-4 h-4 rounded-full bg-orange-500 animate-pulse"></div>
+                        </div>
+                        <h3 class="text-gray-800 font-bold text-lg">Loading Summary Data...</h3>
+                        <p class="text-sm text-gray-500 mt-1">Please wait while data is being processed</p>
+                    </div>
+                </td></tr>`;
+            }
+            const tfoot = table.querySelector('tfoot');
+            if (tfoot) {
+                tfoot.innerHTML = '';
+            }
+        }
+        
+        // Force browser repaint so spinner is visible before heavy JS execution
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         await ensureLoadDataForDept(activeSummaryDepartment);
         const data = buildSummaryData(activeSummaryDepartment);
         renderSummaryTable(data);
@@ -503,52 +526,90 @@ function renderSummaryTable(data) {
 }
 
 async function downloadLoadReport(department) {
-    showToast(`Loading ${department} data...`);
-    await ensureLoadDataForDept(department);
-    const { config, reportMonths, headers, rows } = buildReportData(department);
-    if (!rows.length) { showToast(`No ${config.name} load data found.`); return; }
+    const btnId = 'btnLoadDetailed' + department.charAt(0).toUpperCase() + department.slice(1);
+    const btn = document.getElementById(btnId);
+    let originalHtml = '';
+    if (btn) {
+        originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin text-sm"></i> Loading...`;
+        btn.disabled = true;
+    }
 
-    const worksheetData = [headers, ...rows.map(row => row.excelRow)];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    
-    worksheet['!autofilter'] = {
-        ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: headers.length - 1 } })
-    };
-    worksheet['!cols'] = headers.map(header => {
-        if (header.includes('Date') || header.includes('Construction') || header.includes('Process')) return { wch: 21 };
-        return { wch: Math.max(10, Math.min(String(header).length + 3, 18)) };
-    });
+    try {
+        showToast(`Loading ${department} data...`);
+        await ensureLoadDataForDept(department);
+        const { config, reportMonths, headers, rows } = buildReportData(department);
+        if (!rows.length) { showToast(`No ${config.name} load data found.`); return; }
 
-    // Apply special formatting
-    formatExcelWorksheet(worksheet);
+        const worksheetData = [headers, ...rows.map(row => row.excelRow)];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        
+        worksheet['!autofilter'] = {
+            ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: headers.length - 1 } })
+        };
+        worksheet['!cols'] = headers.map(header => {
+            if (header.includes('Date') || header.includes('Construction') || header.includes('Process')) return { wch: 21 };
+            return { wch: Math.max(10, Math.min(String(header).length + 3, 18)) };
+        });
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Load`);
-    const filename = `${config.name}_Load_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
-    XLSX.writeFile(workbook, filename);
+        // Apply special formatting
+        formatExcelWorksheet(worksheet);
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Load`);
+        const filename = `${config.name}_Load_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
+        XLSX.writeFile(workbook, filename);
+    } catch (error) {
+        console.error("Error downloading report:", error);
+        showToast("Error generating report");
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
 }
 
 async function downloadLoadSummary(department) {
-    showToast(`Loading ${department} summary...`);
-    await ensureLoadDataForDept(department);
-    const { config, reportMonths, headers, rows, grandMonthlyTotals, grandTotal } = buildSummaryData(department);
-    if (!rows.length) { showToast(`No ${config.name} summary data found.`); return; }
+    const btnId = 'btnLoadSummary' + department.charAt(0).toUpperCase() + department.slice(1);
+    const btn = document.getElementById(btnId);
+    let originalHtml = '';
+    if (btn) {
+        originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin text-sm"></i> Loading...`;
+        btn.disabled = true;
+    }
 
-    const worksheetData = [
-        headers,
-        ...rows.map(row => [row.buyer, ...row.monthlyValues, row.total]),
-        ['Grand Total', ...grandMonthlyTotals, grandTotal]
-    ];
+    try {
+        showToast(`Loading ${department} summary...`);
+        await ensureLoadDataForDept(department);
+        const { config, reportMonths, headers, rows, grandMonthlyTotals, grandTotal } = buildSummaryData(department);
+        if (!rows.length) { showToast(`No ${config.name} summary data found.`); return; }
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    worksheet['!cols'] = [{ wch: 25 }, ...reportMonths.map(() => ({ wch: 15 })), { wch: 15 }];
-    
-    // Apply special formatting
-    formatExcelWorksheet(worksheet);
+        const worksheetData = [
+            headers,
+            ...rows.map(row => [row.buyer, ...row.monthlyValues, row.total]),
+            ['Grand Total', ...grandMonthlyTotals, grandTotal]
+        ];
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Summary`);
-    const filename = `${config.name}_Summary_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
-    XLSX.writeFile(workbook, filename);
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        worksheet['!cols'] = [{ wch: 25 }, ...reportMonths.map(() => ({ wch: 15 })), { wch: 15 }];
+        
+        // Apply special formatting
+        formatExcelWorksheet(worksheet);
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, `${config.name} Summary`);
+        const filename = `${config.name}_Summary_${formatLoadMonthYear(reportMonths[0])}.xlsx`;
+        XLSX.writeFile(workbook, filename);
+    } catch (error) {
+        console.error("Error downloading summary:", error);
+        showToast("Error generating summary");
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
 }
 
