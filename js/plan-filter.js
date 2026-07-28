@@ -107,6 +107,7 @@ async function fetchPlanFilterData(deptKey) {
         }
         const data = await res.json();
         const { planDocs, orderMap } = data;
+        const loadedTrackingOrderNos = new Set();
         
         planDocs.forEach(plan => {
             const deptItems = plan[dbDeptKey];
@@ -115,6 +116,7 @@ async function fetchPlanFilterData(deptKey) {
                     const planType = deptKey === 'deliveryfloor' ? item.floorPlanType : item.planType;
                     
                     if (planType === 'Confirm' || planType === 'Tentative') {
+                        loadedTrackingOrderNos.add(plan.orderNo);
                         const orderInfo = orderMap[plan.orderNo] || {};
                         let displayBuyer = orderInfo.buyer || plan.buyer || 'N/A';
                         
@@ -142,6 +144,55 @@ async function fetchPlanFilterData(deptKey) {
                 });
             }
         });
+        
+        // Also fetch Tentative orders from the orders collection
+        try {
+            const tentativeRes = await fetch(`${API_BASE}/api/orders?dept=${deptKey}&status=Tentative&limit=10000&populateItems=true`);
+            if (tentativeRes.ok) {
+                const tentativeData = await tentativeRes.json();
+                if (tentativeData.orders) {
+                    tentativeData.orders.forEach(order => {
+                        // Skip if we already loaded it from tracking
+                        if (loadedTrackingOrderNos.has(order.orderNo)) return;
+                        
+                        const items = order[`${deptKey}Items`] || [];
+                        items.forEach(item => {
+                            const planType = 'Tentative';
+                            
+                            // Prevent duplicating items if they are already in tracking (tracking items will have 'startDate' etc.)
+                            // Tracking items are already added above. 
+                            
+                            const row = {
+                                OrderNo: order.orderNo,
+                                Buyer: order.buyer || 'N/A',
+                                Color: item.Color || 'N/A',
+                                ...item
+                            };
+                            
+                            // Map order-level dates if item doesn't have them
+                            let sd = '';
+                            let ed = '';
+                            if (deptKey === 'knitting') { sd = order.knitStart; ed = order.knitEnd; }
+                            else if (deptKey === 'dyeing') { sd = order.dyeStart; ed = order.dyeEnd; }
+                            else if (deptKey === 'delivery' || deptKey === 'deliveryfloor') { sd = order.deliStart; ed = order.deliEnd; }
+                            else if (deptKey === 'yd') { sd = order.ydStart; ed = order.ydEnd; }
+                            
+                            row['Plan Start Date'] = sd || '';
+                            row['Plan End Date'] = ed || '';
+                            row['Plan Type'] = planType;
+                            
+                            row._start = parseShortDateToISO(row['Plan Start Date']);
+                            row._end = parseShortDateToISO(row['Plan End Date']);
+                            
+                            // Only add if it has some dates to be filtered by
+                            pfAllData.push(row);
+                        });
+                    });
+                }
+            }
+        } catch(e) {
+            console.error('Error fetching tentative orders', e);
+        }
         
         // Fetch buyers list from API to ensure we have all active buyers from uploaded files
         try {
