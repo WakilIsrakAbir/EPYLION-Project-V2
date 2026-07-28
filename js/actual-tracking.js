@@ -272,7 +272,22 @@ function switchActualTab(tab) {
 
 function renderActualBuyerFilter() {
     const container = document.getElementById('actualBuyerFilterContainer');
-    const buyers = actualBuyersFromServer || [];
+    let buyers = actualBuyersFromServer || [];
+    
+    let userPerms = null;
+    try {
+      userPerms = JSON.parse(localStorage.getItem("permissions"));
+    } catch (e) {}
+    if (userPerms && userPerms.buyers && userPerms.buyers.accessType !== "all") {
+      const ids = userPerms.buyers.buyerIds || [];
+      buyers = buyers.filter((b) => {
+        const id = String(b)
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+        return ids.includes(id);
+      });
+    }
+
     if (buyers.length === 0) { container.innerHTML = ''; return; }
 
     let html = '';
