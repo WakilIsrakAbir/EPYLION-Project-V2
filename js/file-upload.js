@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // FILE UPLOAD: Upload, List, Delete Files
 // ==========================================================
 async function handleExcelUpload() {
@@ -46,8 +46,18 @@ async function loadUploadedFiles() {
         if (displayFiles.length === 0) {
             fileHtml = `<tr><td colspan="5" class="p-4 text-center text-gray-500 font-medium">No ${activeUploadCategory} files uploaded yet.</td></tr>`;
         } else {
+            const permsStr = localStorage.getItem('permissions');
+            let canDelete = false;
+            if (permsStr) {
+                try {
+                    const p = JSON.parse(permsStr);
+                    if (p.actions && p.actions.deleteFiles) canDelete = true;
+                } catch(e){}
+            }
+
             displayFiles.forEach(f => {
                 const catBadge = f.category ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold text-[10px]">${f.category}</span>` : `<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-bold text-[10px]">General</span>`;
+                const deleteBtn = canDelete ? `<button onclick="deleteFileGroup('${f.originalName}', '${f.category || 'General'}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>` : '';
                 fileHtml += `
                 <tr class="border-b hover:bg-gray-50 transition-colors">
                     <td class="p-2">${catBadge}</td>
@@ -55,7 +65,7 @@ async function loadUploadedFiles() {
                     <td class="p-2 font-semibold">${f.uploadedBy}</td>
                     <td class="p-2 text-xs text-gray-500">${new Date(f.createdAt).toLocaleString()}</td>
                     <td class="p-2 text-center">
-                        <button onclick="deleteFileGroup('${f.originalName}', '${f.category || 'General'}')" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
+                        ${deleteBtn}
                     </td>
                 </tr>`;
             });
