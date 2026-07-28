@@ -306,11 +306,6 @@ let buyersLoaded = false;
 
       // Loading state is automatically replaced by renderUsers()
 
-      if (!liveUpdateInterval) {
-        liveUpdateInterval = setInterval(() => {
-            loadUsers(true);
-        }, 15000);
-      }
 
     } catch (err) {
       console.error(err);
@@ -411,7 +406,6 @@ let buyersLoaded = false;
                 <h3 class="font-black truncate" title="${escapeHtml(user.username)}">${escapeHtml(user.username)}</h3>
                 <div class="flex flex-wrap items-center gap-1.5 mt-1">
                   <span class="role-pill text-[10px] font-black px-2 py-1 rounded-full" data-role="${user.role}">${user.role}</span>
-                  <span class="text-[10px] font-bold px-2 py-1 rounded-full ${isActive?'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300':'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}">${isActive?'ACTIVE':'INACTIVE'}</span>
                 </div>
               </div>
             </div>
