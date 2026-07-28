@@ -299,6 +299,13 @@ function makeTemplate(role) {
       "loadSummaryKnitting",
       "loadSummaryDyeing",
       "loadSummaryDelivery",
+      // Planners need Tracking Downloads since they have actualTracking menu
+      "trackingYD",
+      "trackingKnitting",
+      "trackingDyeing",
+      "trackingFinishing",
+      "trackingDelivery",
+      "trackingDeliveryFloor",
     ].forEach((k) => (p.downloads[k] = true));
     p.buyers.accessType = "selected";
     p.buyers.buyerIds = ["hm", "next", "marks"];
@@ -307,6 +314,15 @@ function makeTemplate(role) {
     ["globalSearch"].forEach((k) => (p.actions[k] = true));
 
     [
+      // Viewers need report downloads since they have reports menu
+      "reportUpdatedExcelYD",
+      "reportUpdatedExcelKnitting",
+      "reportUpdatedExcelDyeing",
+      "reportUpdatedExcelFinishing",
+      "reportUpdatedExcelDelivery",
+      "osDetailedExcel",
+      "osDetailedPdf",
+      // Tracking downloads
       "trackingYD",
       "trackingKnitting",
       "trackingDyeing",
@@ -834,7 +850,23 @@ function openPermissionBuilder(target) {
   } else {
     const u = users.find((x) => x.id === target);
     if (!u) return;
-    permissionDraft = clone(u.permissions);
+    
+    // Merge existing permissions with an empty template to ensure no missing groups
+    const emptyP = emptyPermissions();
+    const existingP = u.permissions || {};
+    
+    permissionDraft = {
+      menus: { ...emptyP.menus, ...(existingP.menus || {}) },
+      actions: { ...emptyP.actions, ...(existingP.actions || {}) },
+      buyers: { ...emptyP.buyers, ...(existingP.buyers || {}) },
+      downloads: { ...emptyP.downloads, ...(existingP.downloads || {}) },
+    };
+    
+    // Deep merge menus just to be safe
+    Object.keys(emptyP.menus).forEach(group => {
+      permissionDraft.menus[group] = { ...emptyP.menus[group], ...(permissionDraft.menus[group] || {}) };
+    });
+
     document.getElementById("permissionModalTitle").textContent =
       `Permissions: ${u.username}`;
   }

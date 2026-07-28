@@ -1,6 +1,47 @@
 // ==========================================================
 // CORE: Init, Permissions, Navigation
 // ==========================================================
+
+// Global fetch interceptor to append allowed buyers for restricted users
+const originalFetch = window.fetch;
+window.fetch = async function (resource, init) {
+  let urlStr =
+    typeof resource === "string"
+      ? resource
+      : resource instanceof Request
+        ? resource.url
+        : String(resource);
+
+  if (
+    urlStr.includes("/api/orders") &&
+    !urlStr.includes("/api/orders/buyers")
+  ) {
+    let perms = null;
+    try {
+      perms = JSON.parse(localStorage.getItem("permissions"));
+    } catch (e) {}
+
+    if (perms && perms.buyers && perms.buyers.accessType !== "all") {
+      const allowedIds = (perms.buyers.buyerIds || []).join(",");
+      const urlObj = new URL(urlStr, window.location.origin);
+
+      if (allowedIds) {
+        urlObj.searchParams.set("allowedBuyers", allowedIds);
+      } else {
+        urlObj.searchParams.set("allowedBuyers", "NONE_ASSIGNED");
+      }
+      urlStr = urlObj.toString();
+
+      if (resource instanceof Request) {
+        resource = new Request(urlStr, resource);
+      } else {
+        resource = urlStr;
+      }
+    }
+  }
+
+  return originalFetch.call(this, resource, init);
+};
 function initDashboard() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; return; }
