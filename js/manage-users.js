@@ -4,10 +4,12 @@ let buyersLoaded = false;
 async function updateDynamicBuyers() {
   BUYERS = [];
   try {
-    const res = await fetch(`https://abir-backend-api.onrender.com/api/orders/buyers?t=${Date.now()}`);
+    const res = await fetch(
+      `https://abir-backend-api.onrender.com/api/orders/buyers?t=${Date.now()}`,
+    );
     if (res.ok) {
       const buyerNames = await res.json();
-      buyerNames.forEach(buyer => {
+      buyerNames.forEach((buyer) => {
         const id = buyer.toLowerCase().replace(/[^a-z0-9]/g, "");
         if (id) {
           BUYERS.push({ id, name: buyer });
@@ -21,7 +23,7 @@ async function updateDynamicBuyers() {
   // Ensure unique by ID
   const uniqueBuyers = [];
   const existingIds = new Set();
-  BUYERS.forEach(b => {
+  BUYERS.forEach((b) => {
     if (!existingIds.has(b.id)) {
       uniqueBuyers.push(b);
       existingIds.add(b.id);
@@ -123,18 +125,7 @@ const ACTION_GROUPS = [
       ["wipeSystem", "Wipe System Data"],
     ],
   },
-  {
-    title: "Planning Save Permissions",
-    icon: "fa-floppy-disk",
-    items: [
-      ["saveYD", "Save YD Planning"],
-      ["saveKnitting", "Save Knitting Planning"],
-      ["saveDyeing", "Save Dyeing Planning"],
-      ["saveFinishing", "Save Finishing Planning"],
-      ["saveDelivery", "Save Delivery Planning"],
-      ["saveActual", "Save Plan vs Actual"],
-    ],
-  },
+
   {
     title: "Order Workflow Actions",
     icon: "fa-arrows-rotate",
@@ -270,12 +261,7 @@ function makeTemplate(role) {
     );
     p.menus.dataManagement.view = true;
     [
-      "saveYD",
-      "saveKnitting",
-      "saveDyeing",
-      "saveFinishing",
-      "saveDelivery",
-      "saveActual",
+
       "tentativePlan",
       "editDates",
       "editActualQty",
@@ -848,21 +834,24 @@ function openPermissionBuilder(target) {
   } else {
     const u = users.find((x) => x.id === target);
     if (!u) return;
-    
+
     // Merge existing permissions with an empty template to ensure no missing groups
     const emptyP = emptyPermissions();
     const existingP = u.permissions || {};
-    
+
     permissionDraft = {
       menus: { ...emptyP.menus, ...(existingP.menus || {}) },
       actions: { ...emptyP.actions, ...(existingP.actions || {}) },
       buyers: { ...emptyP.buyers, ...(existingP.buyers || {}) },
       downloads: { ...emptyP.downloads, ...(existingP.downloads || {}) },
     };
-    
+
     // Deep merge menus just to be safe
-    Object.keys(emptyP.menus).forEach(group => {
-      permissionDraft.menus[group] = { ...emptyP.menus[group], ...(permissionDraft.menus[group] || {}) };
+    Object.keys(emptyP.menus).forEach((group) => {
+      permissionDraft.menus[group] = {
+        ...emptyP.menus[group],
+        ...(permissionDraft.menus[group] || {}),
+      };
     });
 
     document.getElementById("permissionModalTitle").textContent =
