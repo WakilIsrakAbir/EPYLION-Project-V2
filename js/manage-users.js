@@ -160,17 +160,7 @@ const ACTION_GROUPS = [
       ["deletePlan", "Delete Planning Data"],
     ],
   },
-  {
-    title: "Data Editing Actions",
-    icon: "fa-pen-to-square",
-    items: [
-      ["editDates", "Edit Production Dates"],
-      ["editActualQty", "Edit Actual Quantity"],
-      ["editRemarks", "Edit Internal Remarks"],
-      ["bulkUpdate", "Bulk Update"],
-      ["globalSearch", "Global Booking Search"],
-    ],
-  },
+
   {
     title: "User Management",
     icon: "fa-user-shield",
@@ -270,10 +260,6 @@ function makeTemplate(role) {
       "completeOrder",
       "reopenOrder",
       "changeOrderStatus",
-      "editDates",
-      "editActualQty",
-      "editRemarks",
-      "globalSearch",
     ].forEach((k) => (p.actions[k] = true));
     setAllObj(p.downloads);
     p.buyers.accessType = "all";
@@ -295,10 +281,6 @@ function makeTemplate(role) {
       "saveActualDelivery",
       "saveActualDeliveryFloor",
       "tentativePlan",
-      "editDates",
-      "editActualQty",
-      "editRemarks",
-      "globalSearch",
     ].forEach((k) => (p.actions[k] = true));
 
     [
