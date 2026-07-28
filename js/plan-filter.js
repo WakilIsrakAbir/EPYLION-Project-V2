@@ -56,6 +56,7 @@ function showPlanFilter(deptKey) {
     
     document.getElementById('pfFromDate').value = fmtDate(firstDay);
     document.getElementById('pfToDate').value = fmtDate(today);
+    document.getElementById('pfToDate').min = fmtDate(firstDay);
     
     // Fetch data for the selected department
     fetchPlanFilterData(deptKey);
@@ -308,4 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
             buyerDropdown.classList.add('hidden');
         }
     });
+    
+    const pfFromDate = document.getElementById('pfFromDate');
+    const pfToDate = document.getElementById('pfToDate');
+    if (pfFromDate && pfToDate) {
+        pfFromDate.addEventListener('change', (e) => {
+            const minDate = e.target.value;
+            pfToDate.min = minDate;
+            if (pfToDate.value && pfToDate.value < minDate) {
+                pfToDate.value = minDate;
+            }
+        });
+    }
 });
