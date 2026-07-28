@@ -179,10 +179,39 @@ function applyPermissions() {
             if (lSummary) m.loadCalculation.summary ? lSummary.parentElement.classList.remove('hidden') : lSummary.parentElement.classList.add('hidden');
         }
 
-        // Hide upload area if not allowed to upload anything
+        // Enforce Granular Upload & Data Management Permissions
         let canUpload = false;
         if (permissions.actions) {
             const a = permissions.actions;
+            
+            const toggleElement = (id, hasPerm) => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = hasPerm ? '' : 'none';
+            };
+
+            // Hide/show individual category tabs
+            const tabs = [
+                {id: 'tabGeneral', perm: a.uploadGeneral, name: 'General'},
+                {id: 'tabYD', perm: a.uploadYD, name: 'YD'},
+                {id: 'tabKnitting', perm: a.uploadKnitting, name: 'Knitting'},
+                {id: 'tabDyeing', perm: a.uploadDyeing, name: 'Dyeing'},
+                {id: 'tabFinishing', perm: a.uploadFinishing, name: 'Finishing'},
+                {id: 'tabDelivery', perm: a.uploadDelivery, name: 'Delivery'}
+            ];
+            
+            let firstVisibleTab = null;
+            tabs.forEach(t => {
+                toggleElement(t.id, t.perm);
+                if (t.perm && !firstVisibleTab) firstVisibleTab = t.name;
+            });
+            
+            if (firstVisibleTab && typeof setUploadCategory === 'function') {
+                setUploadCategory(firstVisibleTab);
+            }
+
+            // Hide/show file list and wipe system sections
+            toggleElement('wipeSystemContainer', a.wipeSystem);
+
             if (a.uploadGeneral || a.uploadYD || a.uploadKnitting || a.uploadDyeing || a.uploadFinishing || a.uploadDelivery) {
                 canUpload = true;
             }

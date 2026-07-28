@@ -119,7 +119,6 @@ const ACTION_GROUPS = [
       ["uploadDyeing", "Upload Dyeing Data"],
       ["uploadFinishing", "Upload Finishing Data"],
       ["uploadDelivery", "Upload Delivery Data"],
-      ["viewFiles", "View Uploaded Files"],
       ["deleteFiles", "Delete Uploaded Files"],
       ["wipeSystem", "Wipe System Data"],
     ],
@@ -270,7 +269,6 @@ function makeTemplate(role) {
       (k) => setMenu(k),
     );
     p.menus.dataManagement.view = true;
-    p.actions.viewFiles = true;
     [
       "saveYD",
       "saveKnitting",
