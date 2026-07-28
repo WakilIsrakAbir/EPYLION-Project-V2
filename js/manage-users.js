@@ -149,6 +149,15 @@ const ACTION_GROUPS = [
     ],
   },
   {
+    title: "Buyer-wise Load Summary Permissions",
+    icon: "fa-chart-column",
+    items: [
+      ["loadSummaryKnitting", "Load Summary (Knitting)"],
+      ["loadSummaryDyeing", "Load Summary (Dyeing)"],
+      ["loadSummaryDelivery", "Load Summary (Delivery)"],
+    ],
+  },
+  {
     title: "Order Workflow Actions",
     icon: "fa-arrows-rotate",
     items: [
@@ -269,6 +278,9 @@ function makeTemplate(role) {
       "saveActualDelivery",
       "saveActualDeliveryFloor",
       "tentativePlan",
+      "loadSummaryKnitting",
+      "loadSummaryDyeing",
+      "loadSummaryDelivery",
     ].forEach((k) => (p.actions[k] = true));
 
     [

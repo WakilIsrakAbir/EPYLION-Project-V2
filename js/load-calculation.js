@@ -73,6 +73,30 @@ function showLoadCalculation(menuName) {
     if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuTitle, dept: menuName, mode: 'loadCalculation' });
     renderTabs();
 
+    if (menuName === 'summary') {
+        const btnKnit = document.getElementById('summaryBtnKnitting');
+        const btnDye = document.getElementById('summaryBtnDyeing');
+        const btnDeli = document.getElementById('summaryBtnDelivery');
+
+        if (btnKnit && btnDye && btnDeli) {
+            let permKnit = false, permDye = false, permDeli = false;
+            const permsStr = localStorage.getItem('permissions');
+            if (permsStr) {
+                try {
+                    const p = JSON.parse(permsStr);
+                    if (p.actions) {
+                        permKnit = !!p.actions.loadSummaryKnitting;
+                        permDye = !!p.actions.loadSummaryDyeing;
+                        permDeli = !!p.actions.loadSummaryDelivery;
+                    }
+                } catch (e) {}
+            }
+            btnKnit.style.display = permKnit ? '' : 'none';
+            btnDye.style.display = permDye ? '' : 'none';
+            btnDeli.style.display = permDeli ? '' : 'none';
+        }
+    }
+
     if (document.getElementById('contentTabTitle')) document.getElementById('contentTabTitle').textContent = title;
     if (document.getElementById('pageMainTitle')) document.getElementById('pageMainTitle').textContent = title;
     if (document.getElementById('pageMainDescription')) document.getElementById('pageMainDescription').textContent = description;
