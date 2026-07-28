@@ -73,13 +73,25 @@ function showLoadCalculation(menuName) {
     if (!openTabs.find(tab => tab.id === uniqueId)) openTabs.push({ id: uniqueId, title: menuTitle, dept: menuName, mode: 'loadCalculation' });
     renderTabs();
 
+    if (document.getElementById('contentTabTitle')) document.getElementById('contentTabTitle').textContent = title;
+    if (document.getElementById('pageMainTitle')) document.getElementById('pageMainTitle').textContent = title;
+    if (document.getElementById('pageMainDescription')) document.getElementById('pageMainDescription').textContent = description;
+
+    closeSidebarMobile();
+    
+    setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
+    
+    if (document.getElementById('loadStartMonth').options.length === 0) {
+        initLoadMonthSelector();
+    }
+    
     if (menuName === 'summary') {
         const btnKnit = document.getElementById('summaryBtnKnitting');
         const btnDye = document.getElementById('summaryBtnDyeing');
         const btnDeli = document.getElementById('summaryBtnDelivery');
+        let permKnit = false, permDye = false, permDeli = false;
 
         if (btnKnit && btnDye && btnDeli) {
-            let permKnit = false, permDye = false, permDeli = false;
             const permsStr = localStorage.getItem('permissions');
             if (permsStr) {
                 try {
@@ -95,20 +107,18 @@ function showLoadCalculation(menuName) {
             btnDye.style.display = permDye ? '' : 'none';
             btnDeli.style.display = permDeli ? '' : 'none';
         }
-    }
+        
+        let firstPermitted = 'knitting';
+        if (permKnit) firstPermitted = 'knitting';
+        else if (permDye) firstPermitted = 'dyeing';
+        else if (permDeli) firstPermitted = 'delivery';
+        
+        if ((activeSummaryDepartment === 'knitting' && !permKnit) ||
+            (activeSummaryDepartment === 'dyeing' && !permDye) ||
+            (activeSummaryDepartment === 'delivery' && !permDeli)) {
+            activeSummaryDepartment = firstPermitted;
+        }
 
-    if (document.getElementById('contentTabTitle')) document.getElementById('contentTabTitle').textContent = title;
-    if (document.getElementById('pageMainTitle')) document.getElementById('pageMainTitle').textContent = title;
-    if (document.getElementById('pageMainDescription')) document.getElementById('pageMainDescription').textContent = description;
-
-    closeSidebarMobile();
-    
-    setActiveSidebarMenu(menuName === 'detailed' ? 'menu-load-detailed' : 'menu-load-summary');
-    
-    if (document.getElementById('loadStartMonth').options.length === 0) {
-        initLoadMonthSelector();
-    }
-    if (menuName === 'summary') {
         setSummaryDepartment(activeSummaryDepartment);
     } else {
         refreshCurrentView();
