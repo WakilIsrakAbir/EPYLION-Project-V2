@@ -160,18 +160,6 @@ const ACTION_GROUPS = [
       ["deletePlan", "Delete Planning Data"],
     ],
   },
-
-  {
-    title: "User Management",
-    icon: "fa-user-shield",
-    items: [
-      ["createUsers", "Create Users"],
-      ["editUsers", "Edit Users"],
-      ["deleteUsers", "Delete Users"],
-      ["resetPassword", "Reset Password"],
-      ["changePermissions", "Change Permissions"],
-    ],
-  },
 ];
 
 const DOWNLOAD_GROUPS = [
