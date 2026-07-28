@@ -68,6 +68,18 @@ const MENU_GROUPS = [
     ],
   },
   {
+    key: "planFilter",
+    title: "Plan Filter",
+    icon: "fa-filter",
+    items: [
+      ["yd", "YD Plan Filter"],
+      ["knitting", "Knitting Plan Filter"],
+      ["dyeing", "Dyeing Plan Filter"],
+      ["delivery", "Delivery Plan Filter"],
+      ["deliveryfloor", "Delivery Plan (Floor) Filter"],
+    ],
+  },
+  {
     key: "actualTracking",
     title: "Plan Vs Actual Tracking",
     icon: "fa-scale-balanced",
@@ -247,6 +259,7 @@ function makeTemplate(role) {
     [
       "orderManagement",
       "reports",
+      "planFilter",
       "actualTracking",
       "trackingReports",
       "loadCalculation",
@@ -261,9 +274,13 @@ function makeTemplate(role) {
     setAllObj(p.downloads);
     p.buyers.accessType = "all";
   } else if (role === "Planner") {
-    ["orderManagement", "reports", "actualTracking", "loadCalculation"].forEach(
-      (k) => setMenu(k),
-    );
+    [
+      "orderManagement",
+      "reports",
+      "planFilter",
+      "actualTracking",
+      "loadCalculation",
+    ].forEach((k) => setMenu(k));
     p.menus.dataManagement.view = true;
     [
       "saveYD",
@@ -308,7 +325,7 @@ function makeTemplate(role) {
     p.buyers.accessType = "selected";
     p.buyers.buyerIds = ["hm", "next", "marks"];
   } else {
-    ["reports", "trackingReports"].forEach((k) => setMenu(k));
+    ["reports", "planFilter", "trackingReports"].forEach((k) => setMenu(k));
     ["globalSearch"].forEach((k) => (p.actions[k] = true));
 
     [
