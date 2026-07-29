@@ -702,7 +702,7 @@ async function createUser(event) {
   const username = document.getElementById("createUsername").value.trim();
   const password = document.getElementById("createPassword").value;
   const role = document.getElementById("createRole").value;
-  const status = document.getElementById("createStatus").value;
+  const status = document.getElementById("createStatus")?.value || "active";
 
   if (username.length < 3)
     return showToast("Username must contain at least 3 characters.", true);
