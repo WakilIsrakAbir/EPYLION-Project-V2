@@ -65,6 +65,8 @@ function initDashboard() {
       loadMenuData(state.dept, state.title, state.mode);
     } else if (state.page === "orderStatus") {
       showOrderStatus();
+    } else if (state.page === "productInfo") {
+      showProductInfo();
     } else if (state.page === "actualTracking" && state.dept) {
       loadActualTracking(state.dept);
     } else {
@@ -386,6 +388,7 @@ function hideAllCoreViews() {
     "planVsActualReportView",
     "planVsActualView",
     "orderStatusSection",
+    "productInfoSection",
     "loadCalculationView",
     "planFilterView",
   ];
