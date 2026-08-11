@@ -186,6 +186,13 @@ async function saveFabricPlanning() {
                 itemData['Process Name'] = pVal;
             }
 
+            if (row.querySelector('.row-barrier-qty')) {
+                itemData['Barrier Qty.'] = row.querySelector('.row-barrier-qty').value;
+            }
+            if (row.querySelector('.row-workable-qty')) {
+                itemData['Workable Qty.'] = row.querySelector('.row-workable-qty').value;
+            }
+
             allItemsMap.set(id, {
                 itemId: id, itemData: itemData,
                 startDate: newStartDate, endDate: newEndDate,

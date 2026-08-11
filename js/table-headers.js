@@ -70,7 +70,7 @@ function renderDynamicHeaders() {
     }
     else if (currentDept === 'yd') {
         let leftCols = ['Booking Type', 'YDB', 'YD Booking Date'];
-        let rightCols = ['YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE', 'Barrier Qty.', 'Workable Qty.'];
+        let rightCols = ['Barrier Qty.', 'Workable Qty.', 'YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE'];
 
         document.getElementById('planningHeaderText').innerText = 'YD Planning';
         document.getElementById('limitationHeaderText').innerText = 'YD Remarks';

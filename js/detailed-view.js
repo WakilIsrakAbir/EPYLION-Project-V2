@@ -144,6 +144,8 @@ async function openDetailedView(encodedBookingNo) {
                     if (dbItem.itemData.Unit) itemData.Unit = dbItem.itemData.Unit;
                     if (dbItem.itemData.ProcessName) itemData.ProcessName = dbItem.itemData.ProcessName;
                     if (dbItem.itemData['Process Name']) itemData['Process Name'] = dbItem.itemData['Process Name'];
+                    if (dbItem.itemData['Barrier Qty.']) itemData['Barrier Qty.'] = dbItem.itemData['Barrier Qty.'];
+                    if (dbItem.itemData['Workable Qty.']) itemData['Workable Qty.'] = dbItem.itemData['Workable Qty.'];
                 }
 
                 data.mergedItems.push({
@@ -480,11 +482,18 @@ async function openDetailedView(encodedBookingNo) {
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px]">${knitPlan.end && knitPlan.end.includes('-') && knitPlan.end.length === 10 ? formatDateDisplay(knitPlan.end) : knitPlan.end}</td>
             `;
 
-            const rightCols = ['YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE', 'Barrier Qty.', 'Workable Qty.'];
+            const rightCols = ['Barrier Qty.', 'Workable Qty.', 'YD REQ.', 'DYED', 'YD BALANCE', 'YD Delivered', 'YD DELIVERY BALANCE'];
             rightCols.forEach(c => {
                 let val = item.itemData[c];
                 let className = c === 'YD DELIVERY BALANCE' ? 'text-red-600 font-bold' : '';
-                itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] ${className}">${val !== undefined && val !== null ? val : ''}</td>`;
+                
+                if (c === 'Barrier Qty.') {
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[80px]"><input type="number" class="row-barrier-qty w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" value="${val !== undefined && val !== null ? val : ''}"></td>`;
+                } else if (c === 'Workable Qty.') {
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[80px]"><input type="number" class="row-workable-qty w-full p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none" value="${val !== undefined && val !== null ? val : ''}"></td>`;
+                } else {
+                    itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px] ${className}">${val !== undefined && val !== null ? val : ''}</td>`;
+                }
             });
         }
         else {
