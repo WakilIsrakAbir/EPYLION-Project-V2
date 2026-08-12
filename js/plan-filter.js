@@ -271,8 +271,9 @@ async function fetchPlanFilterData(deptKey) {
 
     // Also fetch Tentative orders from the orders collection
     try {
+      const tentativeDeptKey = deptKey === "deliveryfloor" ? "delivery" : deptKey;
       const tentativeRes = await fetch(
-        `${API_BASE}/api/orders?dept=${deptKey}&status=Tentative&limit=10000&populateItems=true`,
+        `${API_BASE}/api/orders?dept=${tentativeDeptKey}&status=Tentative&limit=10000&populateItems=true`,
       );
       if (tentativeRes.ok) {
         const tentativeData = await tentativeRes.json();
@@ -281,18 +282,50 @@ async function fetchPlanFilterData(deptKey) {
             // Skip if we already loaded it from tracking
             if (loadedTrackingOrderNos.has(order.orderNo)) return;
 
-            const items = order[`${deptKey}Items`] || [];
+            const items = order[`${tentativeDeptKey}Items`] || [];
             items.forEach((item) => {
               const planType = "Tentative";
 
               // Prevent duplicating items if they are already in tracking (tracking items will have 'startDate' etc.)
               // Tracking items are already added above.
 
+              // Normalize item fields using getColData to match pfConfigs column names
               const row = {
                 OrderNo: order.orderNo,
                 Buyer: order.buyer || "N/A",
-                Color: item.Color || "N/A",
-                ...item,
+                Color: getColData(item, ['Color', 'Colour', 'Fab Color']) || "N/A",
+                FabricConstruction: getColData(item, ['FabricConstruction', 'Construction', 'Fab Const', 'Fabric']),
+                GSM: getColData(item, ['GSM', 'G.S.M']),
+                RequiredQtyKgs: getColData(item, ['RequiredQtyKgs', 'Req Qty', 'Qty']),
+                Allowance: getColData(item, ['Allowance']),
+                YarnReq: getColData(item, ['YarnReq', 'Yarn Req', 'Yarn Req.']),
+                AllocatedQty: getColData(item, ['AllocatedQty', 'Allocated Qty', 'Allocated']),
+                YarnBala: getColData(item, ['YarnBala', 'Yarn Bala', 'Yarn Bala.']),
+                GreyReq: getColData(item, ['Grey Req.', 'GreyReq']),
+                KnitProd: getColData(item, ['Knit Prod.', 'KnitProd']),
+                KnitBala: getColData(item, ['Knit. Bala.', 'KnitBala']),
+                Unit: getColData(item, ['Unit']),
+                ProcessName: getColData(item, ['Process Name', 'ProcessName', 'Process']),
+                BPQty: getColData(item, ['BP Qty', 'BPQty']),
+                DyeingProd: getColData(item, ['Dyeing Prod.', 'DyeingProd']),
+                DyeingBala: getColData(item, ['Dyeing Bala.', 'DyeingBala']),
+                NetReceivedQtyKgs: getColData(item, ['NetReceivedQtyKgs', 'NetReceivedQty']),
+                NetDeliveryQtyKgs: getColData(item, ['NetDeliveryQtyKgs', 'NetDeliveryQty', 'DeliveryQty']),
+                DeliBal: getColData(item, ['Deli. Bal.', 'Deli Bal.', 'DeliBal', 'Deli. Bala.', 'Delivery Balance']),
+                RFD: getColData(item, ['RFD']),
+                Slowmoving: getColData(item, ['Slowmoving']),
+                FFStock: getColData(item, ['FFStock', 'FF Stock']),
+                // YD fields
+                'Booking Type': getColData(item, ['Booking Type', 'Type', 'YD Type']),
+                YDB: getColData(item, ['YDB', 'YD B']),
+                'YD Booking Date': getColData(item, ['YD Booking Date']),
+                'Barrier Qty.': getColData(item, ['Barrier Qty.', 'Barrier Qty']),
+                'Workable Qty.': getColData(item, ['Workable Qty.', 'Workable Qty']),
+                'YD REQ.': getColData(item, ['YD REQ.', 'YD REQ', 'Requirement']),
+                DYED: getColData(item, ['DYED', 'Dyed']),
+                'YD BALANCE': getColData(item, ['YD BALANCE', 'YD Balance']),
+                'YD Delivered': getColData(item, ['YD Delivered', 'Delivered']),
+                'YD DELIVERY BALANCE': getColData(item, ['YD DELIVERY BALANCE', 'YD Balance_1', 'YD Delivery Balance']),
               };
 
               // Map order-level dates if item doesn't have them
@@ -550,6 +583,10 @@ function exportPlanFilterExcel() {
   ws["!cols"] = cols.map((c) => ({
     wch: Math.max(12, Math.min(26, c.length + 3)),
   }));
+
+  // Apply date formatting to Plan Start Date & Plan End Date columns
+  formatExcelWorksheet(ws);
+
   const wb = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(wb, ws, "Plan Filter");

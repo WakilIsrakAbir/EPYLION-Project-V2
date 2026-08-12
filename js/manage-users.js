@@ -65,6 +65,7 @@ const MENU_GROUPS = [
       ["finishing", "Updated Finishing Report"],
       ["delivery", "Updated Delivery Report"],
       ["orderStatus", "Order Status"],
+      ["productInfo", "Product Info"],
     ],
   },
   {
@@ -164,9 +165,11 @@ const ACTION_GROUPS = [
     title: "Buyer-wise Load Summary Permissions",
     icon: "fa-chart-column",
     items: [
+      ["loadSummaryYd", "Load Summary (YD)"],
       ["loadSummaryKnitting", "Load Summary (Knitting)"],
       ["loadSummaryDyeing", "Load Summary (Dyeing)"],
       ["loadSummaryDelivery", "Load Summary (Delivery)"],
+      ["loadSummaryDeliveryfloor", "Load Summary (Delivery Floor)"],
     ],
   },
   {
@@ -213,12 +216,16 @@ const DOWNLOAD_GROUPS = [
   {
     title: "Load Calculation Menu",
     items: [
+      ["loadDetailedYd", "Detailed Load (YD)"],
       ["loadDetailedKnitting", "Detailed Load (Knitting)"],
       ["loadDetailedDyeing", "Detailed Load (Dyeing)"],
       ["loadDetailedDelivery", "Detailed Load (Delivery)"],
+      ["loadDetailedDeliveryfloor", "Detailed Load (Delivery Floor)"],
+      ["loadSummaryYd", "Load Summary (YD)"],
       ["loadSummaryKnitting", "Load Summary (Knitting)"],
       ["loadSummaryDyeing", "Load Summary (Dyeing)"],
       ["loadSummaryDelivery", "Load Summary (Delivery)"],
+      ["loadSummaryDeliveryfloor", "Load Summary (Delivery Floor)"],
     ],
   },
 ];
@@ -295,9 +302,11 @@ function makeTemplate(role) {
       "saveActualDelivery",
       "saveActualDeliveryFloor",
       "tentativePlan",
+      "loadSummaryYd",
       "loadSummaryKnitting",
       "loadSummaryDyeing",
       "loadSummaryDelivery",
+      "loadSummaryDeliveryfloor",
     ].forEach((k) => (p.actions[k] = true));
 
     [
@@ -308,12 +317,16 @@ function makeTemplate(role) {
       "reportUpdatedExcelDelivery",
       "osDetailedExcel",
       "osDetailedPdf",
+      "loadDetailedYd",
       "loadDetailedKnitting",
       "loadDetailedDyeing",
       "loadDetailedDelivery",
+      "loadDetailedDeliveryfloor",
+      "loadSummaryYd",
       "loadSummaryKnitting",
       "loadSummaryDyeing",
       "loadSummaryDelivery",
+      "loadSummaryDeliveryfloor",
       // Planners need Tracking Downloads since they have actualTracking menu
       "trackingYD",
       "trackingKnitting",

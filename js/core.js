@@ -177,6 +177,11 @@ function applyPermissions() {
         m.reports.orderStatus
           ? os.parentElement.classList.remove("hidden")
           : os.parentElement.classList.add("hidden");
+      const pi = document.getElementById("menu-prod-info");
+      if (pi)
+        m.reports.productInfo
+          ? pi.parentElement.classList.remove("hidden")
+          : pi.parentElement.classList.add("hidden");
     }
 
     // Toggle Plan Filter Submenus
@@ -320,12 +325,16 @@ function applyPermissions() {
       toggleBtn("btnOSDetailedExcel", d.osDetailedExcel);
       toggleBtn("btnOSDetailedPDF", d.osDetailedPdf);
 
+      toggleBtn("btnLoadDetailedYd", d.loadDetailedYd !== undefined ? d.loadDetailedYd : d.loadDetailedKnitting);
       toggleBtn("btnLoadDetailedKnitting", d.loadDetailedKnitting);
       toggleBtn("btnLoadDetailedDyeing", d.loadDetailedDyeing);
       toggleBtn("btnLoadDetailedDelivery", d.loadDetailedDelivery);
+      toggleBtn("btnLoadDetailedDeliveryfloor", d.loadDetailedDeliveryfloor !== undefined ? d.loadDetailedDeliveryfloor : d.loadDetailedKnitting);
+      toggleBtn("btnLoadSummaryYd", d.loadSummaryYd !== undefined ? d.loadSummaryYd : d.loadSummaryKnitting);
       toggleBtn("btnLoadSummaryKnitting", d.loadSummaryKnitting);
       toggleBtn("btnLoadSummaryDyeing", d.loadSummaryDyeing);
       toggleBtn("btnLoadSummaryDelivery", d.loadSummaryDelivery);
+      toggleBtn("btnLoadSummaryDeliveryfloor", d.loadSummaryDeliveryfloor !== undefined ? d.loadSummaryDeliveryfloor : d.loadSummaryKnitting);
     }
   } else {
     // Fallback to legacy role checks

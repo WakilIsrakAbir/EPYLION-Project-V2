@@ -86,12 +86,14 @@ function showLoadCalculation(menuName) {
     }
     
     if (menuName === 'summary') {
+        const btnYd = document.getElementById('summaryBtnYd');
         const btnKnit = document.getElementById('summaryBtnKnitting');
         const btnDye = document.getElementById('summaryBtnDyeing');
         const btnDeli = document.getElementById('summaryBtnDelivery');
-        let permKnit = false, permDye = false, permDeli = false;
+        const btnFloor = document.getElementById('summaryBtnDeliveryfloor');
+        let permYd = false, permKnit = false, permDye = false, permDeli = false, permFloor = false;
 
-        if (btnKnit && btnDye && btnDeli) {
+        if (btnYd && btnKnit && btnDye && btnDeli && btnFloor) {
             const permsStr = localStorage.getItem('permissions');
             if (permsStr) {
                 try {
@@ -100,26 +102,41 @@ function showLoadCalculation(menuName) {
                         permKnit = !!p.actions.loadSummaryKnitting;
                         permDye = !!p.actions.loadSummaryDyeing;
                         permDeli = !!p.actions.loadSummaryDelivery;
+                        // Fallback for existing cached permissions that lack the new keys
+                        permYd = p.actions.loadSummaryYd !== undefined ? !!p.actions.loadSummaryYd : permKnit;
+                        permFloor = p.actions.loadSummaryDeliveryfloor !== undefined ? !!p.actions.loadSummaryDeliveryfloor : permKnit;
                     }
                 } catch (e) {}
             }
+            btnYd.style.display = permYd ? '' : 'none';
             btnKnit.style.display = permKnit ? '' : 'none';
             btnDye.style.display = permDye ? '' : 'none';
             btnDeli.style.display = permDeli ? '' : 'none';
+            btnFloor.style.display = permFloor ? '' : 'none';
         }
         
-        let firstPermitted = 'knitting';
-        if (permKnit) firstPermitted = 'knitting';
-        else if (permDye) firstPermitted = 'dyeing';
-        else if (permDeli) firstPermitted = 'delivery';
-        
-        if ((activeSummaryDepartment === 'knitting' && !permKnit) ||
-            (activeSummaryDepartment === 'dyeing' && !permDye) ||
-            (activeSummaryDepartment === 'delivery' && !permDeli)) {
-            activeSummaryDepartment = firstPermitted;
+        // Show empty state — do not auto-load any department
+        // Reset all department tab buttons to default style
+        document.querySelectorAll('.department-tab').forEach(tab => {
+            tab.className = 'department-tab px-4 py-2 rounded border text-xs font-bold bg-white text-gray-700 hover:bg-gray-50';
+        });
+        // Show prompt in summary table
+        const table = document.getElementById('summaryPreviewTable');
+        if (table) {
+            table.querySelector('thead').innerHTML = '';
+            const tbody = table.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-10">
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fas fa-hand-pointer text-4xl text-blue-400 mb-4"></i>
+                        <h3 class="text-gray-800 font-bold text-lg">Select a Department</h3>
+                        <p class="text-sm text-gray-500 mt-1">Click on a department button above (Knitting, Dyeing, Delivery, etc.) to view the buyer-wise load summary.</p>
+                    </div>
+                </td></tr>`;
+            }
+            const tfoot = table.querySelector('tfoot');
+            if (tfoot) tfoot.innerHTML = '';
         }
-
-        setSummaryDepartment(activeSummaryDepartment);
     } else {
         refreshCurrentView();
     }
@@ -490,7 +507,8 @@ function setSummaryDepartment(department) {
     document.querySelectorAll('.department-tab').forEach(tab => {
         tab.className = 'department-tab px-4 py-2 rounded border text-xs font-bold bg-white text-gray-700 hover:bg-gray-50';
     });
-    const activeBtn = document.getElementById('summaryBtn' + department.charAt(0).toUpperCase() + department.slice(1));
+    const deptBtnName = department.charAt(0).toUpperCase() + department.slice(1);
+    const activeBtn = document.getElementById('summaryBtn' + deptBtnName);
     if(activeBtn) {
         activeBtn.className = `department-tab px-4 py-2 rounded border text-xs font-bold active-${department}`;
     }
@@ -560,7 +578,8 @@ function renderSummaryTable(data) {
 }
 
 async function downloadLoadReport(department) {
-    const btnId = 'btnLoadDetailed' + department.charAt(0).toUpperCase() + department.slice(1);
+    const deptCapitalized = department.charAt(0).toUpperCase() + department.slice(1);
+    const btnId = 'btnLoadDetailed' + deptCapitalized;
     const btn = document.getElementById(btnId);
     let originalHtml = '';
     if (btn) {
@@ -605,7 +624,8 @@ async function downloadLoadReport(department) {
 }
 
 async function downloadLoadSummary(department) {
-    const btnId = 'btnLoadSummary' + department.charAt(0).toUpperCase() + department.slice(1);
+    const deptCapitalized = department.charAt(0).toUpperCase() + department.slice(1);
+    const btnId = 'btnLoadSummary' + deptCapitalized;
     const btn = document.getElementById(btnId);
     let originalHtml = '';
     if (btn) {
