@@ -102,6 +102,75 @@ async function loadActualTracking(deptKey) {
     renderActualTable();
 }
 
+function parseTrackingNum(val) {
+    if (val === undefined || val === null || val === '' || val === '-') return 0;
+    const clean = String(val).replace(/,/g, '').trim();
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+}
+
+function getTrackingRowVal(row, fieldNames) {
+    if (!row) return undefined;
+    for (const f of fieldNames) {
+        if (row[f] !== undefined && row[f] !== null && row[f] !== '') {
+            return row[f];
+        }
+    }
+    return undefined;
+}
+
+function computeTrackingDeptValues(plan, deptKey) {
+    const dbDept = deptKey === 'deliveryfloor' ? 'delivery' : deptKey;
+    const rawItems = (plan.uploadedItems && Array.isArray(plan.uploadedItems) && plan.uploadedItems.length > 0)
+        ? plan.uploadedItems
+        : (plan[dbDept] && Array.isArray(plan[dbDept]) && plan[dbDept].length > 0 ? plan[dbDept] : []);
+
+    if (!rawItems || rawItems.length === 0) {
+        return { extProd: '', extBal: '' };
+    }
+
+    let prodFields = [];
+    let balFields = [];
+
+    if (deptKey === 'knitting') {
+        prodFields = ['Knit Prod.', 'KnitProd', 'Knit Production', 'Knit Prod'];
+        balFields = ['Knit. Bala.', 'KnitBala', 'Knit Bala', 'Knit Balance', 'Knit. Bal.', 'Knit Bal.'];
+    } else if (deptKey === 'dyeing') {
+        prodFields = ['Dyeing Prod.', 'Dyeing ok', 'DyeingProd', 'Dyeing Prod', 'Dyeing Production'];
+        balFields = ['Dyeing Bala.', 'Dyeing Bal.', 'DyeingBala', 'Dyeing Balance', 'Dye Bal'];
+    } else if (deptKey === 'delivery' || deptKey === 'deliveryfloor') {
+        prodFields = ['NetDeliveryQtyKgs', 'Net Delivery Qty Kgs', 'NetDeliveryQty', 'Delivery Qty', 'DeliveryQty'];
+        balFields = ['Deli. Bala.', 'Deli. Bal.', 'DeliBal', 'Deli Bal.', 'Delivery Balance', 'Deli Bal'];
+    } else {
+        return { extProd: '', extBal: '' };
+    }
+
+    let prodSum = 0;
+    let balSum = 0;
+    let hasFound = false;
+
+    rawItems.forEach(item => {
+        const row = item.itemData || item;
+        const pVal = getTrackingRowVal(row, prodFields);
+        const bVal = getTrackingRowVal(row, balFields);
+
+        if (pVal !== undefined) {
+            prodSum += parseTrackingNum(pVal);
+            hasFound = true;
+        }
+        if (bVal !== undefined) {
+            balSum += parseTrackingNum(bVal);
+            hasFound = true;
+        }
+    });
+
+    if (!hasFound) {
+        return { extProd: '', extBal: '' };
+    }
+
+    return { extProd: prodSum, extBal: balSum };
+}
+
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
@@ -190,8 +259,7 @@ async function fetchActualTrackingData() {
                 if (buyersFromItems.size > 0) displayBuyer = Array.from(buyersFromItems).join(', ');
             }
 
-            let extProd = '';
-            let extBal = '';
+            const { extProd, extBal } = computeTrackingDeptValues(plan, actualDeptKey);
 
             actualTrackingData.push({
                 orderNo: plan.orderNo,
@@ -262,6 +330,8 @@ async function fetchAllActualTrackingDataForReport() {
             let displayBuyer = orderInfo.buyer || 'N/A';
             let bookingDate = orderInfo.bookingDate ? formatDateDisplay(orderInfo.bookingDate) : 'N/A';
 
+            const { extProd, extBal } = computeTrackingDeptValues(plan, actualDeptKey);
+
             actualTrackingData.push({
                 orderNo: plan.orderNo,
                 buyer: displayBuyer,
@@ -272,8 +342,8 @@ async function fetchAllActualTrackingDataForReport() {
                 actualEnd: actualEnd,
                 failReason: failReason,
                 relatedDept: relatedDept,
-                extProd: '',
-                extBal: ''
+                extProd: extProd,
+                extBal: extBal
             });
         });
     } catch (e) {
