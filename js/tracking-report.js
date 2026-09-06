@@ -98,14 +98,8 @@ async function downloadTrackingReport(statusType, formatType) {
         let headers = ['SL', 'Order/Booking No.', 'Buyer', 'Plan Start', 'Plan End', 'Actual Start', 'Actual End', 'Start Result', 'End Result', 'Fail Reason', 'Related Dept.'];
         
         let exportRows = dataToExport.map((d, idx) => {
-            let startRes = '—';
-            if (d.actualStart && d.planStart) {
-                startRes = new Date(d.actualStart) <= new Date(d.planStart) ? 'Pass' : 'Fail';
-            }
-            let endRes = '—';
-            if (d.actualEnd && d.planEnd) {
-                endRes = new Date(d.actualEnd) <= new Date(d.planEnd) ? 'Pass' : 'Fail';
-            }
+            let startRes = typeof getActualTrackingResult === 'function' ? (getActualTrackingResult(d.actualStart, d.planStart) || '—') : '—';
+            let endRes = typeof getActualTrackingResult === 'function' ? (getActualTrackingResult(d.actualEnd, d.planEnd) || '—') : '—';
             return [idx + 1, d.orderNo, d.buyer, formatDateDisplay(d.planStart), formatDateDisplay(d.planEnd), formatDateDisplay(d.actualStart), formatDateDisplay(d.actualEnd), startRes, endRes, d.failReason, d.relatedDept];
         });
 

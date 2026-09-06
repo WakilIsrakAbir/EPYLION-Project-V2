@@ -171,6 +171,39 @@ function computeTrackingDeptValues(plan, deptKey) {
     return { extProd: prodSum, extBal: balSum };
 }
 
+function getActualTrackingResult(actualDateStr, planDateStr) {
+    const hasActual = actualDateStr && String(actualDateStr).trim() !== '' && String(actualDateStr).trim() !== '-';
+    const hasPlan = planDateStr && String(planDateStr).trim() !== '' && String(planDateStr).trim() !== '-';
+
+    if (hasActual) {
+        if (!hasPlan) return '';
+        const aDate = new Date(actualDateStr).setHours(0, 0, 0, 0);
+        const pDate = new Date(planDateStr).setHours(0, 0, 0, 0);
+        return aDate <= pDate ? 'Pass' : 'Fail';
+    }
+
+    // When actual is blank
+    if (hasPlan) {
+        const pDate = new Date(planDateStr).setHours(0, 0, 0, 0);
+        const today = new Date().setHours(0, 0, 0, 0);
+        if (pDate < today) {
+            return 'Fail';
+        }
+    }
+
+    return '';
+}
+
+function getActualTrackingResultBadge(actualDateStr, planDateStr) {
+    const res = getActualTrackingResult(actualDateStr, planDateStr);
+    if (res === 'Pass') {
+        return '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
+    } else if (res === 'Fail') {
+        return '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
+    }
+    return '<span class="text-gray-400 text-[10px]">—</span>';
+}
+
 async function fetchActualTrackingData() {
     actualTrackingData = [];
     try {
@@ -650,29 +683,9 @@ function renderActualTable() {
         const sl = start + idx + 1;
         const encodedOrderNo = encodeURIComponent(d.orderNo);
 
-        // Compute Pass/Fail for Start: actual <= plan = Pass (started on time or early)
-        let startResultHtml = '<span class="text-gray-400 text-[10px]">\u2014</span>';
-        if (d.actualStart && d.planStart) {
-            const actualS = new Date(d.actualStart).setHours(0, 0, 0, 0);
-            const planS = new Date(d.planStart).setHours(0, 0, 0, 0);
-            if (actualS <= planS) {
-                startResultHtml = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
-            } else {
-                startResultHtml = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
-            }
-        }
-
-        // Compute Pass/Fail for End: actual <= plan = Pass (ended on time or early)
-        let endResultHtml = '<span class="text-gray-400 text-[10px]">\u2014</span>';
-        if (d.actualEnd && d.planEnd) {
-            const actualE = new Date(d.actualEnd).setHours(0, 0, 0, 0);
-            const planE = new Date(d.planEnd).setHours(0, 0, 0, 0);
-            if (actualE <= planE) {
-                endResultHtml = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
-            } else {
-                endResultHtml = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
-            }
-        }
+        // Compute Pass/Fail for Start & End
+        const startResultHtml = getActualTrackingResultBadge(d.actualStart, d.planStart);
+        const endResultHtml = getActualTrackingResultBadge(d.actualEnd, d.planEnd);
 
         let dynColsHtml = '';
         if (actualDeptKey === 'knitting' || actualDeptKey === 'dyeing' || actualDeptKey === 'delivery' || actualDeptKey === 'deliveryfloor') {
@@ -727,7 +740,7 @@ function updateActualResult(inputEl) {
     if (actualEnd && !actualStart) {
         showToast("Please select Actual Start date first!");
         endInput.value = '';
-        endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
+        endResultCell.innerHTML = getActualTrackingResultBadge('', planEnd);
         return;
     }
 
@@ -738,36 +751,14 @@ function updateActualResult(inputEl) {
         if (aE < aS) {
             showToast("Actual End date cannot be before Actual Start date!");
             endInput.value = '';
-            endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
+            endResultCell.innerHTML = getActualTrackingResultBadge('', planEnd);
             return;
         }
     }
 
-    // Compute Start Result: actual <= plan = Pass
-    if (actualStart && planStart) {
-        const aS = new Date(actualStart).setHours(0, 0, 0, 0);
-        const pS = new Date(planStart).setHours(0, 0, 0, 0);
-        if (aS <= pS) {
-            startResultCell.innerHTML = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
-        } else {
-            startResultCell.innerHTML = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
-        }
-    } else {
-        startResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
-    }
-
-    // Compute End Result: actual <= plan = Pass
-    if (actualEnd && planEnd) {
-        const aE = new Date(actualEnd).setHours(0, 0, 0, 0);
-        const pE = new Date(planEnd).setHours(0, 0, 0, 0);
-        if (aE <= pE) {
-            endResultCell.innerHTML = '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold text-[10px]">Pass</span>';
-        } else {
-            endResultCell.innerHTML = '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">Fail</span>';
-        }
-    } else {
-        endResultCell.innerHTML = '<span class="text-gray-400 text-[10px]">\u2014</span>';
-    }
+    // Compute Start Result & End Result
+    startResultCell.innerHTML = getActualTrackingResultBadge(actualStart, planStart);
+    endResultCell.innerHTML = getActualTrackingResultBadge(actualEnd, planEnd);
 }
 
 function updateActualPaginationUI(start, end, total, totalPages) {
@@ -819,32 +810,6 @@ async function saveActualData() {
         const actualEnd = row.querySelector('.actual-end-date').value;
         const failReason = row.querySelector('.actual-fail-reason').value;
         const relatedDept = row.querySelector('.actual-related-dept').value;
-
-        // Compute results to check if Fail
-        let startIsFail = false;
-        let endIsFail = false;
-        const planStart = row.querySelector('.actual-start-date').dataset.planStart;
-        const planEnd = row.querySelector('.actual-end-date').dataset.planEnd;
-
-        if (actualStart && planStart) {
-            const aS = new Date(actualStart).setHours(0, 0, 0, 0);
-            const pS = new Date(planStart).setHours(0, 0, 0, 0);
-            if (aS > pS) startIsFail = true;
-        }
-        if (actualEnd && planEnd) {
-            const aE = new Date(actualEnd).setHours(0, 0, 0, 0);
-            const pE = new Date(planEnd).setHours(0, 0, 0, 0);
-            if (aE > pE) endIsFail = true;
-        }
-
-        // Validation: If any result is Fail, Fail Reason and Related Dept are mandatory
-        if ((startIsFail || endIsFail) && (!failReason.trim() || !relatedDept.trim())) {
-            showToast(`Save failed for ${orderNo}: "Fail Reason" and "Related Dept." are mandatory when result is Fail!`);
-            if (!failReason.trim()) row.querySelector('.actual-fail-reason').style.borderColor = 'red';
-            if (!relatedDept.trim()) row.querySelector('.actual-related-dept').style.borderColor = 'red';
-            validationFailed = true;
-            return;
-        }
 
         // Validation: actualEnd < actualStart
         if (actualStart && actualEnd) {
