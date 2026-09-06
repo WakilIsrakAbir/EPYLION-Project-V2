@@ -51,6 +51,7 @@ async function loadActualTracking(deptKey) {
     actualColFilters = {};
     actualActiveTab = 'Pending';
     actualActiveBuyer = '';
+    actualSearchQuery = '';
     actualFilterStartMin = '';
     actualFilterStartMax = '';
     actualFilterEndMin = '';
@@ -60,6 +61,8 @@ async function loadActualTracking(deptKey) {
     document.getElementById('actualFilterStartMax').value = '';
     document.getElementById('actualFilterEndMin').value = '';
     document.getElementById('actualFilterEndMax').value = '';
+    const actualSearchInp = document.getElementById('actualGlobalBookingSearch');
+    if (actualSearchInp) actualSearchInp.value = '';
 
     const th1 = document.getElementById('thDynamic1');
     const th2 = document.getElementById('thDynamic2');
@@ -83,8 +86,8 @@ async function loadActualTracking(deptKey) {
     }
 
     // Reset tab buttons UI
-    document.getElementById('btnActualPending').className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
-    document.getElementById('btnActualComplete').className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
+    document.getElementById('btnActualPending').className = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    document.getElementById('btnActualComplete').className = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
 
     setActiveSidebarMenu('menu-' + deptKey + '-actual');
     closeSidebarMobile();
@@ -111,6 +114,7 @@ async function fetchActualTrackingData() {
             status: actualActiveTab  // 'Pending' or 'Complete'
         });
         if (actualActiveBuyer) params.set('buyer', actualActiveBuyer);
+        if (actualSearchQuery) params.set('search', actualSearchQuery);
         if (actualFilterStartMin) params.set('startMin', actualFilterStartMin);
         if (actualFilterStartMax) params.set('startMax', actualFilterStartMax);
         if (actualFilterEndMin) params.set('endMin', actualFilterEndMin);
@@ -288,12 +292,124 @@ function switchActualTab(tab) {
     actualCurrentPage = 1;
     const btnP = document.getElementById('btnActualPending');
     const btnC = document.getElementById('btnActualComplete');
-    const activeClass = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
-    const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] text-center";
+    const activeClass = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
     btnP.className = tab === 'Pending' ? activeClass : inactiveClass;
     btnC.className = tab === 'Complete' ? activeClass : inactiveClass;
     refreshActualTracking(); // Server-side filter by Pending/Complete
 }
+
+async function searchActualGlobalBooking() {
+    const searchInput = document.getElementById('actualGlobalBookingSearch');
+    const searchVal = searchInput ? searchInput.value.trim() : '';
+    if (!searchVal) {
+        showToast("Please enter a Booking No. to search");
+        return;
+    }
+
+    const loader = document.getElementById('actualLoadingSpinner');
+    if (loader) loader.classList.remove('hidden');
+
+    const statuses = ['Pending', 'Complete'];
+    let foundOrder = null;
+    let foundStatus = '';
+
+    // Step 1: Search exact match first across Pending and Complete
+    for (const status of statuses) {
+        try {
+            const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?status=${status}&search=${encodeURIComponent(searchVal)}&exact=true&limit=1`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.planDocs && data.planDocs.length > 0) {
+                    foundOrder = data.planDocs[0];
+                    foundStatus = status;
+                    break;
+                }
+            }
+        } catch (e) {
+            console.error('Error during actual tracking search:', e);
+        }
+    }
+
+    // Step 2: If not found exact, search partial match
+    if (!foundOrder) {
+        for (const status of statuses) {
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/tracking/${actualDeptKey}?status=${status}&search=${encodeURIComponent(searchVal)}&limit=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.planDocs && data.planDocs.length > 0) {
+                        foundOrder = data.planDocs[0];
+                        foundStatus = status;
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.error('Error during actual tracking search:', e);
+            }
+        }
+    }
+
+    if (loader) loader.classList.add('hidden');
+
+    if (!foundOrder) {
+        showToast(`Booking "${searchVal}" not found in this department!`);
+        return;
+    }
+
+    // Switch to the tab where the order was found
+    actualActiveTab = foundStatus;
+    const btnP = document.getElementById('btnActualPending');
+    const btnC = document.getElementById('btnActualComplete');
+    const activeClass = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    if (btnP) btnP.className = foundStatus === 'Pending' ? activeClass : inactiveClass;
+    if (btnC) btnC.className = foundStatus === 'Complete' ? activeClass : inactiveClass;
+
+    // Reset buyer filter so the found item won't be hidden
+    actualActiveBuyer = '';
+    actualSearchQuery = searchVal;
+    actualCurrentPage = 1;
+
+    // Fetch and render data with search query applied
+    await refreshActualTracking();
+
+    // Smoothly scroll to and highlight the found row
+    setTimeout(() => {
+        const rows = document.querySelectorAll('#actualTableBody tr');
+        let matchedRow = null;
+        rows.forEach(row => {
+            const bookingCell = row.querySelector('td:nth-child(2)');
+            if (bookingCell && bookingCell.innerText.trim().toLowerCase().includes(searchVal.toLowerCase())) {
+                matchedRow = row;
+                row.style.backgroundColor = '#fef08a';
+                row.style.transition = 'background-color 0.3s';
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 4000);
+            }
+        });
+        showToast(`Found "${foundOrder.orderNo}" in ${foundStatus} Actual Data!`);
+    }, 200);
+}
+
+function clearActualGlobalSearch() {
+    const searchInput = document.getElementById('actualGlobalBookingSearch');
+    if (searchInput) searchInput.value = '';
+    actualSearchQuery = '';
+    actualActiveTab = 'Pending';
+    const btnP = document.getElementById('btnActualPending');
+    const btnC = document.getElementById('btnActualComplete');
+    const activeClass = "bg-[#313644] text-white px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    const inactiveClass = "bg-white text-gray-800 border border-gray-300 px-3 sm:px-6 py-1.5 sm:py-2 font-bold rounded-sm cursor-pointer shadow-sm hover:bg-gray-50 uppercase tracking-wide transition-colors text-[10px] sm:text-[13px] flex-1 sm:flex-none text-center";
+    if (btnP) btnP.className = activeClass;
+    if (btnC) btnC.className = inactiveClass;
+    actualCurrentPage = 1;
+    refreshActualTracking();
+    showToast("Search cleared. Showing Pending Actual Data.");
+}
+
 
 function renderActualBuyerFilter() {
     const container = document.getElementById('actualBuyerFilterContainer');
@@ -376,6 +492,12 @@ function renderActualTable() {
         paginationControls.classList.add('hidden');
         emptyState.classList.remove('hidden');
         emptyState.style.display = 'flex';
+        const emptyP = emptyState.querySelector('p');
+        if (emptyP) {
+            emptyP.innerText = actualSearchQuery
+                ? `No confirmed plan data found matching "${actualSearchQuery}".`
+                : 'No confirmed plan data available for this department.';
+        }
         tbody.innerHTML = '';
         return;
     }

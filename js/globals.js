@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // GLOBAL VARIABLES & STATE
 // ==========================================================
 let groupedData = {};
@@ -29,4 +29,5 @@ let actualFilterEnd = ''; // date range filter end
 let actualTotalFromServer = 0;
 let actualTotalPagesFromServer = 0;
 let actualBuyersFromServer = [];
+let actualSearchQuery = '';
 

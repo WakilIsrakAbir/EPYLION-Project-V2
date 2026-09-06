@@ -245,6 +245,18 @@ async function fetchOrderList(currentDept) {
     });
   }
 
+  // Cache department buyers so selecting a buyer never hides the other buyer tabs
+  if (!window.deptBuyersCache) window.deptBuyersCache = {};
+  if (allBuyers.length > 0) {
+    if (!window.deptBuyersCache[currentDept] || !activeBuyer) {
+      window.deptBuyersCache[currentDept] = allBuyers;
+    }
+  }
+  const buyersToRender =
+    window.deptBuyersCache[currentDept] && window.deptBuyersCache[currentDept].length > 0
+      ? window.deptBuyersCache[currentDept]
+      : allBuyers;
+
   // Build groupedData compatible structure for renderMainTable
   groupedData = {};
   ordersData.orders.forEach((order) => {
@@ -265,8 +277,8 @@ async function fetchOrderList(currentDept) {
     };
   });
 
-  // Render buyer tabs
-  renderBuyerTabs(allBuyers);
+  // Render buyer tabs (always keep all buyer tabs visible)
+  renderBuyerTabs(buyersToRender);
 
   // Render table with server-side pagination info
   renderMainTableFromAPI(ordersData, status);
@@ -536,9 +548,13 @@ function renderBuyerTabs(buyers) {
 }
 
 function activateBuyerFilter(buyer) {
-  activeBuyer = buyer;
+  if (activeBuyer && activeBuyer.toLowerCase() === buyer.toLowerCase()) {
+    activeBuyer = ""; // Toggle off to show all buyers' data
+  } else {
+    activeBuyer = buyer;
+  }
   document.querySelectorAll(".buyer-tab").forEach((t) => {
-    if (t.innerText.toLowerCase() === buyer.toLowerCase())
+    if (activeBuyer && t.innerText.toLowerCase() === activeBuyer.toLowerCase())
       t.classList.add("active");
     else t.classList.remove("active");
   });
