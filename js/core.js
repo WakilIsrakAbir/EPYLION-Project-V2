@@ -69,6 +69,10 @@ function initDashboard() {
       showProductInfo();
     } else if (state.page === "actualTracking" && state.dept) {
       loadActualTracking(state.dept);
+    } else if (state.page === "planFilter" && state.dept) {
+      showPlanFilter(state.dept);
+    } else if (state.page === "planVsActualTrackingFilter" && state.dept) {
+      showPlanVsActualTrackingFilter(state.dept);
     } else {
       showDashboardHome();
     }
@@ -248,6 +252,30 @@ function applyPermissions() {
       });
     }
 
+    // Toggle Plan Vs Actual Tracking Filter
+    if (m.planTrackingFilter) {
+      const actualFilterMenuEl = document.getElementById(
+        "submenu-actual-filter",
+      );
+      if (actualFilterMenuEl)
+        hasAny(m.planTrackingFilter)
+          ? actualFilterMenuEl.parentElement.classList.remove("hidden")
+          : actualFilterMenuEl.parentElement.classList.add("hidden");
+      [
+        "yd",
+        "knitting",
+        "dyeing",
+        "delivery",
+        "deliveryfloor",
+      ].forEach((k) => {
+        const el = document.getElementById(`menu-${k}-actualfilter`);
+        if (el)
+          m.planTrackingFilter[k]
+            ? el.parentElement.classList.remove("hidden")
+            : el.parentElement.classList.add("hidden");
+      });
+    }
+
     // Toggle Load Calculation
     if (m.loadCalculation) {
       const loadCalcMenuEl = document.getElementById("submenu-load-calc");
@@ -400,6 +428,7 @@ function hideAllCoreViews() {
     "productInfoSection",
     "loadCalculationView",
     "planFilterView",
+    "planVsActualTrackingFilterView",
   ];
   views.forEach((id) => {
     const el = document.getElementById(id);
