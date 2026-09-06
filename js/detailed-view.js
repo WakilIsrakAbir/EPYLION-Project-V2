@@ -42,13 +42,17 @@ async function openDetailedView(encodedBookingNo) {
                 bookingNo: order.orderNo,
                 buyers: new Set([order.buyer || 'N/A']),
                 bookingDate: order.bookingDate ? formatDateDisplay(order.bookingDate) : 'N/A',
-                buyerTeam: order.bookingBy || '',
+                buyerTeam: order.buyerTeam || '',
+                bookedBy: order.bookedBy || order.bookingBy || '',
+                style: order.style || '',
                 generalInfo: {
                     EWO: order.orderNo,
                     OrderQty: order.requiredQtyKgs,
-                    BookingUnit: '',
-                    Unit: '',
+                    GmtUnit: order.gmtUnit || order.bookingUnit || '',
+                    Floor: order.floor || order.unit || '',
                     FinalConf: order.finalConfirmation,
+                    BPStatus: order.bpStatus ? formatDateDisplay(order.bpStatus) : '',
+                    PMC: order.pmc || '',
                     OrderStatus: planData ? (planData[`${currentDept}Status`] || 'On Process') : 'On Process',
                     EventDay: order.eventDay,
                     Ship1: order.ship1 ? formatDateDisplay(order.ship1) : 'N/A',
@@ -189,13 +193,18 @@ async function openDetailedView(encodedBookingNo) {
     setSafeVal('detEWO', data.generalInfo.EWO);
     setSafeVal('detBookingNo', data.bookingNo);
     setSafeVal('detBookingDate', data.bookingDate);
+    setSafeVal('detGmtUnit', data.generalInfo.GmtUnit);
+    setSafeVal('detFloor', data.generalInfo.Floor);
+    setSafeVal('detFinalConf', data.generalInfo.FinalConf);
+    setSafeVal('detBPStatus', data.generalInfo.BPStatus);
+    setSafeVal('detPMC', data.generalInfo.PMC);
+    setSafeVal('detOrderStatus', data.generalInfo.OrderStatus || 'On Process');
+
     setSafeVal('detBuyer', data.buyers.size > 0 ? Array.from(data.buyers).join(', ') : 'N/A');
     setSafeVal('detBuyerTeam', data.buyerTeam);
+    setSafeVal('detBookedBy', data.bookedBy);
+    setSafeVal('detStyle', data.style);
     setSafeVal('detOrderQty', data.generalInfo.OrderQty);
-    setSafeVal('detBookingUnit', data.generalInfo.BookingUnit);
-    setSafeVal('detUnit', data.generalInfo.Unit);
-    setSafeVal('detFinalConf', data.generalInfo.FinalConf);
-    setSafeVal('detOrderStatus', data.generalInfo.OrderStatus || 'On Process');
     setSafeVal('detEventDay', data.generalInfo.EventDay);
     setSafeVal('detShip1', data.generalInfo.Ship1);
     setSafeVal('detShipLast', data.generalInfo.ShipLast);
