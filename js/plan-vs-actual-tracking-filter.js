@@ -316,6 +316,12 @@ function previewPlanVsActualTrackingFilter() {
     renderPvatfPreviewModal(from, to, type, selectedBuyers);
 }
 
+function formatPvatfPercent(count, total) {
+    if (!total || total <= 0) return '0%';
+    const pct = (count / total) * 100;
+    return (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+}
+
 function renderPvatfPreviewModal(from, to, type, selectedBuyers) {
     const title = document.getElementById('pvatfModalTitle');
     const meta = document.getElementById('pvatfModalMeta');
@@ -333,10 +339,30 @@ function renderPvatfPreviewModal(from, to, type, selectedBuyers) {
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     })[m]);
 
+    const totalRows = pvatfFilteredRows.length;
+    const startPass = pvatfFilteredRows.filter(r => r.startResult === 'Pass').length;
+    const startFail = pvatfFilteredRows.filter(r => r.startResult === 'Fail').length;
+    const startPassPct = formatPvatfPercent(startPass, totalRows);
+    const startFailPct = formatPvatfPercent(startFail, totalRows);
+
+    const endPass = pvatfFilteredRows.filter(r => r.endResult === 'Pass').length;
+    const endFail = pvatfFilteredRows.filter(r => r.endResult === 'Fail').length;
+    const endPassPct = formatPvatfPercent(endPass, totalRows);
+    const endFailPct = formatPvatfPercent(endFail, totalRows);
+
     if (title) title.textContent = pvatfConfigs[pvatfCurrentDept].title;
     if (meta) {
         const buyerText = selectedBuyers.length ? selectedBuyers.join(', ') : 'All Buyers';
-        meta.textContent = `${typeLabels[type] || 'Plan Start Date'}: ${from} to ${to} | Buyer: ${buyerText} | Rows: ${pvatfFilteredRows.length}`;
+        const dateLabel = typeLabels[type] || 'Plan Start Date';
+        meta.innerHTML = `
+            <span class="text-gray-600">${esc(dateLabel)}: ${esc(from)} to ${esc(to)} | Buyer: ${esc(buyerText)} | Rows: ${totalRows}</span>
+            <span class="text-gray-400 mx-1">|</span>
+            <span class="font-semibold text-gray-800">Start Plan:</span>
+            <span>Fail: <strong class="text-red-600">${startFail}</strong>, Fail%: <strong class="text-red-600">${startFailPct}</strong>, Pass: <strong class="text-green-600">${startPass}</strong>, Pass%: <strong class="text-green-600">${startPassPct}</strong></span>
+            <span class="text-gray-400 mx-1">|</span>
+            <span class="font-semibold text-gray-800">End Plan:</span>
+            <span>Fail: <strong class="text-red-600">${endFail}</strong>, Fail%: <strong class="text-red-600">${endFailPct}</strong>, Pass: <strong class="text-green-600">${endPass}</strong>, Pass%: <strong class="text-green-600">${endPassPct}</strong></span>
+        `;
     }
 
     if (thead) {
@@ -406,6 +432,17 @@ function exportPlanVsActualTrackingFilterExcel() {
         return /^\d+$/.test(s) && s.length <= 15 ? Number(s) : String(v ?? '').trim();
     };
 
+    const totalRows = pvatfFilteredRows.length;
+    const startPass = pvatfFilteredRows.filter(r => r.startResult === 'Pass').length;
+    const startFail = pvatfFilteredRows.filter(r => r.startResult === 'Fail').length;
+    const startPassPct = formatPvatfPercent(startPass, totalRows);
+    const startFailPct = formatPvatfPercent(startFail, totalRows);
+
+    const endPass = pvatfFilteredRows.filter(r => r.endResult === 'Pass').length;
+    const endFail = pvatfFilteredRows.filter(r => r.endResult === 'Fail').length;
+    const endPassPct = formatPvatfPercent(endPass, totalRows);
+    const endFailPct = formatPvatfPercent(endFail, totalRows);
+
     const matrix = [PVATF_HEADERS];
 
     pvatfFilteredRows.forEach((r, i) => {
@@ -423,6 +460,22 @@ function exportPlanVsActualTrackingFilterExcel() {
             r.relatedDept || ''
         ]);
     });
+
+    // Append summary statistics row
+    matrix.push([]);
+    matrix.push([
+        'Summary',
+        `Total Rows: ${totalRows}`,
+        '',
+        `Start Plan -> Fail: ${startFail} (${startFailPct}), Pass: ${startPass} (${startPassPct})`,
+        '',
+        '',
+        '',
+        `End Plan -> Fail: ${endFail} (${endFailPct}), Pass: ${endPass} (${endPassPct})`,
+        '',
+        '',
+        ''
+    ]);
 
     const ws = XLSX.utils.aoa_to_sheet(matrix, { cellDates: true });
     const range = XLSX.utils.decode_range(ws['!ref']);
