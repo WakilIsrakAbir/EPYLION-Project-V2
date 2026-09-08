@@ -554,6 +554,10 @@
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="showProductInfo()">Product Info</a>
                         </li>
+                        <li><a href="#" id="menu-planning-prod-info"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
+                                onclick="showPlanningProdInfo()">Planning & Production Info</a>
+                        </li>
                     </ul>
                 </li>
 
@@ -1601,6 +1605,275 @@
             </div>
         </div>
 
+        <!-- Planning & Production Info Section -->
+        <div id="planningProdInfoSection" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full overflow-hidden bg-slate-50 dark:bg-[#0f1117]">
+            <!-- List View -->
+            <div id="ppiListView" class="p-3 md:p-5 flex-1 flex flex-col min-h-0 w-full relative">
+                <!-- Loading Spinner -->
+                <div id="ppiLoadingSpinner"
+                    class="hidden absolute inset-0 bg-white/70 dark:bg-[#151921]/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-lg mt-14 mx-5">
+                    <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                        <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                        <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-500 animate-spin"></div>
+                        <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-cyan-500 border-l-cyan-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-4 h-4 rounded-full bg-indigo-500 animate-pulse"></div>
+                    </div>
+                    <h3 class="text-gray-800 dark:text-gray-100 font-bold text-lg">Loading Orders...</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Fetching order records</p>
+                </div>
+
+                <!-- Top Header / Search Bar -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                    <h2 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center">
+                        <i class="fas fa-file-invoice-dollar text-blue-600 dark:text-blue-400 mr-2.5 text-2xl"></i>
+                        Planning & Production Info
+                    </h2>
+                    <div class="relative w-full sm:w-80 flex gap-2">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+                            <input type="text" id="ppiSearchInput" onkeydown="if(event.key==='Enter') filterPPIOrderList()" placeholder="Search Booking No..."
+                                class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-slate-700 dark:bg-[#181c25] dark:text-slate-100 rounded shadow-sm text-sm focus:border-blue-500 outline-none transition">
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded text-sm font-bold shadow hover:shadow-md transition flex items-center gap-1.5" onclick="filterPPIOrderList()">
+                            <i class="fas fa-search text-xs"></i>
+                            <span>Search</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="border border-gray-200 dark:border-slate-800 w-full bg-white dark:bg-[#181c25] flex-1 flex flex-col rounded-lg shadow-sm overflow-hidden min-h-0">
+                    <div class="flex-1 overflow-auto custom-scrollbar w-full">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="sticky top-0 z-20 bg-gray-100 dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700">
+                                <tr class="text-gray-700 dark:text-slate-200 text-[12px] font-bold tracking-wide">
+                                    <th class="p-3 border-r border-gray-200 dark:border-slate-700 text-center w-20">View</th>
+                                    <th class="p-3 border-r border-gray-200 dark:border-slate-700 w-1/3">Booking No. / Order No.</th>
+                                    <th class="p-3">Buyer Name</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ppiTableBody" class="text-gray-700 dark:text-slate-200 text-[12px]"></tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination Bar -->
+                    <div class="bg-gray-50 dark:bg-slate-800/60 border-t border-gray-200 dark:border-slate-700 p-2 md:px-4 flex items-center justify-between text-xs text-gray-700 dark:text-slate-300 shrink-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium">Rows:</span>
+                            <select id="ppiRowsPerPage" onchange="changePPIRowsPerPage()" class="border border-gray-300 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-[#181c25] dark:text-slate-200 cursor-pointer font-bold outline-none">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span id="ppiPageInfo" class="ml-2 font-medium"></span>
+                        </div>
+                        <div class="flex gap-1" id="ppiPageButtons"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed View -->
+            <div id="ppiDetailedView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full overflow-hidden">
+                <!-- Detailed Loading Overlay -->
+                <div id="ppiDetailedLoadingSpinner"
+                    class="hidden absolute inset-0 bg-white/80 dark:bg-[#151921]/80 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center">
+                    <div class="relative flex justify-center items-center w-14 h-14 mb-4">
+                        <div class="absolute w-full h-full rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                        <div class="absolute w-full h-full rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-500 animate-spin"></div>
+                        <div class="absolute w-10 h-10 rounded-full border-4 border-transparent border-b-cyan-500 border-l-cyan-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                    </div>
+                    <h3 class="text-gray-800 dark:text-gray-100 font-bold text-lg">Loading Report Details...</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Preparing specification and planning milestones</p>
+                </div>
+
+                <!-- Action Toolbar with Filled Color Back Button -->
+                <div class="no-print bg-white dark:bg-[#151921] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 py-3 shrink-0 shadow-sm flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <button onclick="closePPIDetailedView()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20 active:scale-95">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <h3 class="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fas fa-file-contract text-blue-600 mr-1.5"></i> Detailed Planning & Production Info
+                            <span id="ppiBadgeBookingNo" class="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-700"></span>
+                        </h3>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportPPIToExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                            <i class="fas fa-file-excel"></i> Excel Download
+                        </button>
+                        <button onclick="window.print()" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Body -->
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-2 sm:p-4 md:p-6 bg-slate-100 dark:bg-[#0f1117] min-h-0 w-full pb-24">
+                    <div id="reportSheet" class="max-w-6xl mx-auto bg-white dark:bg-[#181c25] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 sm:p-6 space-y-6">
+
+                        <!-- ================= 1. BOOKING SPECIFICATION (Deep Indigo Blue Header) ================= -->
+                        <section class="w-full">
+                            <div class="bg-[#1e40af] text-white px-4 py-2.5 rounded-t-lg font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between shadow-sm">
+                                <span><i class="fas fa-clipboard-check mr-2"></i> Booking Specification</span>
+                                <span class="text-[11px] font-semibold bg-white/20 px-2.5 py-0.5 rounded">General & Technical Specs</span>
+                            </div>
+                            <div class="overflow-x-auto border border-t-0 border-slate-300 dark:border-slate-700 rounded-b-lg">
+                                <table class="w-full text-xs border-collapse">
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Booking No.</td>
+                                            <td id="ppi_val_bookingNo" class="p-2 font-black text-blue-600 dark:text-blue-400 border-r dark:border-slate-700">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">PMC</td>
+                                            <td id="ppi_val_pmc" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">ALD</td>
+                                            <td id="ppi_val_ald" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Buyer Name</td>
+                                            <td id="ppi_val_buyer" class="p-2 font-black text-slate-800 dark:text-slate-200 border-r dark:border-slate-700">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Merchant</td>
+                                            <td id="ppi_val_merchant" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Batch Plan</td>
+                                            <td id="ppi_val_batchPlan" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Booking Date</td>
+                                            <td id="ppi_val_bookingDate" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Event Day</td>
+                                            <td id="ppi_val_eventDay" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Body Fabric</td>
+                                            <td id="ppi_val_bodyFabric" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Order Qty (KG)</td>
+                                            <td id="ppi_val_orderQty" class="p-2 font-black text-emerald-600 dark:text-emerald-400 border-r dark:border-slate-700">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Program Type</td>
+                                            <td id="ppi_val_programType" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Body GSM</td>
+                                            <td id="ppi_val_bodyGsm" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Buyer Team</td>
+                                            <td id="ppi_val_buyerTeam" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Brush</td>
+                                            <td id="ppi_val_brush" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">PMC Notes</td>
+                                            <td id="ppi_val_pmcNotes" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Unit</td>
+                                            <td id="ppi_val_unit" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Peach</td>
+                                            <td id="ppi_val_peach" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Fabric Notes</td>
+                                            <td id="ppi_val_fabricNotes" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Gmt Unit</td>
+                                            <td id="ppi_val_gmtUnit" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Heatset</td>
+                                            <td id="ppi_val_heatset" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Final Conf.</td>
+                                            <td id="ppi_val_finalConf" class="p-2 font-bold text-blue-600 dark:text-blue-400 col-span-1 lg:col-span-3">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- ================= 2. BOOKING PLANNING (Cyan/Slate Teal Header) ================= -->
+                        <section class="w-full">
+                            <div class="bg-[#0e7490] text-white px-4 py-2.5 rounded-t-lg font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between shadow-sm">
+                                <span><i class="fas fa-calendar-alt mr-2"></i> Booking Planning (Milestones & Plan vs Actual)</span>
+                                <span class="text-[11px] font-semibold bg-white/20 px-2.5 py-0.5 rounded">Timeline Review</span>
+                            </div>
+                            <div class="overflow-x-auto border border-t-0 border-slate-300 dark:border-slate-700 rounded-b-lg">
+                                <table class="w-full text-xs min-w-[760px] border-collapse text-center">
+                                    <thead class="bg-cyan-100/80 dark:bg-cyan-950/60 text-cyan-950 dark:text-cyan-200 font-extrabold border-b border-slate-300 dark:border-slate-700">
+                                        <tr>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700 text-left w-36 bg-cyan-200/80 dark:bg-cyan-900/80 font-black">Timeline Phase</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Yarn Date</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Knit Start</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Knit End</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Dye Start</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Dye End</th>
+                                            <th class="p-2.5 border-r border-slate-300 dark:border-slate-700">Deli Start (Floor)</th>
+                                            <th class="p-2.5">Deli End (Floor)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-medium">
+                                        <tr class="bg-white dark:bg-[#181c25] hover:bg-cyan-50/30">
+                                            <td class="p-2 font-bold text-left bg-slate-100/70 dark:bg-slate-800/70 text-blue-700 dark:text-blue-400 border-r border-slate-300 dark:border-slate-700">Planned</td>
+                                            <td id="ppi_plan_yarn" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_knitStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_knitEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_dyeStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_dyeEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_deliStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_plan_deliEnd" class="p-2 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="bg-slate-50/80 dark:bg-[#141822] hover:bg-cyan-50/40">
+                                            <td class="p-2 font-bold text-left bg-slate-100/70 dark:bg-slate-800/70 text-emerald-700 dark:text-emerald-400 border-r border-slate-300 dark:border-slate-700">Actual</td>
+                                            <td id="ppi_act_yarn" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_knitStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_knitEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_dyeStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_dyeEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_deliStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_act_deliEnd" class="p-2 font-medium text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="bg-white dark:bg-[#181c25] hover:bg-cyan-50/30">
+                                            <td class="p-2 font-black text-left bg-slate-100/70 dark:bg-slate-800/70 text-teal-800 dark:text-teal-300 border-r border-slate-300 dark:border-slate-700">Lead Day</td>
+                                            <td id="ppi_ld_yarn" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_knitStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_knitEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_dyeStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_dyeEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_deliStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ld_deliEnd" class="p-2 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="bg-slate-50/80 dark:bg-[#141822] hover:bg-cyan-50/40">
+                                            <td class="p-2 font-bold text-left bg-slate-100/70 dark:bg-slate-800/70 border-r border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">OTT Result</td>
+                                            <td id="ppi_ott_yarn" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_knitStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_knitEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_dyeStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_dyeEnd" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_deliStart" class="p-2 border-r border-slate-300 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                            <td id="ppi_ott_deliEnd" class="p-2 font-bold text-slate-800 dark:text-slate-200">-</td>
+                                        </tr>
+                                        <tr class="bg-white dark:bg-[#181c25] hover:bg-cyan-50/30">
+                                            <td class="p-2 font-bold text-left bg-slate-100/70 dark:bg-slate-800/70 border-r border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">Reason & Dept</td>
+                                            <td id="ppi_rsn_yarn" class="p-2 border-r border-slate-300 dark:border-slate-700 text-[11px] text-slate-500">-</td>
+                                            <td id="ppi_rsn_knit" class="p-2 border-r border-slate-300 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 font-medium" colspan="2">-</td>
+                                            <td id="ppi_rsn_dye" class="p-2 border-r border-slate-300 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 font-medium" colspan="2">-</td>
+                                            <td id="ppi_rsn_deli" class="p-2 text-[11px] text-slate-600 dark:text-slate-300 font-medium" colspan="2">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- ================= 3. DETAILS BOOKING SUMMARY (Warm Amber Header) ================= -->
+                        <section class="w-full">
+                            <div class="bg-[#b45309] text-white px-4 py-2.5 rounded-t-lg font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between shadow-sm">
+                                <span><i class="fas fa-layer-group mr-2"></i> Details Booking Summary (Color-Wise)</span>
+                                <span id="ppiBadgeColorCount" class="text-[11px] font-semibold bg-white/20 px-2.5 py-0.5 rounded">0 Colors</span>
+                            </div>
+                            <div class="overflow-x-auto border border-t-0 border-slate-300 dark:border-slate-700 rounded-b-lg">
+                                <table class="w-full text-xs min-w-[760px] border-collapse whitespace-nowrap">
+                                    <thead id="ppiSummaryThead" class="bg-amber-100/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border-b border-slate-300 dark:border-slate-700"></thead>
+                                    <tbody id="ppiSummaryTbody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="planVsActualReportView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 w-full bg-slate-50">
             <div class="bg-gray-100 border-b border-gray-200 flex items-end px-2 pt-2 gap-1 shrink-0 w-full">
                 <div class="px-4 py-2 bg-white border border-gray-200 border-b-0 rounded-t font-semibold text-gray-700 flex items-center">
@@ -1802,6 +2075,7 @@
     <script defer src="js/load-calculation.js"></script>
     <script defer src="js/plan-filter.js"></script>
     <script defer src="js/plan-vs-actual-tracking-filter.js"></script>
+    <script defer src="js/planning-prod-info.js"></script>
 </body>
 
 </html>

@@ -66,6 +66,7 @@ const MENU_GROUPS = [
       ["delivery", "Updated Delivery Report"],
       ["orderStatus", "Order Status"],
       ["productInfo", "Product Info"],
+      ["planningProdInfo", "Planning & Production Info"],
     ],
   },
   {

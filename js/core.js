@@ -67,6 +67,8 @@ function initDashboard() {
       showOrderStatus();
     } else if (state.page === "productInfo") {
       showProductInfo();
+    } else if (state.page === "planningProdInfo") {
+      showPlanningProdInfo();
     } else if (state.page === "actualTracking" && state.dept) {
       loadActualTracking(state.dept);
     } else if (state.page === "planFilter" && state.dept) {
@@ -186,6 +188,11 @@ function applyPermissions() {
         m.reports.productInfo
           ? pi.parentElement.classList.remove("hidden")
           : pi.parentElement.classList.add("hidden");
+      const ppi = document.getElementById("menu-planning-prod-info");
+      if (ppi)
+        (role === "Admin" || m.reports.planningProdInfo)
+          ? ppi.parentElement.classList.remove("hidden")
+          : ppi.parentElement.classList.add("hidden");
     }
 
     // Toggle Plan Filter Submenus
@@ -489,6 +496,7 @@ function hideAllCoreViews() {
     "planVsActualView",
     "orderStatusSection",
     "productInfoSection",
+    "planningProdInfoSection",
     "loadCalculationView",
     "planFilterView",
     "planVsActualTrackingFilterView",
