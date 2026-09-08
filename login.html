@@ -168,9 +168,36 @@
     </div>
 
     <script>
-        if (localStorage.getItem('token')) {
-            window.location.href = 'index.html';
+        function getNextMidnightTimestamp() {
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+            return midnight.getTime();
         }
+
+        // Check if existing token has expired past 12:00 AM midnight
+        const existingToken = localStorage.getItem('token');
+        const sessionExpiresAt = Number(localStorage.getItem('sessionExpiresAt') || 0);
+
+        if (existingToken) {
+            if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
+                // Session expired at midnight
+                localStorage.clear();
+            } else if (!sessionExpiresAt) {
+                // Legacy session without expiry - clear it to ensure clean slate
+                localStorage.clear();
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Check if redirected due to midnight expiration
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('expired') === 'midnight') {
+                showToast("Your session expired at 12:00 AM. Please login again.", true);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
 
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
@@ -220,6 +247,11 @@
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.user.username || u);
                     localStorage.setItem('role', data.user.role);
+
+                    // Save session expiry (12:00 AM midnight)
+                    const expiresAt = data.sessionExpiresAt || getNextMidnightTimestamp();
+                    localStorage.setItem('sessionExpiresAt', String(expiresAt));
+                    localStorage.setItem('loginDate', new Date().toDateString());
                     
                     if (data.user.permissions) {
                         localStorage.setItem('permissions', JSON.stringify(data.user.permissions));

@@ -43,9 +43,8 @@ window.fetch = async function (resource, init) {
   return originalFetch.call(this, resource, init);
 };
 function initDashboard() {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    window.location.href = "login.html";
+  if (!isMidnightSessionValid()) {
+    logout(true);
     return;
   }
   document.getElementById("displayUsername").innerText =
@@ -53,6 +52,7 @@ function initDashboard() {
   applyPermissions();
   loadUploadedFiles();
   startHeartbeat();
+  startMidnightWatcher();
 
   const savedState = localStorage.getItem("activePage");
   if (savedState) {
@@ -385,6 +385,63 @@ function applyPermissions() {
   }
 }
 
+function getNextMidnightTimestamp() {
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return midnight.getTime();
+}
+
+function isMidnightSessionValid() {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  const sessionExpiresAt = Number(localStorage.getItem("sessionExpiresAt") || 0);
+  if (!sessionExpiresAt) {
+    localStorage.setItem("sessionExpiresAt", String(getNextMidnightTimestamp()));
+    return true;
+  }
+
+  if (Date.now() >= sessionExpiresAt) {
+    return false;
+  }
+
+  return true;
+}
+
+let midnightWatcherTimer = null;
+let midnightWatcherInterval = null;
+
+function startMidnightWatcher() {
+  const checkAndEnforceMidnight = () => {
+    if (!isMidnightSessionValid()) {
+      logout(true);
+    }
+  };
+
+  checkAndEnforceMidnight();
+
+  const sessionExpiresAt = Number(localStorage.getItem("sessionExpiresAt") || getNextMidnightTimestamp());
+  const msUntilMidnight = Math.max(sessionExpiresAt - Date.now(), 1000);
+
+  if (midnightWatcherTimer) clearTimeout(midnightWatcherTimer);
+  midnightWatcherTimer = setTimeout(() => {
+    logout(true);
+  }, msUntilMidnight);
+
+  if (midnightWatcherInterval) clearInterval(midnightWatcherInterval);
+  midnightWatcherInterval = setInterval(checkAndEnforceMidnight, 10000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      checkAndEnforceMidnight();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    checkAndEnforceMidnight();
+  });
+}
+
 function startHeartbeat() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -393,7 +450,13 @@ function startHeartbeat() {
     fetch("https://abir-backend-api.onrender.com/api/auth/heartbeat", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-    }).catch((err) => console.log("Heartbeat failed", err));
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          logout(true);
+        }
+      })
+      .catch((err) => console.log("Heartbeat failed", err));
   };
 
   // Send immediately, then every 60 seconds
@@ -401,9 +464,9 @@ function startHeartbeat() {
   setInterval(sendHeartbeat, 60000);
 }
 
-function logout() {
+function logout(expired = false) {
   localStorage.clear();
-  window.location.href = "login.html";
+  window.location.href = expired ? "login.html?expired=midnight" : "login.html";
 }
 function showToast(msg) {
   const t = document.getElementById("toast");

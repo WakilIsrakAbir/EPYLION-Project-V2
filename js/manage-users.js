@@ -449,12 +449,75 @@ function togglePassword(id, btn) {
   }
 }
 
-function logout() {
+function getNextMidnightTimestamp() {
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return midnight.getTime();
+}
+
+function isMidnightSessionValid() {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  const sessionExpiresAt = Number(localStorage.getItem("sessionExpiresAt") || 0);
+  if (!sessionExpiresAt) {
+    localStorage.setItem("sessionExpiresAt", String(getNextMidnightTimestamp()));
+    return true;
+  }
+
+  if (Date.now() >= sessionExpiresAt) {
+    return false;
+  }
+
+  return true;
+}
+
+let midnightWatcherTimer = null;
+let midnightWatcherInterval = null;
+
+function startMidnightWatcher() {
+  const checkAndEnforceMidnight = () => {
+    if (!isMidnightSessionValid()) {
+      logout(true);
+    }
+  };
+
+  checkAndEnforceMidnight();
+
+  const sessionExpiresAt = Number(localStorage.getItem("sessionExpiresAt") || getNextMidnightTimestamp());
+  const msUntilMidnight = Math.max(sessionExpiresAt - Date.now(), 1000);
+
+  if (midnightWatcherTimer) clearTimeout(midnightWatcherTimer);
+  midnightWatcherTimer = setTimeout(() => {
+    logout(true);
+  }, msUntilMidnight);
+
+  if (midnightWatcherInterval) clearInterval(midnightWatcherInterval);
+  midnightWatcherInterval = setInterval(checkAndEnforceMidnight, 10000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      checkAndEnforceMidnight();
+    }
+  });
+
+  window.addEventListener("focus", () => {
+    checkAndEnforceMidnight();
+  });
+}
+
+function logout(expired = false) {
   localStorage.clear();
-  window.location.href = "login.html";
+  window.location.href = expired ? "login.html?expired=midnight" : "login.html";
 }
 
 function checkAdminAndLoadUsers() {
+  if (!isMidnightSessionValid()) {
+    logout(true);
+    return;
+  }
+  startMidnightWatcher();
+
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const username = localStorage.getItem("username");
