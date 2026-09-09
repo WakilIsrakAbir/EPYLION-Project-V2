@@ -304,12 +304,9 @@ function renderPPIDetailedReport(order, planData) {
   const kItems = o.knittingItems || [];
   const dItems = o.dyeingItems || [];
   const delItems = o.deliveryItems || [];
-  const firstItem = kItems[0] || dItems[0] || delItems[0] || {};
 
-  const bodyFabric = ppiGetString(firstItem, ["FabricConstruction", "Fabric Construction", "BodyFabric", "Body Fabric", "Fabric"]);
-  const bodyGsm = ppiGetString(firstItem, ["GSM", "Gsm", "Body GSM"]);
-  const programType = ppiGetString(firstItem, ["Process Name", "ProcessName", "ProgramType", "Program Type"]) || "SOLID";
-
+  // 1. SPECIFICATION SECTION: Red-marked all data will come from "General Information & Planning" uploaded file only.
+  // Blue-marked "Final Conf." renamed as "Style" & its data also from "General Information & Planning" uploaded file.
   fill("ppi_val_bookingNo", o.orderNo);
   fill("ppi_val_pmc", o.pmc);
   fill("ppi_val_ald", o.ald || o["ALD"] || (o.eventDay ? `${o.eventDay} ok out of ${o.eventDay}` : "—"));
@@ -318,37 +315,46 @@ function renderPPIDetailedReport(order, planData) {
   fill("ppi_val_batchPlan", o.bpStatus || "Pending");
   fill("ppi_val_bookingDate", formatPPIDate(o.bookingDate));
   fill("ppi_val_eventDay", o.eventDay);
-  fill("ppi_val_bodyFabric", bodyFabric);
+  fill("ppi_val_bodyFabric", o.bodyFabric || o["Body Fabric"] || "—");
   fill("ppi_val_orderQty", o.requiredQtyKgs ? `${Number(o.requiredQtyKgs).toLocaleString()} KG` : "—");
-  fill("ppi_val_programType", programType);
-  fill("ppi_val_bodyGsm", bodyGsm);
+  fill("ppi_val_programType", o.programType || o["Program type"] || "SOLID");
+  fill("ppi_val_bodyGsm", o.bodyGsm || o["Body GSM"] || "—");
   fill("ppi_val_buyerTeam", o.buyerTeam);
-  fill("ppi_val_brush", o.brush || ppiGetString(firstItem, ["Brush"]) || "NO");
-  fill("ppi_val_pmcNotes", o.pmcNotes || o.fabricNotes);
+  fill("ppi_val_brush", o.brush || o["Brush"] || "NO");
+  fill("ppi_val_pmcNotes", o.pmcNotes || o["PMC Notes"] || o.fabricNotes || "—");
   fill("ppi_val_unit", o.floor || o.unit || "EFL");
-  fill("ppi_val_peach", o.peach || ppiGetString(firstItem, ["Peach"]) || "NO");
+  fill("ppi_val_peach", o.peach || o["Peach"] || "NO");
   fill("ppi_val_fabricNotes", o.fabricNotes);
   fill("ppi_val_gmtUnit", o.gmtUnit);
-  fill("ppi_val_heatset", o.heatset || ppiGetString(firstItem, ["Heatset"]) || "NO");
-  fill("ppi_val_finalConf", o.finalConfirmation || "Yes");
+  fill("ppi_val_heatset", o.heatset || o["Heatset"] || "NO");
+  fill("ppi_val_style", o.style || o["Style"] || "—");
+  fill("ppi_val_finalConf", o.style || o["Style"] || "—");
 
   // 2. PLANNING SECTION
   let planKnitStart = o.knitStart, planKnitEnd = o.knitEnd;
-  let planDyeStart = o.dyeStart, planDyeEnd = o.dyeEnd;
-  let planDeliStart = o.deliStart, planDeliEnd = o.deliEnd;
-
+  let knitPlanType = "T&A";
   if (pd.knitting && pd.knitting.length > 0) {
     const starts = pd.knitting.map(i => i.startDate || i["Plan Start Date"] || i["Plan Start"] || i["Start Date"] || i["Knit Start Date"]).filter(Boolean).sort();
     const ends = pd.knitting.map(i => i.endDate || i["Plan End Date"] || i["Plan End"] || i["End Date"] || i["Knit End Date"]).filter(Boolean).sort();
     if (starts.length) planKnitStart = starts[0];
     if (ends.length) planKnitEnd = ends[ends.length - 1];
+    const savedType = pd.knitting.map(i => i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') knitPlanType = savedType;
   }
+
+  let planDyeStart = o.dyeStart, planDyeEnd = o.dyeEnd;
+  let dyePlanType = "T&A";
   if (pd.dyeing && pd.dyeing.length > 0) {
     const starts = pd.dyeing.map(i => i.startDate || i["Plan Start Date"] || i["Plan Start"] || i["Start Date"] || i["Dyeing Start Date"]).filter(Boolean).sort();
     const ends = pd.dyeing.map(i => i.endDate || i["Plan End Date"] || i["Plan End"] || i["End Date"] || i["Dyeing End Date"]).filter(Boolean).sort();
     if (starts.length) planDyeStart = starts[0];
     if (ends.length) planDyeEnd = ends[ends.length - 1];
+    const savedType = pd.dyeing.map(i => i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') dyePlanType = savedType;
   }
+
+  let planDeliStart = o.deliStart, planDeliEnd = o.deliEnd;
+  let deliPlanType = "T&A";
   if (pd.delivery && pd.delivery.length > 0) {
     const floorItems = pd.delivery.filter(i => {
       const type = i.floorPlanType || i["Delivery Plan Type (Floor)"] || "";
@@ -359,6 +365,8 @@ function renderPPIDetailedReport(order, planData) {
     const ends = sourceItems.map(i => i.floorEndDate || i["Delivery Plan End (Floor)"] || i.endDate || i["Delivery Plan End"]).filter(Boolean).sort();
     if (starts.length) planDeliStart = starts[0];
     if (ends.length) planDeliEnd = ends[ends.length - 1];
+    const savedType = sourceItems.map(i => i.floorPlanType || i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') deliPlanType = savedType;
   }
 
   fill("ppi_plan_yarn", formatPPIDate(o.yarnDate));
@@ -369,11 +377,42 @@ function renderPPIDetailedReport(order, planData) {
   fill("ppi_plan_deliStart", formatPPIDate(planDeliStart));
   fill("ppi_plan_deliEnd", formatPPIDate(planDeliEnd));
 
+  // Plan Type row (New row below Planned)
+  const renderPlanTypeBadge = (type) => {
+    if (!type || type === "—" || type === "-") return "—";
+    const t = String(type).trim();
+    let colorClass = "bg-slate-200/80 dark:bg-slate-700 text-slate-800 dark:text-slate-200";
+    if (t === "Confirm") colorClass = "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+    else if (t === "Tentative") colorClass = "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800";
+    else if (t === "T&A") colorClass = "bg-slate-200/90 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold";
+    return `<span class="inline-block px-3 py-0.5 rounded ${colorClass} font-bold text-[11px] shadow-sm">${t}</span>`;
+  };
+
+  const setBadgeHtml = (id, type) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = renderPlanTypeBadge(type);
+  };
+
+  setBadgeHtml("ppi_pt_yarn", "T&A");
+  setBadgeHtml("ppi_pt_knit", knitPlanType);
+  setBadgeHtml("ppi_pt_dye", dyePlanType);
+  setBadgeHtml("ppi_pt_deli", deliPlanType);
+
+  // Actual Yarn Date: "here, Yarn Date Actual will be come from Order management 'Department Fabric Items' part inputted yarn Date."
+  let actYarnDate = "";
+  if (pd.knitting && pd.knitting.length > 0) {
+    const found = pd.knitting.map(i => i.yarnDate).find(Boolean);
+    if (found) actYarnDate = found;
+  }
+  if (!actYarnDate && pd.knittingActual && pd.knittingActual.yarnDate) {
+    actYarnDate = pd.knittingActual.yarnDate;
+  }
+
   const actKnit = pd.knittingActual || {};
   const actDye = pd.dyeingActual || {};
   const actDeli = pd.deliveryfloorActual || pd.deliveryActual || {};
 
-  fill("ppi_act_yarn", formatPPIDate(o.yarnDate));
+  fill("ppi_act_yarn", formatPPIDate(actYarnDate));
   fill("ppi_act_knitStart", formatPPIDate(actKnit.actualStart));
   fill("ppi_act_knitEnd", formatPPIDate(actKnit.actualEnd));
   fill("ppi_act_dyeStart", formatPPIDate(actDye.actualStart));
@@ -382,7 +421,7 @@ function renderPPIDetailedReport(order, planData) {
   fill("ppi_act_deliEnd", formatPPIDate(actDeli.actualEnd));
 
   // Lead Days
-  fill("ppi_ld_yarn", calcPPILeadDay(o.yarnDate, o.yarnDate));
+  fill("ppi_ld_yarn", calcPPILeadDay(o.yarnDate, actYarnDate));
   fill("ppi_ld_knitStart", calcPPILeadDay(planKnitStart, actKnit.actualStart));
   fill("ppi_ld_knitEnd", calcPPILeadDay(planKnitEnd, actKnit.actualEnd));
   fill("ppi_ld_dyeStart", calcPPILeadDay(planDyeStart, actDye.actualStart));
@@ -392,7 +431,7 @@ function renderPPIDetailedReport(order, planData) {
 
   // OTT Result
   const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  setHtml("ppi_ott_yarn", getPPIOTTResult(o.yarnDate, o.yarnDate));
+  setHtml("ppi_ott_yarn", getPPIOTTResult(o.yarnDate, actYarnDate));
   setHtml("ppi_ott_knitStart", getPPIOTTResult(planKnitStart, actKnit.actualStart));
   setHtml("ppi_ott_knitEnd", getPPIOTTResult(planKnitEnd, actKnit.actualEnd));
   setHtml("ppi_ott_dyeStart", getPPIOTTResult(planDyeStart, actDye.actualStart));
@@ -473,7 +512,7 @@ function renderPPIColorSummary(knittingItems, dyeingItems, deliveryItems) {
     const agg = colorAggs[key];
     if (!agg) return;
 
-    const allow = ppiGetNum(item, ["Allowance %", "Allowance", "Allow"]);
+    const allow = ppiGetNum(item, ["Wastage %", "Wastage", "Allowance %", "Allowance", "Allow"]);
     if (allow > 0) agg.allowances.push(allow > 1 ? allow / 100 : allow);
 
     agg.allocQty += ppiGetNum(item, ["Allocated Qty", "Allocated Qty ", "AllocatedQty"]);
@@ -565,27 +604,39 @@ function exportPPIToExcel() {
   const delItems = o.deliveryItems || [];
   const firstItem = kItems[0] || dItems[0] || delItems[0] || {};
 
-  const bodyFabric = ppiGetString(firstItem, ["FabricConstruction", "Fabric Construction", "BodyFabric", "Body Fabric", "Fabric"]);
-  const bodyGsm = ppiGetString(firstItem, ["GSM", "Gsm", "Body GSM"]);
-  const programType = ppiGetString(firstItem, ["Process Name", "ProcessName", "ProgramType", "Program Type"]) || "SOLID";
+  const bodyFabric = o.bodyFabric || o["Body Fabric"] || ppiGetString(firstItem, ["FabricConstruction", "Fabric Construction", "BodyFabric", "Body Fabric", "Fabric"]);
+  const bodyGsm = o.bodyGsm || o["Body GSM"] || ppiGetString(firstItem, ["GSM", "Gsm", "Body GSM"]);
+  const programType = o.programType || o["Program type"] || ppiGetString(firstItem, ["Process Name", "ProcessName", "ProgramType", "Program Type"]) || "SOLID";
 
   // Section 2 Milestones
   let planKnitStart = o.knitStart, planKnitEnd = o.knitEnd;
-  let planDyeStart = o.dyeStart, planDyeEnd = o.dyeEnd;
-  let planDeliStart = o.deliStart, planDeliEnd = o.deliEnd;
-
+  let knitPlanType = "T&A";
   if (pd.knitting && pd.knitting.length > 0) {
     const starts = pd.knitting.map(i => i.startDate || i["Plan Start Date"] || i["Plan Start"] || i["Start Date"] || i["Knit Start Date"]).filter(Boolean).sort();
     const ends = pd.knitting.map(i => i.endDate || i["Plan End Date"] || i["Plan End"] || i["End Date"] || i["Knit End Date"]).filter(Boolean).sort();
-    if (starts.length) planKnitStart = starts[0];
-    if (ends.length) planKnitEnd = ends[ends.length - 1];
+    if (starts.length) {
+      planKnitStart = starts[0];
+      planKnitEnd = ends[ends.length - 1];
+    }
+    const savedType = pd.knitting.map(i => i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') knitPlanType = savedType;
   }
+
+  let planDyeStart = o.dyeStart, planDyeEnd = o.dyeEnd;
+  let dyePlanType = "T&A";
   if (pd.dyeing && pd.dyeing.length > 0) {
     const starts = pd.dyeing.map(i => i.startDate || i["Plan Start Date"] || i["Plan Start"] || i["Start Date"] || i["Dyeing Start Date"]).filter(Boolean).sort();
     const ends = pd.dyeing.map(i => i.endDate || i["Plan End Date"] || i["Plan End"] || i["End Date"] || i["Dyeing End Date"]).filter(Boolean).sort();
-    if (starts.length) planDyeStart = starts[0];
-    if (ends.length) planDyeEnd = ends[ends.length - 1];
+    if (starts.length) {
+      planDyeStart = starts[0];
+      planDyeEnd = ends[ends.length - 1];
+    }
+    const savedType = pd.dyeing.map(i => i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') dyePlanType = savedType;
   }
+
+  let planDeliStart = o.deliStart, planDeliEnd = o.deliEnd;
+  let deliPlanType = "T&A";
   if (pd.delivery && pd.delivery.length > 0) {
     const floorItems = pd.delivery.filter(i => {
       const type = i.floorPlanType || i["Delivery Plan Type (Floor)"] || "";
@@ -594,8 +645,21 @@ function exportPPIToExcel() {
     const sourceItems = floorItems.length ? floorItems : pd.delivery;
     const starts = sourceItems.map(i => i.floorStartDate || i["Delivery Plan Start (Floor)"] || i.startDate || i["Delivery Plan Start"]).filter(Boolean).sort();
     const ends = sourceItems.map(i => i.floorEndDate || i["Delivery Plan End (Floor)"] || i.endDate || i["Delivery Plan End"]).filter(Boolean).sort();
-    if (starts.length) planDeliStart = starts[0];
-    if (ends.length) planDeliEnd = ends[ends.length - 1];
+    if (starts.length) {
+      planDeliStart = starts[0];
+      planDeliEnd = ends[ends.length - 1];
+    }
+    const savedType = sourceItems.map(i => i.floorPlanType || i.planType).find(Boolean);
+    if (savedType && savedType !== 'Select') deliPlanType = savedType;
+  }
+
+  let actYarnDate = "";
+  if (pd.knitting && pd.knitting.length > 0) {
+    const found = pd.knitting.map(i => i.yarnDate).find(Boolean);
+    if (found) actYarnDate = found;
+  }
+  if (!actYarnDate && pd.knittingActual && pd.knittingActual.yarnDate) {
+    actYarnDate = pd.knittingActual.yarnDate;
   }
 
   const actKnit = pd.knittingActual || {};
@@ -605,13 +669,13 @@ function exportPPIToExcel() {
   // Section 1 Spec
   const sheetData = [
     ["Booking Specification"],
-    ["Booking No.", o.orderNo || "", "", "PMC", o.pmc || "", "", "ALD", o.ald || (o.eventDay ? `${o.eventDay} ok out of ${o.eventDay}` : "")],
+    ["Booking No.", o.orderNo || "", "", "PMC", o.pmc || "", "", "ALD", o.ald || o["ALD"] || (o.eventDay ? `${o.eventDay} ok out of ${o.eventDay}` : "")],
     ["Buyer Name", o.buyer || "", "", "Merchant", o.bookingBy || o.bookedBy || "", "", "Batch Plan", o.bpStatus || "Pending"],
     ["Booking Date", formatPPIDate(o.bookingDate), "", "Event Day", o.eventDay || "", "", "Body Fabric", bodyFabric],
     ["Order Qty (KG)", o.requiredQtyKgs || "", "", "Program type", programType, "", "Body GSM", bodyGsm],
-    ["Buyer Team", o.buyerTeam || "", "", "Brush", o.brush || "NO", "", "PMC Notes (Status)", o.pmcNotes || o.fabricNotes || ""],
-    ["Unit", o.floor || o.unit || "EFL", "", "Peach", o.peach || "NO", "", "Fabric Notes", o.fabricNotes || ""],
-    ["Gmt Unit", o.gmtUnit || "", "", "Heatset", o.heatset || "NO", "", "Final Confirmation", o.finalConfirmation || "Yes"],
+    ["Buyer Team", o.buyerTeam || "", "", "Brush", o.brush || o["Brush"] || "NO", "", "PMC Notes (Status)", o.pmcNotes || o["PMC Notes"] || o.fabricNotes || ""],
+    ["Unit", o.floor || o.unit || "EFL", "", "Peach", o.peach || o["Peach"] || "NO", "", "Fabric Notes", o.fabricNotes || ""],
+    ["Gmt Unit", o.gmtUnit || "", "", "Heatset", o.heatset || o["Heatset"] || "NO", "", "Style", o.style || o["Style"] || o.finalConfirmation || ""],
     [],
     ["Booking Planning"],
     ["Timeline Phase", "Yarn Date", "Knit Start", "Knit End", "Dye Start", "Dye End", "Deli Start (Floor)", "Deli End (Floor)"],
@@ -626,8 +690,18 @@ function exportPPIToExcel() {
       formatPPIDate(planDeliEnd)
     ],
     [
+      "Plan Type",
+      "T&A",
+      knitPlanType,
+      knitPlanType,
+      dyePlanType,
+      dyePlanType,
+      deliPlanType,
+      deliPlanType
+    ],
+    [
       "Actual",
-      formatPPIDate(o.yarnDate),
+      formatPPIDate(actYarnDate),
       formatPPIDate(actKnit.actualStart),
       formatPPIDate(actKnit.actualEnd),
       formatPPIDate(actDye.actualStart),
@@ -637,7 +711,7 @@ function exportPPIToExcel() {
     ],
     [
       "Lead Day",
-      calcPPILeadDay(o.yarnDate, o.yarnDate),
+      calcPPILeadDay(o.yarnDate, actYarnDate),
       calcPPILeadDay(planKnitStart, actKnit.actualStart),
       calcPPILeadDay(planKnitEnd, actKnit.actualEnd),
       calcPPILeadDay(planDyeStart, actDye.actualStart),
@@ -647,7 +721,7 @@ function exportPPIToExcel() {
     ],
     [
       "OTT Result",
-      getPPIOTTResult(o.yarnDate, o.yarnDate).replace(/<[^>]+>/g, ""),
+      getPPIOTTResult(o.yarnDate, actYarnDate).replace(/<[^>]+>/g, ""),
       getPPIOTTResult(planKnitStart, actKnit.actualStart).replace(/<[^>]+>/g, ""),
       getPPIOTTResult(planKnitEnd, actKnit.actualEnd).replace(/<[^>]+>/g, ""),
       getPPIOTTResult(planDyeStart, actDye.actualStart).replace(/<[^>]+>/g, ""),
@@ -709,7 +783,7 @@ function exportPPIToExcel() {
     if (!colName) return;
     const agg = colorAggs[colName.toLowerCase().replace(/\s+/g, " ")];
     if (!agg) return;
-    const allow = ppiGetNum(item, ["Allowance %", "Allowance", "Allow"]);
+    const allow = ppiGetNum(item, ["Wastage %", "Wastage", "Allowance %", "Allowance", "Allow"]);
     if (allow > 0) agg.allowances.push(allow > 1 ? allow / 100 : allow);
     agg.allocQty += ppiGetNum(item, ["Allocated Qty", "Allocated Qty ", "AllocatedQty"]);
     agg.yarnBal += ppiGetNum(item, ["Yarn bala.", "Yarn Bala", "YarnBala"]);

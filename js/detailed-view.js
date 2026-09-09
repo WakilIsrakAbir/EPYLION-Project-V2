@@ -236,10 +236,15 @@ async function openDetailedView(encodedBookingNo) {
 
             
             let yarnDateVal = item.yarnDate || '';
+            const isYarnDatePresent = Boolean(yarnDateVal && yarnDateVal !== '-' && yarnDateVal !== 'N/A');
+            const knitDisabledAttr = !isYarnDatePresent ? 'disabled' : '';
+            const knitDisabledCls = !isYarnDatePresent ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800/60' : '';
+            const knitDisabledTitle = !isYarnDatePresent ? 'title="Without Yarn Date input Knitting Planning date cannot be inputted"' : '';
+
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center bg-yellow-50 dark:bg-yellow-900/10"><input type="date" class="row-yarn-date p-1 border border-yellow-300 dark:border-yellow-700/50 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none dark:bg-[#151921] dark:text-yellow-100" value="${yarnDateVal}" onchange="autoFillYarnDate(this)"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
+                <td class="p-2 border-r border-gray-300 dark:border-[#2a3346] text-center bg-yellow-50 dark:bg-yellow-900/10"><input type="date" class="row-yarn-date p-1 border border-yellow-300 dark:border-yellow-700/50 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none dark:bg-[#151921] dark:text-yellow-100" value="${yarnDateVal}" oninput="autoFillYarnDate(this)" onchange="autoFillYarnDate(this)"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${knitDisabledCls}" value="${item.startDate || ''}" ${knitDisabledAttr} ${knitDisabledTitle} ${yarnDateVal ? `min="${yarnDateVal}"` : ''} onchange="enforceEndDateMin(this, 'row-end-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${knitDisabledCls}" value="${item.endDate || ''}" ${knitDisabledAttr} ${knitDisabledTitle} ${item.startDate ? `min="${item.startDate}"` : (yarnDateVal ? `min="${yarnDateVal}"` : '')} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
                     <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
                         <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
@@ -300,19 +305,24 @@ async function openDetailedView(encodedBookingNo) {
                 }
             }
 
+            const isKnitTypeSelected = Boolean(knitPlan.type && knitPlan.type !== 'Select' && knitPlan.type !== '-' && knitPlan.type !== '');
+            const dyeDisabledAttr = !isKnitTypeSelected ? 'disabled' : '';
+            const dyeDisabledCls = !isKnitTypeSelected ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800/60' : '';
+            const dyeDisabledTitle = !isKnitTypeSelected ? 'title="Knitting Plan type selection is mandatory to input Dyeing plan"' : '';
+
             itemHtml += `
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-start" data-val="${knitPlan.start}">${formatDateDisplay(knitPlan.start)}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${formatDateDisplay(knitPlan.end)}</td>
-                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold knit-type" data-val="${knitPlan.type}">${knitPlan.type}</td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold knit-type" data-val="${knitPlan.type}">${knitPlan.type || '-'}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.limit}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[100px]">${knitPlan.remark}</td>
             `;
 
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${dyeDisabledCls}" value="${item.startDate || ''}" ${dyeDisabledAttr} ${dyeDisabledTitle} onchange="enforceEndDateMin(this, 'row-end-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${dyeDisabledCls}" value="${item.endDate || ''}" ${dyeDisabledAttr} ${dyeDisabledTitle} ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
-                    <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                    <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer ${dyeDisabledCls}" ${dyeDisabledAttr} ${dyeDisabledTitle}>
                         <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
                         <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
                         <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
@@ -350,30 +360,37 @@ async function openDetailedView(encodedBookingNo) {
                 }
             }
 
+            const isDyeTypeSelected = Boolean(dyePlan.type && dyePlan.type !== 'Select' && dyePlan.type !== '-' && dyePlan.type !== '');
+            const deliDisabledAttr = !isDyeTypeSelected ? 'disabled' : '';
+            const deliDisabledCls = !isDyeTypeSelected ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800/60' : '';
+            const deliDisabledTitle = !isDyeTypeSelected ? 'title="Dyeing Plan type selection is mandatory to input Delivery plan"' : '';
+
             // Generate Floor Dates
             let floorStart = item.floorStartDate || '';
             let floorEnd = item.floorEndDate || '';
             let floorPlanType = item.floorPlanType || '';
 
-            if (!item.floorStartDate && dyePlan.start) {
-                let d = new Date(dyePlan.start);
-                d.setDate(d.getDate() + 7);
-                floorStart = d.toISOString().split('T')[0];
-            }
-            if (!item.floorEndDate && dyePlan.end) {
-                let d = new Date(dyePlan.end);
-                d.setDate(d.getDate() + 7);
-                floorEnd = d.toISOString().split('T')[0];
-            }
-            if (!item.floorPlanType) {
-                floorPlanType = 'Tentative';
+            if (isDyeTypeSelected) {
+                if (!item.floorStartDate && dyePlan.start) {
+                    let d = new Date(dyePlan.start);
+                    d.setDate(d.getDate() + 7);
+                    floorStart = d.toISOString().split('T')[0];
+                }
+                if (!item.floorEndDate && dyePlan.end) {
+                    let d = new Date(dyePlan.end);
+                    d.setDate(d.getDate() + 7);
+                    floorEnd = d.toISOString().split('T')[0];
+                }
+                if (!item.floorPlanType) {
+                    floorPlanType = 'Tentative';
+                }
             }
 
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-start p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50" value="${floorStart}" onchange="enforceEndDateMin(this, 'row-floor-end')"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50" value="${floorEnd}" ${floorStart ? `min="${floorStart}"` : ''} onchange="checkEndDateValid(this, 'row-floor-start')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-start p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50 ${deliDisabledCls}" value="${floorStart}" ${deliDisabledAttr} ${deliDisabledTitle} onchange="enforceEndDateMin(this, 'row-floor-end')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-floor-end p-1 border border-gray-300 rounded text-[10px] w-[110px] focus:border-blue-500 outline-none bg-blue-50 ${deliDisabledCls}" value="${floorEnd}" ${deliDisabledAttr} ${deliDisabledTitle} ${floorStart ? `min="${floorStart}"` : ''} onchange="checkEndDateValid(this, 'row-floor-start')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
-                    <select class="row-floor-plan p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                    <select class="row-floor-plan p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer ${deliDisabledCls}" ${deliDisabledAttr} ${deliDisabledTitle}>
                         <option value="" ${!floorPlanType ? 'selected' : ''}>Select</option>
                         <option value="Confirm" ${floorPlanType === 'Confirm' ? 'selected' : ''}>Confirm</option>
                         <option value="Tentative" ${floorPlanType === 'Tentative' ? 'selected' : ''}>Tentative</option>
@@ -382,10 +399,10 @@ async function openDetailedView(encodedBookingNo) {
             `;
 
             itemHtml += `
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.startDate || ''}" onchange="enforceEndDateMin(this, 'row-end-date')"></td>
-                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none" value="${item.endDate || ''}" ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-start-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${deliDisabledCls}" value="${item.startDate || ''}" ${deliDisabledAttr} ${deliDisabledTitle} onchange="enforceEndDateMin(this, 'row-end-date')"></td>
+                <td class="p-2 border-r border-gray-300 text-center"><input type="date" class="row-end-date p-1 border border-gray-300 rounded text-[10px] w-[90px] focus:border-blue-500 outline-none ${deliDisabledCls}" value="${item.endDate || ''}" ${deliDisabledAttr} ${deliDisabledTitle} ${item.startDate ? `min="${item.startDate}"` : ''} onchange="checkEndDateValid(this, 'row-start-date')"></td>
                 <td class="p-2 border-r border-gray-300 text-center">
-                    <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer">
+                    <select class="row-plan-type p-1 border border-gray-300 rounded text-[10px] focus:border-blue-500 outline-none cursor-pointer ${deliDisabledCls}" ${deliDisabledAttr} ${deliDisabledTitle}>
                         <option value="" ${!item.planType ? 'selected' : ''}>Select</option>
                         <option value="Confirm" ${item.planType === 'Confirm' ? 'selected' : ''}>Confirm</option>
                         <option value="Tentative" ${item.planType === 'Tentative' ? 'selected' : ''}>Tentative</option>
@@ -398,7 +415,7 @@ async function openDetailedView(encodedBookingNo) {
             itemHtml += `
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-start" data-val="${dyePlan.start}">${formatDateDisplay(dyePlan.start)}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] dye-end" data-val="${dyePlan.end}">${formatDateDisplay(dyePlan.end)}</td>
-                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold dye-type" data-val="${dyePlan.type}">${dyePlan.type}</td>
+                <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] font-semibold dye-type" data-val="${dyePlan.type}">${dyePlan.type || '-'}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-start" data-val="${knitPlan.start}">${formatDateDisplay(knitPlan.start)}</td>
                 <td class="p-2 border-r border-gray-300 text-center text-gray-500 bg-gray-50 min-w-[80px] knit-end" data-val="${knitPlan.end}">${formatDateDisplay(knitPlan.end)}</td>
             `;

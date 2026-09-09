@@ -171,11 +171,42 @@ function renderDynamicHeaders() {
 }
 
 
+function updateRowPlanningState(row) {
+    if (!row) return;
+    const yarnInput = row.querySelector('.row-yarn-date');
+    const startInput = row.querySelector('.row-start-date');
+    const endInput = row.querySelector('.row-end-date');
+    if (!yarnInput || !startInput || !endInput) return;
+
+    const val = yarnInput.value;
+    if (val && val !== '-' && val !== 'N/A') {
+        startInput.disabled = false;
+        endInput.disabled = false;
+        startInput.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
+        endInput.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
+        startInput.removeAttribute('title');
+        endInput.removeAttribute('title');
+        startInput.min = val;
+        if (startInput.value && startInput.value < val) {
+            startInput.value = val;
+        }
+        endInput.min = startInput.value || val;
+    } else {
+        startInput.disabled = true;
+        endInput.disabled = true;
+        startInput.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
+        endInput.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
+        startInput.title = "Without Yarn Date input Knitting Planning date cannot be inputted";
+        endInput.title = "Without Yarn Date input Knitting Planning date cannot be inputted";
+    }
+}
+
 function autoFillYarnDate(inputElem) {
     const currentDept = activeTabId.replace('_report', '');
     if (currentDept !== 'knitting') return;
 
     const tbody = document.getElementById('detFabricItemsBody');
+    if (!tbody) return;
     const yarnInputs = Array.from(tbody.querySelectorAll('.row-yarn-date'));
     if (yarnInputs.length === 0) return;
 
@@ -184,8 +215,10 @@ function autoFillYarnDate(inputElem) {
         const newValue = inputElem.value;
         for (let i = 1; i < yarnInputs.length; i++) {
             yarnInputs[i].value = newValue;
+            updateRowPlanningState(yarnInputs[i].closest('tr'));
         }
     }
+    updateRowPlanningState(inputElem.closest('tr'));
 }
 
 function enforceEndDateMin(startInput, endInputClass) {

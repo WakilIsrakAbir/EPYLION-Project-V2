@@ -89,7 +89,11 @@ async function saveFabricPlanning() {
             }
 
             if (currentDept === 'knitting') {
-                if (newStartDate && newYarnDate) {
+                if ((newStartDate || newEndDate) && (!newYarnDate || newYarnDate === '-' || newYarnDate === 'N/A')) {
+                    showToast("Save failed: Without Yarn Date input, Knitting Planning date cannot be inputted!");
+                    validationFailed = true;
+                }
+                if (newStartDate && newYarnDate && newYarnDate !== '-' && newYarnDate !== 'N/A') {
                     if (new Date(newStartDate).setHours(0, 0, 0, 0) < new Date(newYarnDate).setHours(0, 0, 0, 0)) {
                         showToast("Save failed: Knitting Planning Start Date cannot be less than Yarn Date!");
                         validationFailed = true;
@@ -98,6 +102,15 @@ async function saveFabricPlanning() {
             }
 
             if (currentDept === 'dyeing') {
+                const knitTypeElem = row.querySelector('.knit-type');
+                const knitType = knitTypeElem && knitTypeElem.dataset ? knitTypeElem.dataset.val : "";
+                const hasDyePlanInput = Boolean(newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select' && newPlanType !== ''));
+
+                if (hasDyePlanInput && (!knitType || knitType === 'Select' || knitType === '-' || knitType === '')) {
+                    showToast("Save failed: Knitting Plan type selection is mandatory before inputting Dyeing plan!");
+                    validationFailed = true;
+                }
+
                 const knitStartElem = row.querySelector('.knit-start');
                 const knitEndElem = row.querySelector('.knit-end');
 
@@ -115,6 +128,17 @@ async function saveFabricPlanning() {
             }
 
             if (currentDept === 'delivery') {
+                const dyeTypeElem = row.querySelector('.dye-type');
+                const dyeType = dyeTypeElem && dyeTypeElem.dataset ? dyeTypeElem.dataset.val : "";
+                const floorPlanElem = row.querySelector('.row-floor-plan');
+                const floorPlanVal = floorPlanElem ? floorPlanElem.value : '';
+                const hasDeliPlanInput = Boolean(newStartDate || newEndDate || (newPlanType && newPlanType !== 'Select' && newPlanType !== '') || floorStart || floorEnd || (floorPlanVal && floorPlanVal !== 'Select' && floorPlanVal !== ''));
+
+                if (hasDeliPlanInput && (!dyeType || dyeType === 'Select' || dyeType === '-' || dyeType === '')) {
+                    showToast("Save failed: Dyeing Plan type selection is mandatory before inputting Delivery plan!");
+                    validationFailed = true;
+                }
+
                 const dyeStartElem = row.querySelector('.dye-start');
                 const dyeEndElem = row.querySelector('.dye-end');
 
