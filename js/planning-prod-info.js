@@ -512,7 +512,7 @@ function renderPPIColorSummary(knittingItems, dyeingItems, deliveryItems) {
     const agg = colorAggs[key];
     if (!agg) return;
 
-    const allow = ppiGetNum(item, ["Wastage %", "Wastage", "Allowance %", "Allowance", "Allow"]);
+    const allow = ppiGetNum(item, ["Wastage %", "Wastage"]);
     if (allow > 0) agg.allowances.push(allow > 1 ? allow / 100 : allow);
 
     agg.allocQty += ppiGetNum(item, ["Allocated Qty", "Allocated Qty ", "AllocatedQty"]);
@@ -783,7 +783,7 @@ function exportPPIToExcel() {
     if (!colName) return;
     const agg = colorAggs[colName.toLowerCase().replace(/\s+/g, " ")];
     if (!agg) return;
-    const allow = ppiGetNum(item, ["Wastage %", "Wastage", "Allowance %", "Allowance", "Allow"]);
+    const allow = ppiGetNum(item, ["Wastage %", "Wastage"]);
     if (allow > 0) agg.allowances.push(allow > 1 ? allow / 100 : allow);
     agg.allocQty += ppiGetNum(item, ["Allocated Qty", "Allocated Qty ", "AllocatedQty"]);
     agg.yarnBal += ppiGetNum(item, ["Yarn bala.", "Yarn Bala", "YarnBala"]);
