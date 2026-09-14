@@ -201,9 +201,31 @@ function applyPermissions() {
       sidebarManageUsers?.classList.remove("hidden");
     else sidebarManageUsers?.classList.add("hidden");
 
-    if (m.dataManagement && m.dataManagement.view)
-      sidebarDataManagement?.classList.remove("hidden");
-    else sidebarDataManagement?.classList.add("hidden");
+    // Toggle Data Management Main Menu & Submenus
+    if (m.dataManagement || role === "Admin") {
+      const hasDmAccess = role === "Admin" || !!(m.dataManagement?.view || m.dataManagement?.setup);
+      if (hasDmAccess) {
+        sidebarDataManagement?.classList.remove("hidden");
+      } else {
+        sidebarDataManagement?.classList.add("hidden");
+      }
+
+      const sourceUploadEl = document.getElementById("menu-data-mgmt");
+      if (sourceUploadEl) {
+        (role === "Admin" || m.dataManagement?.view)
+          ? sourceUploadEl.parentElement.classList.remove("hidden")
+          : sourceUploadEl.parentElement.classList.add("hidden");
+      }
+
+      const setupEl = document.getElementById("menu-setup-dropdowns");
+      if (setupEl) {
+        (role === "Admin" || m.dataManagement?.setup)
+          ? setupEl.parentElement.classList.remove("hidden")
+          : setupEl.parentElement.classList.add("hidden");
+      }
+    } else {
+      sidebarDataManagement?.classList.add("hidden");
+    }
 
     const hasAny = (obj) => obj && Object.values(obj).some((v) => v);
 
@@ -443,10 +465,12 @@ function applyPermissions() {
       if (sidebarDataManagement)
         sidebarDataManagement.classList.remove("hidden");
     }
-    if (role === "Viewer") {
-      if (uploadArea) uploadArea.style.display = "none";
+    if (role === "Admin") {
+      const setupEl = document.getElementById("menu-setup-dropdowns");
+      if (setupEl) setupEl.parentElement.classList.remove("hidden");
     } else {
-      if (uploadArea) uploadArea.style.display = "flex";
+      const setupEl = document.getElementById("menu-setup-dropdowns");
+      if (setupEl) setupEl.parentElement.classList.add("hidden");
     }
   }
 }
@@ -579,6 +603,26 @@ function showDashboardHome() {
 }
 
 function showDataManagementView() {
+  const role = localStorage.getItem("role");
+  const permsStr = localStorage.getItem("permissions");
+  let hasPerm = role === "Admin";
+  if (!hasPerm && permsStr) {
+    try {
+      const p = JSON.parse(permsStr);
+      if (p?.menus?.dataManagement?.view) hasPerm = true;
+    } catch (e) {}
+  } else if (!hasPerm && !permsStr && role === "Planner") {
+    hasPerm = true;
+  }
+
+  if (!hasPerm) {
+    if (typeof showToast === "function") {
+      showToast("Access Denied: Data Management permission required.", true);
+    }
+    showDashboardHome();
+    return;
+  }
+
   localStorage.setItem(
     "activePage",
     JSON.stringify({ page: "dataManagement" }),
@@ -593,6 +637,24 @@ function showDataManagementView() {
 }
 
 function showSetupView() {
+  const role = localStorage.getItem("role");
+  const permsStr = localStorage.getItem("permissions");
+  let hasPerm = role === "Admin";
+  if (!hasPerm && permsStr) {
+    try {
+      const p = JSON.parse(permsStr);
+      if (p?.menus?.dataManagement?.setup) hasPerm = true;
+    } catch (e) {}
+  }
+
+  if (!hasPerm) {
+    if (typeof showToast === "function") {
+      showToast("Access Denied: Setup permission required.", true);
+    }
+    showDashboardHome();
+    return;
+  }
+
   localStorage.setItem(
     "activePage",
     JSON.stringify({ page: "setup" }),

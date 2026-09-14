@@ -77,7 +77,10 @@ const MENU_GROUPS = [
     key: "dataManagement",
     title: "Data Management",
     icon: "fa-database",
-    items: [["view", "Data Management"]],
+    items: [
+      ["view", "Source File Upload"],
+      ["setup", "Setup (Dropdown Master)"],
+    ],
   },
   {
     key: "orderManagement",

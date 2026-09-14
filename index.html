@@ -502,6 +502,11 @@
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
                                 onclick="showDataManagementView()">Source File Upload</a>
                         </li>
+                        <li>
+                            <a href="#" id="menu-setup-dropdowns"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
+                                onclick="showSetupView()">Setup</a>
+                        </li>
                     </ul>
                 </li>
 
@@ -721,25 +726,6 @@
                                 class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors">
                                 User Management
                             </a>
-                        </li>
-                        <li>
-                            <div class="py-2 pl-9 pr-4 flex justify-between items-center text-black hover:bg-sidebarHover transition-colors cursor-pointer select-none"
-                                onclick="toggleSubmenu(this, 'setupSubmenu')">
-                                <div class="flex items-center text-xs font-semibold">
-                                    <i class="fas fa-sliders w-5 text-center"></i> <span class="ml-1">Setup</span>
-                                </div>
-                                <i class="fas fa-chevron-left text-[9px] transition-transform duration-200"></i>
-                            </div>
-                            <ul class="hidden bg-black/5 dark:bg-white/5 py-1" id="setupSubmenu">
-                                <li>
-                                    <a href="#" id="menu-setup-dropdowns"
-                                        class="sidebar-menu-item submenu-item flex items-center justify-between py-2 pl-12 pr-4 border-l-4 border-transparent text-xs text-black font-semibold hover:text-black transition-colors"
-                                        onclick="showSetupView()">
-                                        <span>Dropdown Master Setup</span>
-                                        <i class="fas fa-chevron-right text-[9px] opacity-70"></i>
-                                    </a>
-                                </li>
-                            </ul>
                         </li>
                     </ul>
                 </li>
@@ -1122,7 +1108,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
                     <div>
                         <div class="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                            <span>Manage Users</span>
+                            <span>Data Management</span>
                             <i class="fa-solid fa-chevron-right text-[8px] opacity-70"></i>
                             <span class="text-blue-600 dark:text-blue-400 font-semibold">Setup</span>
                         </div>
