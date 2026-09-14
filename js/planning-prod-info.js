@@ -478,14 +478,6 @@ function renderPPIColorSummary(knittingItems, dyeingItems, deliveryItems) {
   const tbody = document.getElementById("ppiSummaryTbody");
   if (!thead || !tbody) return;
 
-  thead.innerHTML = `
-    <tr>
-      <th class="p-2.5 text-left border-r border-slate-300 dark:border-slate-700 w-44 bg-amber-200/90 dark:bg-amber-900/90 text-amber-950 dark:text-amber-100 font-black">Metric \\ Color</th>
-      ${colors.map(col => `<th class="p-2.5 border-r border-slate-300 dark:border-slate-700 text-center font-bold">${col.label}</th>`).join("")}
-      <th class="p-2.5 text-center font-black bg-amber-200/90 dark:bg-amber-900/90 text-amber-950 dark:text-amber-100">Total</th>
-    </tr>
-  `;
-
   const colorAggs = {};
   colors.forEach(col => {
     colorAggs[col.key] = {
@@ -563,23 +555,65 @@ function renderPPIColorSummary(knittingItems, dyeingItems, deliveryItems) {
     { label: "Slow moving", getValue: (agg) => agg.slowMoving }
   ];
 
-  tbody.innerHTML = metrics.map((m, idx) => {
+  if (colors.length === 0) {
+    thead.innerHTML = `
+      <tr>
+        <th class="p-2.5 text-left font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200">Color</th>
+        ${metrics.map(m => `<th class="p-2.5 text-center font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200">${m.label}</th>`).join("")}
+      </tr>
+    `;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="${metrics.length + 1}" class="p-6 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">No color data found for this order.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  // Header: Color column + all metric columns
+  thead.innerHTML = `
+    <tr>
+      <th class="p-2.5 text-left border-r border-slate-300 dark:border-slate-700 font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 min-w-[100px]">Color</th>
+      ${metrics.map(m => `<th class="p-2.5 border-r border-slate-300 dark:border-slate-700 text-center font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 whitespace-nowrap min-w-[85px]">${m.label}</th>`).join("")}
+    </tr>
+  `;
+
+  // Rows: Each color is a row
+  const rowsHtml = colors.map((col, idx) => {
+    const isShaded = idx % 2 === 1;
+    const agg = colorAggs[col.key] || {};
+    const cellsHtml = metrics.map(m => {
+      const v = m.getValue(agg);
+      const fmtVal = m.isPercent ? `${(v * 100).toFixed(0)}%` : Math.round(v).toLocaleString();
+      return `<td class="p-2 border-r border-slate-300 dark:border-slate-700 text-center font-medium">${fmtVal}</td>`;
+    }).join("");
+
+    return `
+      <tr class="${isShaded ? 'bg-slate-50/80 dark:bg-[#141822]' : 'bg-white dark:bg-[#181c25]'} hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-colors">
+        <td class="p-2 font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700 text-left">${col.label}</td>
+        ${cellsHtml}
+      </tr>
+    `;
+  }).join("");
+
+  // Total summary row at bottom
+  const totalCellsHtml = metrics.map(m => {
     const vals = colors.map(col => m.getValue(colorAggs[col.key]));
     const total = m.isAvg
       ? (vals.filter(v => v > 0).length ? vals.reduce((a, b) => a + b, 0) / vals.filter(v => v > 0).length : 0)
       : vals.reduce((a, b) => a + b, 0);
-
-    const fmt = (v) => m.isPercent ? `${(v * 100).toFixed(0)}%` : Math.round(v).toLocaleString();
-    const isShaded = idx % 2 === 1;
-
-    return `
-      <tr class="${isShaded ? 'bg-slate-50/80 dark:bg-[#141822]' : 'bg-white dark:bg-[#181c25]'} hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-colors">
-        <td class="p-2 font-bold text-slate-700 dark:text-slate-300 border-r border-slate-300 dark:border-slate-700">${m.label}</td>
-        ${vals.map(v => `<td class="p-2 border-r border-slate-300 dark:border-slate-700 text-center font-medium">${fmt(v)}</td>`).join("")}
-        <td class="p-2 text-center font-black ${isShaded ? 'bg-slate-100/80 dark:bg-slate-800/80' : 'bg-slate-50 dark:bg-slate-800/40'} text-slate-900 dark:text-amber-300">${fmt(total)}</td>
-      </tr>
-    `;
+    const fmtTotal = m.isPercent ? `${(total * 100).toFixed(0)}%` : Math.round(total).toLocaleString();
+    return `<td class="p-2 border-r border-slate-300 dark:border-slate-700 text-center font-black">${fmtTotal}</td>`;
   }).join("");
+
+  const totalRowHtml = `
+    <tr class="bg-amber-100/90 dark:bg-amber-950/80 text-amber-950 dark:text-amber-100 font-black border-t-2 border-slate-300 dark:border-slate-600">
+      <td class="p-2 font-black border-r border-slate-300 dark:border-slate-700 text-left">Total</td>
+      ${totalCellsHtml}
+    </tr>
+  `;
+
+  tbody.innerHTML = rowsHtml + totalRowHtml;
 }
 
 // ==========================================
@@ -755,9 +789,25 @@ function exportPPIToExcel() {
 
   const colors = Array.from(colorMap.entries()).map(([key, label], idx) => ({ key, label: label || `Col-${idx + 1}` }));
 
+  const metrics = [
+    { label: "Allowance %", isPercent: true, isAvg: true, getValue: (agg) => agg.allowances.length ? (agg.allowances.reduce((a, b) => a + b, 0) / agg.allowances.length) : 0 },
+    { label: "Allocated Qty", getValue: (agg) => agg.allocQty },
+    { label: "Yarn bala.", getValue: (agg) => agg.yarnBal },
+    { label: "Knit Prod.", getValue: (agg) => agg.knitProd },
+    { label: "Knit. Bala.", getValue: (agg) => agg.knitBal },
+    { label: "Dyeing ok", getValue: (agg) => agg.dyeOk },
+    { label: "Dyeing Bal.", getValue: (agg) => agg.dyeBal },
+    { label: "Booking qty", getValue: (agg) => agg.bookingQty },
+    { label: "Received Qty.", getValue: (agg) => agg.receivedQty },
+    { label: "Delivered Qty", getValue: (agg) => agg.deliveredQty },
+    { label: "Deli. Bala.", getValue: (agg) => agg.deliBal },
+    { label: "RFD", getValue: (agg) => agg.rfd },
+    { label: "Slow moving", getValue: (agg) => agg.slowMoving }
+  ];
+
   sheetData.push([]);
-  sheetData.push(["Details Booking Summary"]);
-  sheetData.push(["Metric \\ Color", ...colors.map(c => c.label), "Total"]);
+  sheetData.push(["Details Booking Summary (Color-Wise)"]);
+  sheetData.push(["Color", ...metrics.map(m => m.label)]);
 
   const colorAggs = {};
   colors.forEach(col => {
@@ -813,34 +863,26 @@ function exportPPIToExcel() {
     agg.slowMoving += ppiGetNum(item, ["Slowmoving"]);
   });
 
-  const metrics = [
-    { label: "Allowance %", isPercent: true, isAvg: true, getValue: (agg) => agg.allowances.length ? (agg.allowances.reduce((a, b) => a + b, 0) / agg.allowances.length) : 0 },
-    { label: "Allocated Qty", getValue: (agg) => agg.allocQty },
-    { label: "Yarn bala.", getValue: (agg) => agg.yarnBal },
-    { label: "Knit Prod.", getValue: (agg) => agg.knitProd },
-    { label: "Knit. Bala.", getValue: (agg) => agg.knitBal },
-    { label: "Dyeing ok", getValue: (agg) => agg.dyeOk },
-    { label: "Dyeing Bal.", getValue: (agg) => agg.dyeBal },
-    { label: "Booking qty", getValue: (agg) => agg.bookingQty },
-    { label: "Received Qty.", getValue: (agg) => agg.receivedQty },
-    { label: "Delivered Qty", getValue: (agg) => agg.deliveredQty },
-    { label: "Deli. Bala.", getValue: (agg) => agg.deliBal },
-    { label: "RFD", getValue: (agg) => agg.rfd },
-    { label: "Slow moving", getValue: (agg) => agg.slowMoving }
-  ];
+  colors.forEach(col => {
+    const agg = colorAggs[col.key] || {};
+    const rowVals = metrics.map(m => {
+      const v = m.getValue(agg);
+      return m.isPercent ? `${(v * 100).toFixed(0)}%` : Math.round(v);
+    });
+    sheetData.push([col.label, ...rowVals]);
+  });
 
-  metrics.forEach(m => {
+  const totalRow = metrics.map(m => {
     const vals = colors.map(col => m.getValue(colorAggs[col.key]));
     const total = m.isAvg
       ? (vals.filter(v => v > 0).length ? vals.reduce((a, b) => a + b, 0) / vals.filter(v => v > 0).length : 0)
       : vals.reduce((a, b) => a + b, 0);
-
-    const fmtVal = (v) => m.isPercent ? `${(v * 100).toFixed(0)}%` : Math.round(v);
-    sheetData.push([m.label, ...vals.map(fmtVal), fmtVal(total)]);
+    return m.isPercent ? `${(total * 100).toFixed(0)}%` : Math.round(total);
   });
+  sheetData.push(["Total", ...totalRow]);
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
-  ws["!cols"] = [{ wch: 22 }, ...colors.map(() => ({ wch: 14 })), { wch: 16 }];
+  ws["!cols"] = [{ wch: 18 }, ...metrics.map(() => ({ wch: 14 }))];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Planning_Production_Info");
