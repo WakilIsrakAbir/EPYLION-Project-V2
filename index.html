@@ -1102,42 +1102,58 @@
         </div>
 
         <!-- ==========================================
-             SETUP (DROPDOWNS) VIEW
+             SETUP (DROPDOWNS) VIEW - CLEAN & MODERN
              ========================================== -->
-        <div id="setupView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f8fafc] dark:bg-[#0f1117] overflow-y-auto">
-            <div class="p-4 md:p-6 flex-1 flex flex-col min-h-0 max-w-[1600px] w-full">
+        <div id="setupView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-[#f8fafc] dark:bg-[#0b0f17] overflow-y-auto">
+            <div class="p-4 sm:p-6 md:p-8 flex-1 flex flex-col min-h-0 max-w-[1500px] w-full mx-auto">
                 
-                <!-- Header -->
-                <div class="flex items-center gap-3 mb-6">
-                    <i class="fa-solid fa-sliders text-xl text-blue-600"></i>
-                    <h1 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Dropdown Master Setup</h1>
+                <!-- Page Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
+                    <div>
+                        <div class="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                            <span>Data Management</span>
+                            <i class="fa-solid fa-chevron-right text-[8px] opacity-70"></i>
+                            <span class="text-blue-600 dark:text-blue-400 font-semibold">Setup</span>
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-sliders"></i>
+                            </span>
+                            Dropdown Master Setup
+                        </h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Configure dynamic dropdown values used in Dyeing Plan (Department Fabric Items). Values sync across all users.</p>
+                    </div>
                 </div>
 
-                <!-- Grid of Tables -->
+                <!-- 2-Column Responsive Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
                     <!-- 1. Dyeing Unit List Card -->
-                    <div class="bg-white dark:bg-[#151921] rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
-                        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="bg-white dark:bg-[#131722] rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 overflow-hidden flex flex-col transition-all">
+                        <!-- Card Header -->
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-white dark:bg-[#131722]">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
-                                    <i class="fa-solid fa-bookmark"></i>
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                                    <i class="fa-solid fa-cube"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-black text-base text-slate-900 dark:text-slate-100 leading-tight">Dyeing Unit List</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Controls "Unit" dropdown in Dyeing Plan</p>
+                                    <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">Dyeing Unit List</h3>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500">Controls "Unit" dropdown</p>
                                 </div>
                             </div>
-                            <span id="unitItemCountBadge" class="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-900 px-3 py-1 rounded-full">0 items</span>
+                            <span id="unitItemCountBadge" class="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-full">0 items</span>
                         </div>
 
-                        <!-- Add Item Form -->
-                        <form onsubmit="handleAddDropdownItem(event, 'unit')" class="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-3">
-                            <input type="text" id="unitInputNew" placeholder="Enter new unit name (e.g. DTL)" required
-                                class="flex-1 px-3.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0b0f17] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 placeholder:text-slate-400">
+                        <!-- Add Item Input Group -->
+                        <form onsubmit="handleAddDropdownItem(event, 'unit')" class="p-3.5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#0e121a]/60 flex gap-2">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-plus text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="unitInputNew" placeholder="Enter new unit (e.g. DTL)..." required
+                                    class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#0c1017] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400 transition-colors">
+                            </div>
                             <button type="submit" 
-                                class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm shrink-0">
-                                <i class="fa-solid fa-plus text-xs"></i> Add Unit
+                                class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm shrink-0">
+                                Add Unit
                             </button>
                         </form>
 
@@ -1145,11 +1161,11 @@
                         <div class="overflow-x-auto flex-1 custom-scrollbar">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-400 dark:text-slate-500">
-                                        <th class="py-3 px-4 text-center w-14 font-medium">SL</th>
-                                        <th class="py-3 px-4 font-bold text-slate-700 dark:text-slate-300">Unit Name</th>
-                                        <th class="py-3 px-4 text-center w-28 font-bold text-slate-700 dark:text-slate-300">Status</th>
-                                        <th class="py-3 px-4 text-center w-28 font-bold text-slate-700 dark:text-slate-300">Action</th>
+                                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/40 dark:bg-[#0e121a]/30">
+                                        <th class="py-2.5 px-3 text-center w-12">#</th>
+                                        <th class="py-2.5 px-3">Unit Name</th>
+                                        <th class="py-2.5 px-3 text-center w-28">Status</th>
+                                        <th class="py-2.5 px-3 text-center w-28">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="unitSetupTableBody">
@@ -1160,27 +1176,31 @@
                     </div>
 
                     <!-- 2. Process Name List Card -->
-                    <div class="bg-white dark:bg-[#151921] rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col">
-                        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="bg-white dark:bg-[#131722] rounded-xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 overflow-hidden flex flex-col transition-all">
+                        <!-- Card Header -->
+                        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-white dark:bg-[#131722]">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
                                     <i class="fa-solid fa-flask"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-black text-base text-slate-900 dark:text-slate-100 leading-tight">Process Name List</h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Controls "Process Name" dropdown in Dyeing Plan</p>
+                                    <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">Process Name List</h3>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-500">Controls "Process Name" dropdown</p>
                                 </div>
                             </div>
-                            <span id="processItemCountBadge" class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 px-3 py-1 rounded-full">0 items</span>
+                            <span id="processItemCountBadge" class="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-full">0 items</span>
                         </div>
 
-                        <!-- Add Item Form -->
-                        <form onsubmit="handleAddDropdownItem(event, 'process')" class="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-3">
-                            <input type="text" id="processInputNew" placeholder="Enter new process name (e.g. DF)" required
-                                class="flex-1 px-3.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0b0f17] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-emerald-500 placeholder:text-slate-400">
+                        <!-- Add Item Input Group -->
+                        <form onsubmit="handleAddDropdownItem(event, 'process')" class="p-3.5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#0e121a]/60 flex gap-2">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-plus text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="processInputNew" placeholder="Enter new process (e.g. DF)..." required
+                                    class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#0c1017] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-400 transition-colors">
+                            </div>
                             <button type="submit" 
-                                class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm shrink-0">
-                                <i class="fa-solid fa-plus text-xs"></i> Add Process
+                                class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm shrink-0">
+                                Add Process
                             </button>
                         </form>
 
@@ -1188,11 +1208,11 @@
                         <div class="overflow-x-auto flex-1 custom-scrollbar">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-400 dark:text-slate-500">
-                                        <th class="py-3 px-4 text-center w-14 font-medium">SL</th>
-                                        <th class="py-3 px-4 font-bold text-slate-700 dark:text-slate-300">Process Name</th>
-                                        <th class="py-3 px-4 text-center w-28 font-bold text-slate-700 dark:text-slate-300">Status</th>
-                                        <th class="py-3 px-4 text-center w-28 font-bold text-slate-700 dark:text-slate-300">Action</th>
+                                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/40 dark:bg-[#0e121a]/30">
+                                        <th class="py-2.5 px-3 text-center w-12">#</th>
+                                        <th class="py-2.5 px-3">Process Name</th>
+                                        <th class="py-2.5 px-3 text-center w-28">Status</th>
+                                        <th class="py-2.5 px-3 text-center w-28">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="processSetupTableBody">

@@ -127,7 +127,7 @@ function renderMasterTableBody(type, items) {
     if (!tbody) return;
 
     if (!items || items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-6 px-3 text-center text-xs text-slate-400 font-medium">No items found. Add one above.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 px-3 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">No items found. Add one above.</td></tr>`;
         return;
     }
 
@@ -135,41 +135,41 @@ function renderMasterTableBody(type, items) {
     items.forEach((item, index) => {
         const isActive = item.status === 'ACTIVE';
         
-        // Exact status badge styling from screenshot
+        // Clean, balanced status badge with dot indicator
         const statusBadge = isActive
-            ? `<span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                 <i class="fa-solid fa-circle-check text-[10px]"></i> Active
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
                </span>`
-            : `<span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                 <i class="fa-solid fa-eye-slash text-[10px]"></i> Hidden
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20">
+                 <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Hidden
                </span>`;
 
         // Action buttons
         const toggleIcon = isActive ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-        const toggleTitle = isActive ? 'Hide from new selection' : 'Unhide / Make active';
+        const toggleTitle = isActive ? 'Hide from dropdown' : 'Unhide / Make active';
 
         html += `
-        <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition-colors">
-            <td class="py-2 px-3 text-xs text-slate-400 text-center font-medium w-12">${index + 1}</td>
-            <td class="py-2 px-3 text-sm font-bold text-slate-800">${escapeHtml(item.name)}</td>
-            <td class="py-2 px-3 text-center w-28">${statusBadge}</td>
-            <td class="py-2 px-3 text-center w-28">
-                <div class="inline-flex items-center justify-center gap-1.5">
+        <tr class="border-b border-slate-100/80 dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-2.5 px-3 text-xs text-slate-400 dark:text-slate-500 text-center font-medium w-12">${index + 1}</td>
+            <td class="py-2.5 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200">${escapeHtml(item.name)}</td>
+            <td class="py-2.5 px-3 text-center w-28">${statusBadge}</td>
+            <td class="py-2.5 px-3 text-center w-28">
+                <div class="inline-flex items-center justify-center gap-1">
                     <!-- Edit Button -->
                     <button type="button" onclick="handleEditDropdownItem('${type}', '${item._id}', '${escapeHtml(item.name)}')" 
-                        class="w-7 h-7 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        class="w-7 h-7 rounded-md text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 inline-flex items-center justify-center text-xs transition-colors" 
                         title="Edit name">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </button>
                     <!-- Hide / Unhide Toggle Button -->
                     <button type="button" onclick="toggleDropdownItemStatus('${type}', '${item._id}', '${item.status}')" 
-                        class="w-7 h-7 rounded border border-amber-300 text-amber-500 hover:bg-amber-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        class="w-7 h-7 rounded-md text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 inline-flex items-center justify-center text-xs transition-colors" 
                         title="${toggleTitle}">
                         <i class="${toggleIcon}"></i>
                     </button>
                     <!-- Delete Button -->
                     <button type="button" onclick="deleteDropdownItem('${type}', '${item._id}', '${escapeHtml(item.name)}')" 
-                        class="w-7 h-7 rounded border border-red-300 text-red-500 hover:bg-red-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        class="w-7 h-7 rounded-md text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center justify-center text-xs transition-colors" 
                         title="Delete item">
                         <i class="fa-regular fa-trash-can"></i>
                     </button>
