@@ -176,29 +176,56 @@ function updateRowPlanningState(row) {
     const yarnInput = row.querySelector('.row-yarn-date');
     const startInput = row.querySelector('.row-start-date');
     const endInput = row.querySelector('.row-end-date');
-    if (!yarnInput || !startInput || !endInput) return;
+    const planTypeSelect = row.querySelector('.row-plan-type');
+    if (!yarnInput) return;
 
     const val = yarnInput.value;
-    if (val && val !== '-' && val !== 'N/A') {
-        startInput.disabled = false;
-        endInput.disabled = false;
-        startInput.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
-        endInput.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
-        startInput.removeAttribute('title');
-        endInput.removeAttribute('title');
-        startInput.min = val;
-        if (startInput.value && startInput.value < val) {
-            startInput.value = val;
+    const isYarnPresent = Boolean(val && val !== '-' && val !== 'N/A');
+
+    // If Yarn Date is removed and Knitting Plan Type is currently 'Confirm', reset it
+    if (!isYarnPresent && planTypeSelect && planTypeSelect.value === 'Confirm') {
+        planTypeSelect.value = '';
+        planTypeSelect.dataset.prevVal = '';
+        if (typeof showToast === 'function') {
+            showToast("Without Yarn Date input, Knitting Plan Type cannot be 'Confirm'!");
         }
-        endInput.min = startInput.value || val;
-    } else {
-        startInput.disabled = true;
-        endInput.disabled = true;
-        startInput.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
-        endInput.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100', 'dark:bg-gray-800/60');
-        startInput.title = "Without Yarn Date input Knitting Planning date cannot be inputted";
-        endInput.title = "Without Yarn Date input Knitting Planning date cannot be inputted";
     }
+
+    if (startInput) {
+        if (isYarnPresent) {
+            startInput.min = val;
+            if (startInput.value && startInput.value < val) {
+                startInput.value = val;
+            }
+        } else {
+            startInput.removeAttribute('min');
+        }
+        if (endInput) {
+            endInput.min = startInput.value || (isYarnPresent ? val : '');
+        }
+    }
+}
+
+function checkKnittingPlanType(selectElem) {
+    if (!selectElem) return;
+    const row = selectElem.closest('tr');
+    if (!row) return;
+
+    const currentDept = (typeof activeTabId !== 'undefined') ? activeTabId.replace('_report', '') : '';
+    if (currentDept !== 'knitting') return;
+
+    const yarnInput = row.querySelector('.row-yarn-date');
+    const val = yarnInput ? yarnInput.value : '';
+    const isYarnPresent = Boolean(val && val !== '-' && val !== 'N/A');
+
+    if (selectElem.value === 'Confirm' && !isYarnPresent) {
+        if (typeof showToast === 'function') {
+            showToast("Without Yarn Date input, Knitting Plan Type cannot be 'Confirm'!");
+        }
+        selectElem.value = selectElem.dataset.prevVal || '';
+        return;
+    }
+    selectElem.dataset.prevVal = selectElem.value;
 }
 
 function autoFillYarnDate(inputElem) {

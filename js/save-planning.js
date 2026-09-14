@@ -89,8 +89,8 @@ async function saveFabricPlanning() {
             }
 
             if (currentDept === 'knitting') {
-                if ((newStartDate || newEndDate) && (!newYarnDate || newYarnDate === '-' || newYarnDate === 'N/A')) {
-                    showToast("Save failed: Without Yarn Date input, Knitting Planning date cannot be inputted!");
+                if (newPlanType === 'Confirm' && (!newYarnDate || newYarnDate === '-' || newYarnDate === 'N/A')) {
+                    showToast("Save failed: Without Yarn Date input, Knitting Plan Type cannot be 'Confirm'!");
                     validationFailed = true;
                 }
                 if (newStartDate && newYarnDate && newYarnDate !== '-' && newYarnDate !== 'N/A') {
