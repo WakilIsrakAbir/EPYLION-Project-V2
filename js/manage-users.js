@@ -1,3 +1,40 @@
+// Ensure global authorization interceptor for manage-users
+(function() {
+  const originalFetch = window.fetch;
+  window.fetch = async function(resource, init = {}) {
+    let urlStr = typeof resource === "string" ? resource : resource instanceof Request ? resource.url : String(resource);
+    const isBackendCall = urlStr.includes("abir-backend-api.onrender.com") || urlStr.includes("localhost:5000") || urlStr.startsWith("/api/");
+    if (isBackendCall) {
+      const token = localStorage.getItem("token");
+      let headers = init.headers instanceof Headers ? init.headers : new Headers(init.headers || {});
+      if (token && !headers.has("Authorization")) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+      }
+      init.headers = headers;
+    }
+
+    try {
+      const response = await originalFetch.call(this, resource, init);
+      if (isBackendCall && (response.status === 401 || response.status === 403)) {
+        if (!urlStr.includes("/api/auth/login") && !window.location.pathname.endsWith("login.html")) {
+          if (typeof showToast === "function") {
+            showToast("Session expired or unauthorized. Redirecting to login...", true);
+          }
+          localStorage.removeItem("token");
+          localStorage.removeItem("sessionExpiresAt");
+          setTimeout(() => { window.location.href = "login.html"; }, 800);
+        }
+      }
+      return response;
+    } catch (err) {
+      throw err;
+    }
+  };
+})();
+
 let BUYERS = [];
 let buyersLoaded = false;
 
@@ -599,7 +636,6 @@ async function loadUsers(silent = false) {
           ? `${new Date(u.lastActive).toLocaleTimeString()} [diff: ${Math.round((now - new Date(u.lastActive).getTime()) / 1000)}s]`
           : "Never",
         isLive: isLive,
-        passwordHint: u.password || "Hidden",
         permissions: u.permissions || makeTemplate(u.role),
       };
     });
@@ -772,10 +808,9 @@ function renderUsers() {
   
           <div class="mt-3 flex justify-between text-[11px] text-slate-500">
             <span>Created: ${formatDate(user.createdAt)}</span>
-            <div class="flex items-center gap-2">
-                <code class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">${user.passwordHint}</code>
-                <button onclick="navigator.clipboard.writeText('${user.passwordHint}'); showToast('Password copied');" class="hover:text-blue-500"><i class="fa-regular fa-copy"></i></button>
-            </div>
+            <span class="flex items-center gap-1 font-semibold text-slate-400 dark:text-slate-500">
+              <i class="fa-solid fa-lock text-[10px]"></i> Encrypted
+            </span>
           </div>
         </div>
         <div class="grid grid-cols-2 border-t border-slate-200 dark:border-slate-800">

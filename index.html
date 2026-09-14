@@ -489,11 +489,25 @@
 
             <ul class="py-2 w-full">
                 <li id="sidebarDataManagement">
-                    <div id="menu-data-mgmt"
-                        class="sidebar-menu-item py-3 pr-4 pl-3 border-l-4 border-transparent flex items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
-                        onclick="showDataManagementView()">
-                        <i class="fas fa-database text-black w-6"></i> <span class="ml-2">Data Management</span>
+                    <div class="px-4 py-3 flex justify-between items-center hover:bg-sidebarDark hover:text-black transition-colors cursor-pointer"
+                        onclick="toggleSubmenu(this, 'dataManagementMenu')">
+                        <div class="flex items-center">
+                            <i class="fas fa-database text-black w-6"></i> <span class="ml-2">Data Management</span>
+                        </div>
+                        <i class="fas fa-chevron-left text-[10px] transition-transform duration-200"></i>
                     </div>
+                    <ul class="bg-sidebarDark hidden max-h-80 overflow-y-auto custom-scrollbar" id="dataManagementMenu">
+                        <li>
+                            <a href="#" id="menu-data-mgmt"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
+                                onclick="showDataManagementView()">Source File Upload</a>
+                        </li>
+                        <li>
+                            <a href="#" id="menu-setup-dropdowns"
+                                class="sidebar-menu-item submenu-item block py-2 pl-11 pr-4 border-l-4 border-transparent text-black hover:text-black transition-colors"
+                                onclick="showSetupView()">Setup (Dropdowns)</a>
+                        </li>
+                    </ul>
                 </li>
 
                 <li>
@@ -1070,6 +1084,113 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             SETUP (DROPDOWNS) VIEW
+             ========================================== -->
+        <div id="setupView" class="hidden flex-1 flex flex-col min-h-0 min-w-0 bg-slate-50 dark:bg-[#0f1117] overflow-y-auto">
+            <div class="p-4 md:p-6 flex-1 flex flex-col gap-6 min-h-0 max-w-7xl mx-auto w-full">
+                
+                <!-- Header -->
+                <div class="bg-white dark:bg-[#151921] p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-blue-600"></i> Setup (Dropdown Master)
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Configure Unit and Process Name options. Existing order records in the database are always safely preserved.
+                        </p>
+                    </div>
+                    <div class="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900/50 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved"></i> Zero Regression Protection Active
+                    </div>
+                </div>
+
+                <!-- Grid of Tables -->
+                <div class="grid md:grid-cols-2 gap-6">
+
+                    <!-- 1. Unit Setup Card -->
+                    <div class="bg-white dark:bg-[#151921] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#11151d] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                                    <i class="fa-solid fa-building"></i>
+                                </div>
+                                <h3 class="font-extrabold text-sm text-slate-800 dark:text-slate-200">Dyeing Units</h3>
+                            </div>
+                        </div>
+
+                        <!-- Add Item Form -->
+                        <form onsubmit="handleAddDropdownItem(event, 'unit')" class="p-3 border-b border-slate-200 dark:border-slate-800 flex gap-2">
+                            <input type="text" id="unitInputNew" placeholder="Enter Unit name (e.g. EFL, EKL)..." required
+                                class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f17] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                            <button type="submit" 
+                                class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </form>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-[#11151d] border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th class="py-2 px-3 text-center w-12">#</th>
+                                        <th class="py-2 px-3">Unit Name</th>
+                                        <th class="py-2 px-3 text-center w-24">Status</th>
+                                        <th class="py-2 px-3 text-center w-24">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unitSetupTableBody">
+                                    <!-- Rendered dynamically by js/setup.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. Process Name Setup Card -->
+                    <div class="bg-white dark:bg-[#151921] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#11151d] flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+                                    <i class="fa-solid fa-gear"></i>
+                                </div>
+                                <h3 class="font-extrabold text-sm text-slate-800 dark:text-slate-200">Process Names</h3>
+                            </div>
+                        </div>
+
+                        <!-- Add Item Form -->
+                        <form onsubmit="handleAddDropdownItem(event, 'process')" class="p-3 border-b border-slate-200 dark:border-slate-800 flex gap-2">
+                            <input type="text" id="processInputNew" placeholder="Enter Process name (e.g. Solid, HTR)..." required
+                                class="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0b0f17] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500">
+                            <button type="submit" 
+                                class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </form>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-[#11151d] border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        <th class="py-2 px-3 text-center w-12">#</th>
+                                        <th class="py-2 px-3">Process Name</th>
+                                        <th class="py-2 px-3 text-center w-24">Status</th>
+                                        <th class="py-2 px-3 text-center w-24">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="processSetupTableBody">
+                                    <!-- Rendered dynamically by js/setup.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </div>
 
@@ -2068,6 +2189,7 @@
     <script defer src="js/globals.js"></script>
     <script defer src="js/utils.js"></script>
     <script defer src="js/core.js"></script>
+    <script defer src="js/setup.js"></script>
     <script defer src="js/table-headers.js"></script>
     <script defer src="js/data-processing.js"></script>
     <script defer src="js/pagination-filters.js"></script>

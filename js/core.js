@@ -2,9 +2,9 @@
 // CORE: Init, Permissions, Navigation
 // ==========================================================
 
-// Global fetch interceptor to append allowed buyers for restricted users
+// Global fetch interceptor to append authorization headers, buyer filters, and catch 401/403
 const originalFetch = window.fetch;
-window.fetch = async function (resource, init) {
+window.fetch = async function (resource, init = {}) {
   let urlStr =
     typeof resource === "string"
       ? resource
@@ -12,6 +12,41 @@ window.fetch = async function (resource, init) {
         ? resource.url
         : String(resource);
 
+  // If requesting our backend API
+  const isBackendCall =
+    urlStr.includes("abir-backend-api.onrender.com") ||
+    urlStr.includes("localhost:5000") ||
+    urlStr.startsWith("/api/");
+
+  if (isBackendCall) {
+    const token = localStorage.getItem("token");
+
+    // Copy or initialize headers
+    let headers;
+    if (init.headers instanceof Headers) {
+      headers = init.headers;
+    } else if (Array.isArray(init.headers)) {
+      headers = new Headers(init.headers);
+    } else if (init.headers && typeof init.headers === "object") {
+      headers = new Headers(init.headers);
+    } else {
+      headers = new Headers();
+    }
+
+    // Attach Bearer token if present and not already set
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    // If body is a JSON string or plain object (and NOT FormData), ensure Content-Type is application/json
+    if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    init.headers = headers;
+  }
+
+  // Buyer query parameter handling for orders API
   if (
     urlStr.includes("/api/orders") &&
     !urlStr.includes("/api/orders/buyers")
@@ -33,14 +68,35 @@ window.fetch = async function (resource, init) {
       urlStr = urlObj.toString();
 
       if (resource instanceof Request) {
-        resource = new Request(urlStr, resource);
+        resource = new Request(urlStr, init);
       } else {
         resource = urlStr;
       }
     }
   }
 
-  return originalFetch.call(this, resource, init);
+  try {
+    const response = await originalFetch.call(this, resource, init);
+
+    // Global 401 / 403 handling for backend calls
+    if (isBackendCall && (response.status === 401 || response.status === 403)) {
+      if (!urlStr.includes("/api/auth/login") && !window.location.pathname.endsWith("login.html")) {
+        console.warn("Unauthorized API call (401/403). Redirecting to login...");
+        if (typeof showToast === "function") {
+          showToast("Session expired or unauthorized. Please log in again.", true);
+        }
+        localStorage.removeItem("token");
+        localStorage.removeItem("sessionExpiresAt");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 800);
+      }
+    }
+
+    return response;
+  } catch (fetchErr) {
+    throw fetchErr;
+  }
 };
 function initDashboard() {
   if (!isMidnightSessionValid()) {
@@ -73,8 +129,8 @@ function initDashboard() {
       loadActualTracking(state.dept);
     } else if (state.page === "planFilter" && state.dept) {
       showPlanFilter(state.dept);
-    } else if (state.page === "planVsActualTrackingFilter" && state.dept) {
-      showPlanVsActualTrackingFilter(state.dept);
+    } else if (state.page === "setup") {
+      showSetupView();
     } else {
       showDashboardHome();
     }
@@ -490,6 +546,7 @@ function hideAllCoreViews() {
   const views = [
     "dashboardHomeView",
     "dataManagementView",
+    "setupView",
     "listView",
     "detailedView",
     "planVsActualReportView",
@@ -530,6 +587,24 @@ function showDataManagementView() {
   renderTabs();
   closeSidebarMobile();
   setActiveSidebarMenu("menu-data-mgmt");
+}
+
+function showSetupView() {
+  localStorage.setItem(
+    "activePage",
+    JSON.stringify({ page: "setup" }),
+  );
+
+  activeTabId = "setup";
+  hideAllCoreViews();
+  const setupEl = document.getElementById("setupView");
+  if (setupEl) setupEl.classList.remove("hidden");
+  if (typeof renderSetupTables === "function") {
+    renderSetupTables();
+  }
+  renderTabs();
+  closeSidebarMobile();
+  setActiveSidebarMenu("menu-setup-dropdowns");
 }
 
 async function loadMenuData(deptKey, menuName, mode = "manage") {

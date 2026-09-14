@@ -70,15 +70,20 @@ function closeSidebarMobile() {
 
         async function clearAllPlanningData() {
             if (confirm("⚠️ WARNING: Are you sure you want to delete ALL saved planning, statuses, AND all uploaded Excel files? This action will completely reset the system.")) {
-                const password = prompt("Please type 'DELETE' to confirm full system wipe:");
-                if (password !== 'DELETE') {
-                    showToast("Action cancelled. Incorrect confirmation text.");
+                const adminPassword = prompt("Please enter your Admin Password to confirm complete system wipe:");
+                if (!adminPassword) {
+                    showToast("Action cancelled. Admin password required.");
                     return;
                 }
 
                 showToast("Initiating complete system wipe...");
                 try {
-                    const res = await fetch('https://abir-backend-api.onrender.com/api/files/clear-all-planning', { method: 'DELETE' });
+                    const res = await fetch('https://abir-backend-api.onrender.com/api/files/clear-all-planning', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adminPassword })
+                    });
+                    const data = await res.json();
                     if (res.ok) {
                         showToast("System completely reset! All data and files deleted.");
                         markDataDirty();
@@ -86,10 +91,10 @@ function closeSidebarMobile() {
                         await fetchAndProcessData(true);
                         renderMainTable();
                     } else {
-                        showToast("Failed to clear database. Please contact support.");
+                        showToast(data.message || "Failed to clear database. Invalid password or permissions.", true);
                     }
                 } catch (e) {
-                    showToast("Server Connection Error!");
+                    showToast("Server Connection Error!", true);
                 }
             }
         }

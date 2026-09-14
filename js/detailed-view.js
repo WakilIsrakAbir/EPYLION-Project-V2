@@ -268,27 +268,24 @@ async function openDetailedView(encodedBookingNo) {
             itemHtml += `<td class="p-2 border-r border-gray-300 text-center whitespace-normal min-w-[80px]">${item.itemData['Color'] || ''}</td>`;
 
             let unitVal = item.itemData['Unit'] || '';
+            const unitOptionsHtml = typeof buildDynamicOptions === 'function' 
+                ? buildDynamicOptions('unit', unitVal)
+                : `<option value="" ${!unitVal ? 'selected' : ''}>Select</option><option value="EFL" ${unitVal === 'EFL' ? 'selected' : ''}>EFL</option><option value="EKL" ${unitVal === 'EKL' ? 'selected' : ''}>EKL</option><option value="Ext" ${unitVal === 'Ext' ? 'selected' : ''}>Ext</option><option value="Outside" ${unitVal === 'Outside' ? 'selected' : ''}>Outside</option>`;
+
             itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[100px]">
                 <select class="row-unit p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
-                    <option value="" ${!unitVal ? 'selected' : ''}>Select</option>
-                    <option value="EFL" ${unitVal === 'EFL' ? 'selected' : ''}>EFL</option>
-                    <option value="EKL" ${unitVal === 'EKL' ? 'selected' : ''}>EKL</option>
-                    <option value="Ext" ${unitVal === 'Ext' ? 'selected' : ''}>Ext</option>
-                    <option value="Outside" ${unitVal === 'Outside' ? 'selected' : ''}>Outside</option>
+                    ${unitOptionsHtml}
                 </select>
             </td>`;
 
             let processVal = item.itemData['ProcessName'] || item.itemData['Process Name'] || '';
+            const processOptionsHtml = typeof buildDynamicOptions === 'function'
+                ? buildDynamicOptions('process', processVal)
+                : `<option value="" ${!processVal ? 'selected' : ''}>Select</option><option value="Solid" ${processVal === 'Solid' ? 'selected' : ''}>Solid</option><option value="Dyeing Wash" ${processVal === 'Dyeing Wash' ? 'selected' : ''}>Dyeing Wash</option><option value="HTR" ${processVal === 'HTR' ? 'selected' : ''}>HTR</option><option value="Pluvia" ${processVal === 'Pluvia' ? 'selected' : ''}>Pluvia</option><option value="SB" ${processVal === 'SB' ? 'selected' : ''}>SB</option><option value="WH" ${processVal === 'WH' ? 'selected' : ''}>WH</option><option value="DF" ${processVal === 'DF' ? 'selected' : ''}>DF</option>`;
+
             itemHtml += `<td class="p-2 border-r border-gray-300 text-center min-w-[110px]">
                 <select class="row-process p-1 border border-gray-300 rounded text-[10px] w-full focus:border-blue-500 outline-none cursor-pointer">
-                    <option value="" ${!processVal ? 'selected' : ''}>Select</option>
-                    <option value="Solid" ${processVal === 'Solid' ? 'selected' : ''}>Solid</option>
-                    <option value="Dyeing Wash" ${processVal === 'Dyeing Wash' ? 'selected' : ''}>Dyeing Wash</option>
-                    <option value="HTR" ${processVal === 'HTR' ? 'selected' : ''}>HTR</option>
-                    <option value="Pluvia" ${processVal === 'Pluvia' ? 'selected' : ''}>Pluvia</option>
-                    <option value="SB" ${processVal === 'SB' ? 'selected' : ''}>SB</option>
-                    <option value="WH" ${processVal === 'WH' ? 'selected' : ''}>WH</option>
-                    <option value="DF" ${processVal === 'DF' ? 'selected' : ''}>DF</option>
+                    ${processOptionsHtml}
                 </select>
             </td>`;
 
