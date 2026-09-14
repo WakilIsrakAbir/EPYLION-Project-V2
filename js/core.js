@@ -163,12 +163,15 @@ function setActiveSidebarMenu(activeId) {
     activeEl.classList.remove("border-transparent");
     activeEl.classList.add("bg-sidebarActive", textClass, "border-[#4CAF50]");
 
-    const parentMenu = activeEl.closest("ul");
-    if (parentMenu && parentMenu.classList.contains("hidden")) {
-      parentMenu.classList.remove("hidden");
-      const chevron =
-        parentMenu.previousElementSibling.querySelector(".fa-chevron-left");
-      if (chevron) chevron.classList.add("-rotate-90");
+    let parentMenu = activeEl.closest("ul");
+    while (parentMenu && parentMenu.id !== "sidebar") {
+      if (parentMenu.classList.contains("hidden")) {
+        parentMenu.classList.remove("hidden");
+        const prevEl = parentMenu.previousElementSibling;
+        const chevron = prevEl ? prevEl.querySelector(".fa-chevron-left") : null;
+        if (chevron) chevron.classList.add("-rotate-90");
+      }
+      parentMenu = parentMenu.parentElement ? parentMenu.parentElement.closest("ul") : null;
     }
   }
 }

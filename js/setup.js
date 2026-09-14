@@ -1,140 +1,179 @@
 // ==========================================================
-// SETUP: Dropdown Master Data Management
+// SETUP: Dynamic Dropdown Master Management Module
+// Connected to MongoDB API (/api/dropdowns) with Zero Regression
 // ==========================================================
 
-const DROPDOWN_STORAGE_KEY = 'tps_dropdown_master';
+const DROPDOWN_STORAGE_KEY = 'tps_dropdown_master_cache';
 
-const DEFAULT_DROPDOWN_MASTER = {
-    unit: [
-        { id: 'u_1', name: 'EFL', status: 'active' },
-        { id: 'u_2', name: 'EKL', status: 'active' },
-        { id: 'u_3', name: 'Ext', status: 'active' },
-        { id: 'u_4', name: 'Outside', status: 'active' }
+// In-memory cache for ultra-fast and synchronous dropdown generation
+let dropdownMasterCache = {
+    units: [
+        { _id: 'u1', type: 'UNIT', name: 'EFL', status: 'ACTIVE' },
+        { _id: 'u2', type: 'UNIT', name: 'EKL', status: 'ACTIVE' },
+        { _id: 'u3', type: 'UNIT', name: 'Ext', status: 'ACTIVE' },
+        { _id: 'u4', type: 'UNIT', name: 'Outside', status: 'ACTIVE' }
     ],
-    process: [
-        { id: 'p_1', name: 'Solid', status: 'active' },
-        { id: 'p_2', name: 'Dyeing Wash', status: 'active' },
-        { id: 'p_3', name: 'HTR', status: 'active' },
-        { id: 'p_4', name: 'Pluvia', status: 'active' },
-        { id: 'p_5', name: 'SB', status: 'active' },
-        { id: 'p_6', name: 'WH', status: 'active' },
-        { id: 'p_7', name: 'DF', status: 'active' }
+    processes: [
+        { _id: 'p1', type: 'PROCESS', name: 'Solid', status: 'ACTIVE' },
+        { _id: 'p2', type: 'PROCESS', name: 'Dyeing Wash', status: 'ACTIVE' },
+        { _id: 'p3', type: 'PROCESS', name: 'HTR', status: 'ACTIVE' },
+        { _id: 'p4', type: 'PROCESS', name: 'Pluvia', status: 'ACTIVE' },
+        { _id: 'p5', type: 'PROCESS', name: 'SB', status: 'ACTIVE' },
+        { _id: 'p6', type: 'PROCESS', name: 'WH', status: 'ACTIVE' },
+        { _id: 'p7', type: 'PROCESS', name: 'DF', status: 'ACTIVE' }
     ]
 };
 
-/**
- * Get dropdown master data from localStorage or initialize defaults
- */
-function getDropdownMaster() {
-    try {
-        const stored = localStorage.getItem(DROPDOWN_STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed && parsed.unit && parsed.process) {
-                return parsed;
-            }
+// Initialize cache from localStorage if available
+try {
+    const cached = localStorage.getItem(DROPDOWN_STORAGE_KEY);
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.units) && Array.isArray(parsed.processes)) {
+            dropdownMasterCache = parsed;
         }
-    } catch (e) {
-        console.error('Error reading dropdown master from localStorage:', e);
     }
-
-    // Initialize with default values if not present
-    saveDropdownMaster(DEFAULT_DROPDOWN_MASTER);
-    return JSON.parse(JSON.stringify(DEFAULT_DROPDOWN_MASTER));
+} catch (e) {
+    console.error('Error reading dropdown cache from localStorage:', e);
 }
 
 /**
- * Save dropdown master data to localStorage
+ * Fetch fresh dropdown master list from backend database
  */
-function saveDropdownMaster(data) {
+async function fetchDropdownMaster(silent = false) {
     try {
-        localStorage.setItem(DROPDOWN_STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-        console.error('Error saving dropdown master to localStorage:', e);
+        const base = typeof API_BASE !== 'undefined' ? API_BASE : 'https://abir-backend-api.onrender.com';
+        const res = await fetch(`${base}/api/dropdowns`);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+
+        const data = await res.json();
+        dropdownMasterCache = {
+            units: Array.isArray(data.units) ? data.units : [],
+            processes: Array.isArray(data.processes) ? data.processes : []
+        };
+
+        // Persist to local cache for instant dropdown building
+        localStorage.setItem(DROPDOWN_STORAGE_KEY, JSON.stringify(dropdownMasterCache));
+
+        renderSetupTables();
+        return dropdownMasterCache;
+    } catch (err) {
+        console.warn('Could not fetch dropdowns from server, using cached/default options:', err.message);
+        renderSetupTables();
+        return dropdownMasterCache;
     }
 }
 
 /**
- * Build dynamic options for <select> elements
- * Renders active options PLUS always renders the row's existing saved value
- * (even if marked as hidden) so existing database records are never lost.
+ * Build dynamic options for Dyeing Plan <select> elements
  * 
- * @param {'unit' | 'process'} type
- * @param {string} currentValue
+ * CRITICAL BUSINESS RULE (ZERO REGRESSION):
+ * Renders all ACTIVE options. If an existing row has a saved value (even if marked as HIDDEN),
+ * it is ALWAYS included and selected so that existing records in the database are never lost.
+ * 
+ * @param {'unit' | 'process'} type 
+ * @param {string} currentValue 
  * @returns {string} HTML string of <option> elements
  */
 function buildDynamicOptions(type, currentValue) {
-    const master = getDropdownMaster();
-    const list = master[type] || [];
+    const isUnit = type.toLowerCase() === 'unit';
+    const list = isUnit ? (dropdownMasterCache.units || []) : (dropdownMasterCache.processes || []);
     const val = (currentValue !== undefined && currentValue !== null) ? String(currentValue).trim() : '';
 
     let optionsHtml = `<option value="" ${!val ? 'selected' : ''}>Select</option>`;
 
-    // Active options
-    const activeItems = list.filter(item => item.status === 'active');
-    const isValInActive = activeItems.some(item => item.name.toLowerCase() === val.toLowerCase());
+    // Filter active items
+    const activeItems = list.filter(it => it.status === 'ACTIVE');
+    const isValInActive = activeItems.some(it => it.name.toLowerCase() === val.toLowerCase());
 
-    // If there is an existing saved value from database that is NOT active (hidden or deleted),
-    // always render it first so that existing database records are never lost.
+    // If an existing saved value is present from DB but NOT in the active list (e.g. marked as HIDDEN or legacy custom),
+    // always render it first so that existing database records are preserved!
     if (val && !isValInActive) {
-        optionsHtml += `<option value="${val}" selected>${val} (Saved)</option>`;
+        optionsHtml += `<option value="${escapeHtml(val)}" selected>${escapeHtml(val)}</option>`;
     }
 
     // Render active items
     activeItems.forEach(item => {
         const isSelected = val && item.name.toLowerCase() === val.toLowerCase();
-        optionsHtml += `<option value="${item.name}" ${isSelected ? 'selected' : ''}>${item.name}</option>`;
+        optionsHtml += `<option value="${escapeHtml(item.name)}" ${isSelected ? 'selected' : ''}>${escapeHtml(item.name)}</option>`;
     });
 
     return optionsHtml;
 }
 
 /**
- * Render the setup tables for Units and Processes
+ * Render the side-by-side Setup tables matching the reference UI mockup
  */
 function renderSetupTables() {
-    const master = getDropdownMaster();
-    renderSetupTableForType('unit', master.unit || []);
-    renderSetupTableForType('process', master.process || []);
+    const units = dropdownMasterCache.units || [];
+    const processes = dropdownMasterCache.processes || [];
+
+    // Update count badges
+    const unitBadge = document.getElementById('unitItemCountBadge');
+    if (unitBadge) unitBadge.textContent = `${units.length} items`;
+
+    const procBadge = document.getElementById('processItemCountBadge');
+    if (procBadge) procBadge.textContent = `${processes.length} items`;
+
+    // Render unit table
+    renderMasterTableBody('unit', units);
+
+    // Render process table
+    renderMasterTableBody('process', processes);
 }
 
-function renderSetupTableForType(type, items) {
+function renderMasterTableBody(type, items) {
     const tbody = document.getElementById(`${type}SetupTableBody`);
     if (!tbody) return;
 
     if (!items || items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-3 px-3 text-center text-xs text-gray-400">No items configured yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="py-6 px-3 text-center text-xs text-slate-400 font-medium">No items found. Add one above.</td></tr>`;
         return;
     }
 
     let html = '';
     items.forEach((item, index) => {
-        const isActive = item.status === 'active';
-        const badgeClass = isActive 
-            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' 
-            : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
-        const statusText = isActive ? 'Active' : 'Hidden';
-        const toggleIcon = isActive ? 'fa-eye-slash' : 'fa-eye';
-        const toggleTitle = isActive ? 'Hide from dropdown' : 'Make active';
+        const isActive = item.status === 'ACTIVE';
+        
+        // Exact status badge styling from screenshot
+        const statusBadge = isActive
+            ? `<span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                 <i class="fa-solid fa-circle-check text-[10px]"></i> Active
+               </span>`
+            : `<span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                 <i class="fa-solid fa-eye-slash text-[10px]"></i> Hidden
+               </span>`;
+
+        // Action buttons
+        const toggleIcon = isActive ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        const toggleTitle = isActive ? 'Hide from new selection' : 'Unhide / Make active';
 
         html += `
-        <tr class="border-b border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-            <td class="py-2 px-3 text-xs text-gray-500 dark:text-gray-400 text-center font-mono w-12">${index + 1}</td>
-            <td class="py-2 px-3 text-xs font-semibold text-gray-800 dark:text-gray-200">${item.name}</td>
-            <td class="py-2 px-3 text-center w-24">
-                <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full ${badgeClass}">${statusText}</span>
-            </td>
-            <td class="py-2 px-3 text-center w-24 space-x-1">
-                <button type="button" onclick="toggleDropdownItemStatus('${type}', '${item.id}')" 
-                    class="p-1 text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
-                    title="${toggleTitle}">
-                    <i class="fa-solid ${toggleIcon}"></i>
-                </button>
-                <button type="button" onclick="deleteDropdownItem('${type}', '${item.id}')" 
-                    class="p-1 text-xs text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" 
-                    title="Delete option">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+        <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition-colors">
+            <td class="py-2 px-3 text-xs text-slate-400 text-center font-medium w-12">${index + 1}</td>
+            <td class="py-2 px-3 text-sm font-bold text-slate-800">${escapeHtml(item.name)}</td>
+            <td class="py-2 px-3 text-center w-28">${statusBadge}</td>
+            <td class="py-2 px-3 text-center w-28">
+                <div class="inline-flex items-center justify-center gap-1.5">
+                    <!-- Edit Button -->
+                    <button type="button" onclick="handleEditDropdownItem('${type}', '${item._id}', '${escapeHtml(item.name)}')" 
+                        class="w-7 h-7 rounded border border-blue-200 text-blue-500 hover:bg-blue-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        title="Edit name">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                    <!-- Hide / Unhide Toggle Button -->
+                    <button type="button" onclick="toggleDropdownItemStatus('${type}', '${item._id}', '${item.status}')" 
+                        class="w-7 h-7 rounded border border-amber-300 text-amber-500 hover:bg-amber-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        title="${toggleTitle}">
+                        <i class="${toggleIcon}"></i>
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" onclick="deleteDropdownItem('${type}', '${item._id}', '${escapeHtml(item.name)}')" 
+                        class="w-7 h-7 rounded border border-red-300 text-red-500 hover:bg-red-50 inline-flex items-center justify-center text-xs transition-colors" 
+                        title="Delete item">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
             </td>
         </tr>`;
     });
@@ -143,83 +182,141 @@ function renderSetupTableForType(type, items) {
 }
 
 /**
- * Add a new dropdown option
+ * Handle adding a new item via API
  */
-function handleAddDropdownItem(event, type) {
+async function handleAddDropdownItem(event, type) {
     event.preventDefault();
     const input = document.getElementById(`${type}InputNew`);
     if (!input) return;
 
     const val = input.value.trim();
     if (!val) {
-        if (typeof showToast === 'function') showToast('Please enter a name.', true);
+        if (typeof showToast === 'function') showToast('Please enter an item name.', true);
         return;
     }
 
-    const master = getDropdownMaster();
-    const list = master[type] || [];
+    const apiType = type.toUpperCase();
+    const base = typeof API_BASE !== 'undefined' ? API_BASE : 'https://abir-backend-api.onrender.com';
 
-    // Check for duplicates (case insensitive)
-    const exists = list.some(item => item.name.toLowerCase() === val.toLowerCase());
-    if (exists) {
-        if (typeof showToast === 'function') showToast(`"${val}" already exists in the list!`, true);
-        return;
-    }
+    try {
+        const res = await fetch(`${base}/api/dropdowns`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: apiType, name: val })
+        });
 
-    const newItem = {
-        id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        name: val,
-        status: 'active'
-    };
+        const data = await res.json();
 
-    list.push(newItem);
-    master[type] = list;
-    saveDropdownMaster(master);
-
-    input.value = '';
-    renderSetupTables();
-    if (typeof showToast === 'function') showToast(`"${val}" added successfully!`);
-}
-
-/**
- * Toggle active / hidden status of a dropdown option
- */
-function toggleDropdownItemStatus(type, id) {
-    const master = getDropdownMaster();
-    const list = master[type] || [];
-    const item = list.find(it => it.id === id);
-
-    if (item) {
-        item.status = item.status === 'active' ? 'hidden' : 'active';
-        master[type] = list;
-        saveDropdownMaster(master);
-        renderSetupTables();
-        if (typeof showToast === 'function') {
-            showToast(`"${item.name}" is now ${item.status}.`);
+        if (res.ok) {
+            input.value = '';
+            if (typeof showToast === 'function') showToast(data.message || `"${val}" added successfully!`);
+            await fetchDropdownMaster();
+        } else {
+            if (typeof showToast === 'function') showToast(data.message || 'Failed to add item.', true);
         }
+    } catch (err) {
+        console.error('Error adding dropdown item:', err);
+        if (typeof showToast === 'function') showToast('Server connection error.', true);
     }
 }
 
 /**
- * Delete a dropdown option permanently
+ * Handle renaming an item via API
  */
-function deleteDropdownItem(type, id) {
-    const master = getDropdownMaster();
-    const list = master[type] || [];
-    const item = list.find(it => it.id === id);
+async function handleEditDropdownItem(type, id, currentName) {
+    const newName = prompt(`Edit ${type} name:`, currentName);
+    if (!newName || !newName.trim() || newName.trim() === currentName) return;
 
-    if (!item) return;
+    const base = typeof API_BASE !== 'undefined' ? API_BASE : 'https://abir-backend-api.onrender.com';
 
-    const confirmed = confirm(`Are you sure you want to remove "${item.name}" from ${type} options? Existing saved database records will still keep their value.`);
+    try {
+        const res = await fetch(`${base}/api/dropdowns/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName.trim() })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast(data.message || `Updated to "${newName.trim()}".`);
+            await fetchDropdownMaster();
+        } else {
+            if (typeof showToast === 'function') showToast(data.message || 'Failed to update item.', true);
+        }
+    } catch (err) {
+        console.error('Error editing dropdown item:', err);
+        if (typeof showToast === 'function') showToast('Server connection error.', true);
+    }
+}
+
+/**
+ * Handle toggle between ACTIVE and HIDDEN
+ */
+async function toggleDropdownItemStatus(type, id, currentStatus) {
+    const newStatus = currentStatus === 'ACTIVE' ? 'HIDDEN' : 'ACTIVE';
+    const base = typeof API_BASE !== 'undefined' ? API_BASE : 'https://abir-backend-api.onrender.com';
+
+    try {
+        const res = await fetch(`${base}/api/dropdowns/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            const statusMsg = newStatus === 'ACTIVE' ? 'is now Active' : 'is now Hidden';
+            if (typeof showToast === 'function') showToast(data.message || `Option ${statusMsg}.`);
+            await fetchDropdownMaster();
+        } else {
+            if (typeof showToast === 'function') showToast(data.message || 'Failed to update status.', true);
+        }
+    } catch (err) {
+        console.error('Error toggling status:', err);
+        if (typeof showToast === 'function') showToast('Server connection error.', true);
+    }
+}
+
+/**
+ * Handle safe deletion with backend usage verification
+ */
+async function deleteDropdownItem(type, id, name) {
+    const confirmed = confirm(`Are you sure you want to delete "${name}"?`);
     if (!confirmed) return;
 
-    master[type] = list.filter(it => it.id !== id);
-    saveDropdownMaster(master);
-    renderSetupTables();
-    if (typeof showToast === 'function') showToast(`"${item.name}" deleted.`);
+    const base = typeof API_BASE !== 'undefined' ? API_BASE : 'https://abir-backend-api.onrender.com';
+
+    try {
+        const res = await fetch(`${base}/api/dropdowns/${id}`, {
+            method: 'DELETE'
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            if (typeof showToast === 'function') {
+                showToast(data.message || `"${name}" removed.`, data.action === 'hidden');
+            }
+            await fetchDropdownMaster();
+        } else {
+            if (typeof showToast === 'function') showToast(data.message || 'Failed to delete item.', true);
+        }
+    } catch (err) {
+        console.error('Error deleting dropdown item:', err);
+        if (typeof showToast === 'function') showToast('Server connection error.', true);
+    }
 }
 
-// Initialize on DOM ready
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Initial fetch on script load
 document.addEventListener('DOMContentLoaded', () => {
-    getDropdownMaster(); // Ensure defaults initialized
+    fetchDropdownMaster(true);
 });
