@@ -1876,61 +1876,68 @@
                             <div class="overflow-x-auto border border-t-0 border-slate-300 dark:border-slate-700 rounded-b-lg">
                                 <table class="w-full text-xs border-collapse">
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Booking No.</td>
-                                            <td id="ppi_val_bookingNo" class="p-2 font-black text-blue-600 dark:text-blue-400 border-r dark:border-slate-700">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">PMC</td>
-                                            <td id="ppi_val_pmc" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">ALD</td>
-                                            <td id="ppi_val_ald" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 1: 1. Booking No. | 2. Buyer Name | 3. Buyer Team -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Booking No.</td>
+                                            <td id="ppi_val_bookingNo" class="p-2 font-black text-blue-600 dark:text-blue-400 border-b md:border-b-0 md:border-r dark:border-slate-700 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Buyer Name</td>
+                                            <td id="ppi_val_buyer" class="p-2 font-black text-slate-800 dark:text-slate-200 border-b md:border-b-0 md:border-r dark:border-slate-700 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Buyer Team</td>
+                                            <td id="ppi_val_buyerTeam" class="p-2 font-medium text-slate-800 dark:text-slate-200 border-b md:border-b-0 dark:border-slate-700 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Buyer Name</td>
-                                            <td id="ppi_val_buyer" class="p-2 font-black text-slate-800 dark:text-slate-200 border-r dark:border-slate-700">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Merchant</td>
-                                            <td id="ppi_val_merchant" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Batch Plan</td>
-                                            <td id="ppi_val_batchPlan" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 2: 4. Booking Date | 5. Event Day | 6. Style -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Booking Date</td>
+                                            <td id="ppi_val_bookingDate" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Event Day</td>
+                                            <td id="ppi_val_eventDay" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Style</td>
+                                            <td id="ppi_val_style" class="p-2 font-bold text-blue-600 dark:text-blue-400 border-b md:border-b-0 dark:border-slate-700 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Booking Date</td>
-                                            <td id="ppi_val_bookingDate" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Event Day</td>
-                                            <td id="ppi_val_eventDay" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Body Fabric</td>
-                                            <td id="ppi_val_bodyFabric" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 3: 7. PMC | 8. Merchant | 9. Unit -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">PMC</td>
+                                            <td id="ppi_val_pmc" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Merchant</td>
+                                            <td id="ppi_val_merchant" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Unit</td>
+                                            <td id="ppi_val_unit" class="p-2 border-b md:border-b-0 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Order Qty (KG)</td>
-                                            <td id="ppi_val_orderQty" class="p-2 font-black text-emerald-600 dark:text-emerald-400 border-r dark:border-slate-700">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Program Type</td>
-                                            <td id="ppi_val_programType" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Body GSM</td>
-                                            <td id="ppi_val_bodyGsm" class="p-2 font-medium col-span-1 lg:col-span-3 text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 4: 10. Gmt Unit | 11. Program Type | 12. Order Qty (KG) -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Gmt Unit</td>
+                                            <td id="ppi_val_gmtUnit" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Program Type</td>
+                                            <td id="ppi_val_programType" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Order Qty (KG)</td>
+                                            <td id="ppi_val_orderQty" class="p-2 font-black text-emerald-600 dark:text-emerald-400 border-b md:border-b-0 dark:border-slate-700 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Buyer Team</td>
-                                            <td id="ppi_val_buyerTeam" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Brush</td>
-                                            <td id="ppi_val_brush" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">PMC Notes</td>
-                                            <td id="ppi_val_pmcNotes" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 5: 13. Batch Plan | 14. Body Fabric | 15. Body GSM -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Batch Plan</td>
+                                            <td id="ppi_val_batchPlan" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Body Fabric</td>
+                                            <td id="ppi_val_bodyFabric" class="p-2 font-medium text-slate-800 dark:text-slate-200 border-b md:border-b-0 md:border-r dark:border-slate-700 truncate flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Body GSM</td>
+                                            <td id="ppi_val_bodyGsm" class="p-2 font-medium text-slate-800 dark:text-slate-200 border-b md:border-b-0 dark:border-slate-700 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-slate-50/70 dark:bg-[#141822]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Unit</td>
-                                            <td id="ppi_val_unit" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Peach</td>
-                                            <td id="ppi_val_peach" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Fabric Notes</td>
-                                            <td id="ppi_val_fabricNotes" class="p-2 font-medium col-span-1 lg:col-span-3 truncate text-slate-800 dark:text-slate-200">-</td>
+                                        <!-- Row 6: 16. Brush | 17. Peach | 18. Heatset -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-slate-50/70 dark:bg-[#141822]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Brush</td>
+                                            <td id="ppi_val_brush" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Peach</td>
+                                            <td id="ppi_val_peach" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Heatset</td>
+                                            <td id="ppi_val_heatset" class="p-2 border-b md:border-b-0 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
                                         </tr>
-                                        <tr class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-white dark:bg-[#181c25]">
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Gmt Unit</td>
-                                            <td id="ppi_val_gmtUnit" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Heatset</td>
-                                            <td id="ppi_val_heatset" class="p-2 border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200">-</td>
-                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r dark:border-slate-700">Style</td>
-                                            <td id="ppi_val_style" class="p-2 font-bold text-blue-600 dark:text-blue-400 col-span-1 lg:col-span-3">-</td>
+                                        <!-- Row 7: 19. ALD | 20. PMC Notes | 21. Fabric Notes -->
+                                        <tr class="grid grid-cols-2 md:grid-cols-6 bg-white dark:bg-[#181c25]">
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">ALD</td>
+                                            <td id="ppi_val_ald" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">PMC Notes</td>
+                                            <td id="ppi_val_pmcNotes" class="p-2 border-b md:border-b-0 md:border-r dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 truncate flex items-center">-</td>
+                                            <td class="p-2 font-bold bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-r border-b md:border-b-0 dark:border-slate-700 flex items-center">Fabric Notes</td>
+                                            <td id="ppi_val_fabricNotes" class="p-2 border-b md:border-b-0 dark:border-slate-700 font-medium text-slate-800 dark:text-slate-200 truncate flex items-center">-</td>
                                         </tr>
                                     </tbody>
                                 </table>
